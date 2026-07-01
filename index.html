@@ -146,23 +146,87 @@
     </div>
   </section>
 
-  <!-- ===== PLANOS ===== -->
-  <section class="section sell-cta" id="vender">
-    <div class="wrap">
-      <div class="sell-head">
-        <p class="label">Para quem faz</p>
-        <h2>Tem um talento pra vender?</h2>
-        <p>Comece de graça. Cresça quando suas peças começarem a vender mais.</p>
-      </div>
-      <div class="plans" id="plansContainer">
-        <!-- Injetado via JS -->
-      </div>
-      <div class="mp-note">
-        <span>💳</span>
-        <div>O pagamento é processado direto na conta Mercado Pago de cada artesão — o Obeh não retém nem intermedia o valor da venda. As assinaturas de loja são cobradas à parte.</div>
+<!-- ===== PLANOS E DIFERENCIAL ===== -->
+<section class="section sell-cta" id="vender">
+  <div class="wrap">
+    <!-- DIFERENCIAL PRINCIPAL -->
+    <div style="text-align:center; background:var(--clay); color:white; padding:24px 20px; border-radius:8px; margin-bottom:40px;">
+      <div style="font-size:48px; margin-bottom:8px;">🎯</div>
+      <h2 style="color:white; font-size:clamp(28px,3vw,38px);">Você não paga comissão!</h2>
+      <p style="font-size:18px; margin-top:8px; max-width:600px; margin-left:auto; margin-right:auto;">
+        No Obeh, <strong>100% do valor da venda</strong> vai direto para o artesão. 
+        Cobramos apenas uma assinatura fixa para quem quer vender mais.
+      </p>
+      <div style="display:flex; gap:20px; justify-content:center; margin-top:16px; flex-wrap:wrap; font-size:14px;">
+        <span>✅ Sem taxa por produto</span>
+        <span>✅ Sem comissão sobre vendas</span>
+        <span>✅ Recebimento direto via Mercado Pago</span>
       </div>
     </div>
-  </section>
+
+    <!-- HEADER DOS PLANOS -->
+    <div class="sell-head">
+      <p class="label">Para quem faz</p>
+      <h2>Tem um talento pra vender?</h2>
+      <p>Comece de graça. Cresça quando suas peças começarem a vender mais.</p>
+    </div>
+
+    <!-- PLANOS -->
+    <div class="plans" id="plansContainer">
+      <!-- Plano Grátis -->
+      <div class="plan">
+        <div class="plan-name">Grátis</div>
+        <div class="plan-desc">Para começar ou vender poucas peças.</div>
+        <div class="plan-price"><span class="num">R$0</span><span class="per">/mês</span></div>
+        <ul class="plan-list">
+          <li><span class="check">✅</span> Até 2 produtos/mês</li>
+          <li><span class="check">✅</span> Loja personalizada</li>
+          <li><span class="check">✅</span> 0% de comissão</li>
+          <li><span class="check">✅</span> Pagamento direto MP</li>
+        </ul>
+        <a href="cadastro.html" class="btn btn-ghost">Criar loja grátis</a>
+      </div>
+
+      <!-- Plano Basic (Mais escolhido) -->
+      <div class="plan reco">
+        <div class="plan-badge">🌟 Mais escolhido</div>
+        <div class="plan-name">Loja Basic</div>
+        <div class="plan-desc">Para catálogo sem limites mensais.</div>
+        <div class="plan-price"><span class="num">R$7,99</span><span class="per">/mês</span></div>
+        <ul class="plan-list">
+          <li><span class="check">✅</span> Produtos ilimitados</li>
+          <li><span class="check">✅</span> Selo verificado</li>
+          <li><span class="check">✅</span> 0% de comissão</li>
+          <li><span class="check">✅</span> Estatísticas básicas</li>
+        </ul>
+        <a href="#" class="btn btn-primary" onclick="event.preventDefault(); alert('🔗 Em breve você poderá assinar via Stripe!')">Assinar Basic</a>
+      </div>
+
+      <!-- Plano Pro -->
+      <div class="plan">
+        <div class="plan-name">Loja Pro</div>
+        <div class="plan-desc">Para ateliês com movimento.</div>
+        <div class="plan-price"><span class="num">R$15,99</span><span class="per">/mês</span></div>
+        <ul class="plan-list">
+          <li><span class="check">✅</span> Tudo do Basic</li>
+          <li><span class="check">✅</span> Destaque nas buscas</li>
+          <li><span class="check">✅</span> Cupons personalizados</li>
+          <li><span class="check">✅</span> 0% de comissão</li>
+        </ul>
+        <a href="#" class="btn btn-ghost" onclick="event.preventDefault(); alert('🔗 Em breve você poderá assinar via Stripe!')">Assinar Pro</a>
+      </div>
+    </div>
+
+    <!-- NOTA SOBRE O MERCADO PAGO -->
+    <div class="mp-note">
+      <span>💳</span>
+      <div>
+        <strong>O pagamento é 100% direto:</strong> O cliente paga via Mercado Pago e o valor vai direto para a conta do artesão. 
+        O Obeh <strong>não retém nem intermedeia</strong> o dinheiro das vendas. As assinaturas são cobradas à parte via Stripe.
+      </div>
+    </div>
+  </div>
+</section>
 
   <!-- ===== CARRINHO MODAL ===== -->
   <div id="cartModal">
