@@ -99,8 +99,31 @@ header {
 }
 
 .logo img {
-  height: 44px;
+  height: 68px;
   width: auto;
+}
+
+.sheep-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+.logo-mark {
+  width: 60px;
+  height: 60px;
+  display: block;
+  flex-shrink: 0;
+  filter: drop-shadow(0 3px 6px rgba(43,38,32,0.18));
+}
+
+.logo-wordmark {
+  font-family: 'Fraunces', serif;
+  font-weight: 600;
+  font-size: 26px;
+  color: var(--clay);
+  letter-spacing: -0.01em;
 }
 
 .nav-links {
@@ -1516,7 +1539,16 @@ footer {
   }
 
   .logo img {
-    height: 36px;
+    height: 48px;
+  }
+
+  .logo-mark {
+    width: 44px;
+    height: 44px;
+  }
+
+  .logo-wordmark {
+    font-size: 21px;
   }
 
   .hero {
