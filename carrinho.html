@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Carrinho — Obeh</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Work+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+  </script>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .carrinho-container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 28px 40px;
+    }
+
+    .carrinho-container h1 {
+      font-size: 32px;
+      margin: 32px 0 24px;
+    }
+
+    .carrinho-item {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      background: var(--bg-card);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .carrinho-item .thumb {
+      width: 80px;
+      height: 80px;
+      border-radius: 4px;
+      background: #E9DFC7;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .carrinho-item .thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .carrinho-item .info {
+      flex: 1;
+      min-width: 120px;
+    }
+
+    .carrinho-item .info .nome {
+      font-weight: 600;
+      font-size: 16px;
+    }
+
+    .carrinho-item .info .preco {
+      color: var(--ink-soft);
+      font-size: 14px;
+    }
+
+    .carrinho-item .quantidade {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .carrinho-item .quantidade button {
+      background: none;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      cursor: pointer;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s ease;
+    }
+
+    .carrinho-item .quantidade button:hover {
+      background: var(--ink);
+      color: white;
+    }
+
+    .carrinho-item .quantidade span {
+      font-weight: 600;
+      min-width: 24px;
+      text-align: center;
+    }
+
+    .carrinho-item .remover {
+      color: var(--clay);
+      cursor: pointer;
+      font-size: 18px;
+      background: none;
+      border: none;
+      padding: 4px;
+    }
+
+    .carrinho-item .remover:hover {
+      color: var(--clay-dark);
+    }
+
+    .carrinho-total {
+      background: var(--bg-card);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 24px;
+      margin-top: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .carrinho-total .total-label {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .carrinho-total .total-value {
+      font-family: 'Space Mono', monospace;
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--clay);
+    }
+
+    .carrinho-total .btn {
+      padding: 14px 40px;
+      font-size: 16px;
+    }
+
+    .carrinho-vazio {
+      text-align: center;
+      padding: 80px 20px;
+      color: var(--ink-soft);
+    }
+
+    .carrinho-vazio .icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+    }
+
+    .carrinho-vazio .btn {
+      margin-top: 16px;
+    }
+
+    .carrinho-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    @media (max-width: 600px) {
+      .carrinho-item {
+        flex-direction: column;
+        align-items: stretch;
+        text-align: center;
+      }
+
+      .carrinho-item .thumb {
+        margin: 0 auto;
+      }
+
+      .carrinho-item .quantidade {
+        justify-content: center;
+      }
+
+      .carrinho-total {
+        flex-direction: column;
+        text-align: center;
+      }
+
+      .carrinho-total .btn {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===== HEADER ===== -->
+  <header>
+    <div class="wrap nav">
+      <a href="index.html" class="logo">
+        <img src="https://i.postimg.cc/gjpXKcn5/imagem-2026-07-01-110451621.png" alt="Obeh Logo" style="height:40px;" />
+      </a>
+      <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+        <a href="index.html" class="btn btn-ghost" style="padding:6px 16px; font-size:12px;">← Continuar comprando</a>
+        <button class="cart-btn" id="cartToggle" title="Carrinho">
+          🛒 <span id="cartCount">0</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="carrinho-container">
+    <h1>🛒 Seu carrinho</h1>
+    <div id="carrinhoContent">
+      <!-- Injetado via JS -->
+    </div>
+  </div>
+
+  <script src="js/supabase.js"></script>
+  <script>
+    // ============================================
+    // CARRINHO.JS - PÁGINA DO CARRINHO
+    // ============================================
+
+    // ===== INICIALIZAÇÃO =====
+    document.addEventListener('DOMContentLoaded', () => {
+      renderizarCarrinhoCompleto()
+      atualizarCarrinhoUI()
+
+      // Atualiza contador do header
+      document.getElementById('cartCount').textContent = getQuantidadeCarrinho()
+    })
+
+    // ===== RENDERIZAR CARRINHO =====
+    function renderizarCarrinhoCompleto() {
+      const container = document.getElementById('carrinhoContent')
+
+      if (carrinho.length === 0) {
+        container.innerHTML = `
+              <div class="carrinho-vazio">
+                <div class="icon">🛒</div>
+                <p style="font-size:18px; font-weight:500;">Seu carrinho está vazio</p>
+                <p style="font-size:14px; margin-top:8px;">Que tal explorar nossas peças incríveis?</p>
+                <a href="index.html" class="btn btn-primary">Explorar peças</a>
+              </div>
+            `
+        return
+      }
+
+      container.innerHTML = `
+            ${carrinho.map(item => `
+              <div class="carrinho-item">
+                <div class="thumb">
+                  ${item.fotos && item.fotos.length > 0
+                    ? `<img src="${item.fotos[0]}" alt="${item.nome}" />`
+                    : '🧵'
+                  }
+                </div>
+                <div class="info">
+                  <div class="nome">${item.nome}</div>
+                  <div class="preco">R$ ${Number(item.preco).toFixed(2)}</div>
+                </div>
+                <div class="quantidade">
+                  <button onclick="alterarQuantidade('${item.id}', -1)">−</button>
+                  <span>${item.quantidade}</span>
+                  <button onclick="alterarQuantidade('${item.id}', 1)">+</button>
+                </div>
+                <button class="remover" onclick="removerItem('${item.id}')">✕</button>
+              </div>
+            `).join('')}
+
+            <div class="carrinho-total">
+              <div>
+                <div class="total-label">Total</div>
+                <div class="total-value">R$ ${getTotalCarrinho().toFixed(2)}</div>
+              </div>
+              <div style="display:flex; gap:12px; flex-wrap:wrap;">
+                <button class="btn btn-ghost" onclick="limparCarrinho()">Limpar carrinho</button>
+                <button class="btn btn-primary" onclick="finalizarCompra()">Finalizar compra</button>
+              </div>
+            </div>
+          `
+    }
+
+    // ===== AÇÕES DO CARRINHO =====
+    function alterarQuantidade(produtoId, delta) {
+      atualizarQuantidade(produtoId, delta)
+      renderizarCarrinhoCompleto()
+      atualizarCarrinhoUI()
+      document.getElementById('cartCount').textContent = getQuantidadeCarrinho()
+    }
+
+    function removerItem(produtoId) {
+      removerDoCarrinho(produtoId)
+      renderizarCarrinhoCompleto()
+      atualizarCarrinhoUI()
+      document.getElementById('cartCount').textContent = getQuantidadeCarrinho()
+    }
+
+    function limparCarrinho() {
+      if (!confirm('Tem certeza que deseja limpar o carrinho?')) return
+      carrinho = []
+      renderizarCarrinhoCompleto()
+      atualizarCarrinhoUI()
+      document.getElementById('cartCount').textContent = 0
+    }
+
+    function finalizarCompra() {
+      if (carrinho.length === 0) {
+        alert('🛒 Seu carrinho está vazio!')
+        return
+      }
+
+      // Calcula total
+      const total = getTotalCarrinho()
+      const quantidade = getQuantidadeCarrinho()
+
+      if (confirm(`🛍️ Confirmar compra de ${quantidade} item(s) no valor total de R$ ${total.toFixed(2)}?`)) {
+        alert('✅ Pedido finalizado com sucesso! Em breve você receberá as instruções de pagamento via Mercado Pago.')
+        carrinho = []
+        renderizarCarrinhoCompleto()
+        atualizarCarrinhoUI()
+        document.getElementById('cartCount').textContent = 0
+      }
+    }
+
+    // ===== EXPORTA FUNÇÕES =====
+    window.alterarQuantidade = alterarQuantidade
+    window.removerItem = removerItem
+    window.limparCarrinho = limparCarrinho
+    window.finalizarCompra = finalizarCompra
+
+    console.log('✅ Página do carrinho carregada com sucesso!')
+  </script>
+
+</body>
+</html>

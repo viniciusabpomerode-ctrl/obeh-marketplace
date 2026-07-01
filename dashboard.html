@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — Obeh</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Work+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+  </script>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- ===== HEADER ===== -->
+  <header>
+    <div class="wrap nav">
+      <a href="index.html" class="logo">
+        <img src="https://i.postimg.cc/gjpXKcn5/imagem-2026-07-01-110451621.png" alt="Obeh Logo" style="height:40px;" />
+      </a>
+      <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+        <span id="userEmail" style="font-size:13px; color:var(--ink-soft);"></span>
+        <a href="loja.html" class="btn btn-primary" style="padding:6px 16px; font-size:12px;">Ver minha loja</a>
+        <a href="#" onclick="logout()" class="btn btn-ghost" style="padding:6px 16px; font-size:12px;">Sair</a>
+      </div>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <!-- ===== DASHBOARD HEADER ===== -->
+    <div class="dashboard-header">
+      <h1>🧶 Painel do Artesão</h1>
+      <div class="user-info">
+        <span id="planoBadge" class="badge free">Plano Grátis</span>
+      </div>
+    </div>
+
+    <!-- ===== ESTATÍSTICAS ===== -->
+    <div class="dashboard-grid" id="statsGrid">
+      <div class="stat-card">
+        <div class="number" id="totalProdutos">0</div>
+        <div class="label">Produtos</div>
+      </div>
+      <div class="stat-card">
+        <div class="number" id="totalVendas">0</div>
+        <div class="label">Vendas</div>
+      </div>
+      <div class="stat-card">
+        <div class="number" id="totalMensagens">0</div>
+        <div class="label">Mensagens</div>
+      </div>
+      <div class="stat-card">
+        <div class="number" id="limiteRestante">2</div>
+        <div class="label">Produtos grátis restantes</div>
+      </div>
+    </div>
+
+    <!-- ===== TABS ===== -->
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('produtos')">📦 Meus Produtos</button>
+      <button class="tab-btn" onclick="switchTab('novo')">➕ Novo Produto</button>
+      <button class="tab-btn" onclick="switchTab('loja')">🏪 Minha Loja</button>
+      <button class="tab-btn" onclick="switchTab('vendas')">💰 Vendas</button>
+      <button class="tab-btn" onclick="switchTab('mensagens')">💬 Mensagens</button>
+    </div>
+
+    <!-- ===== TAB: PRODUTOS ===== -->
+    <div id="tab-produtos" class="tab-content active">
+      <div class="product-list" id="productList">
+        <!-- Injetado via JS -->
+      </div>
+    </div>
+
+    <!-- ===== TAB: NOVO PRODUTO ===== -->
+    <div id="tab-novo" class="tab-content">
+      <div class="product-form">
+        <h3 style="margin-bottom:16px;">Cadastrar novo produto</h3>
+        <form id="productForm" onsubmit="handleProductSubmit(event)">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Nome do produto *</label>
+              <input type="text" id="prodNome" required />
+            </div>
+            <div class="form-group">
+              <label>Preço (R$) *</label>
+              <input type="number" id="prodPreco" step="0.01" required />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Categoria</label>
+            <select id="prodCategoria">
+              <option value="">Selecione...</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Descrição</label>
+            <textarea id="prodDescricao" placeholder="Descreva sua peça..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>Fotos (URLs separadas por vírgula)</label>
+            <input type="text" id="prodFotos" placeholder="https://imagem1.jpg, https://imagem2.jpg" />
+          </div>
+          <div class="form-group">
+            <label>Estoque</label>
+            <input type="number" id="prodEstoque" value="1" min="0" />
+          </div>
+          <button type="submit" class="btn btn-primary">Salvar produto</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- ===== TAB: LOJA ===== -->
+    <div id="tab-loja" class="tab-content">
+      <div class="loja-form">
+        <h3 style="margin-bottom:16px;">Configurar minha loja</h3>
+        <form id="lojaForm" onsubmit="handleLojaSubmit(event)">
+          <div class="form-group">
+            <label>Nome da loja *</label>
+            <input type="text" id="lojaNome" required />
+          </div>
+          <div class="form-group">
+            <label>Descrição da loja</label>
+            <textarea id="lojaDescricao" placeholder="Conte um pouco sobre seu trabalho..."></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Logo (URL)</label>
+              <input type="text" id="lojaLogo" placeholder="https://imagem-logo.jpg" />
+            </div>
+            <div class="form-group">
+              <label>Banner (URL) — Cabeçalho da loja</label>
+              <input type="text" id="lojaBanner" placeholder="https://imagem-banner.jpg" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Instagram</label>
+              <input type="text" id="lojaInstagram" placeholder="@seuinstagram" />
+            </div>
+            <div class="form-group">
+              <label>WhatsApp (número)</label>
+              <input type="text" id="lojaWhatsapp" placeholder="(11) 99999-9999" />
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary">Salvar loja</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- ===== TAB: VENDAS ===== -->
+    <div id="tab-vendas" class="tab-content">
+      <div id="vendasList">
+        <p style="color:var(--ink-soft); text-align:center; padding:40px;">Nenhuma venda ainda.</p>
+      </div>
+    </div>
+
+    <!-- ===== TAB: MENSAGENS ===== -->
+    <div id="tab-mensagens" class="tab-content">
+      <div id="mensagensList">
+        <p style="color:var(--ink-soft); text-align:center; padding:40px;">Nenhuma mensagem.</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/supabase.js"></script>
+  <script>
+    // ============================================
+    // DASHBOARD.JS - LÓGICA COMPLETA
+    // ============================================
+
+    let currentUser = null
+    let currentUserId = null
+    let lojaData = null
+
+    // ===== INICIALIZAÇÃO =====
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Verifica usuário logado
+      const user = await verificarUsuarioLogado()
+      if (!user) return
+
+      currentUser = user
+      currentUserId = user.id
+      document.getElementById('userEmail').textContent = user.email
+
+      // Carrega dados
+      await carregarDadosUsuario()
+      await carregarProdutos()
+      await carregarCategorias()
+      await carregarLoja()
+    })
+
+    // ===== CARREGAR DADOS DO USUÁRIO =====
+    async function carregarDadosUsuario() {
+      // Busca plano do usuário
+      const { data, error } = await supabaseClient
+        .from('users')
+        .select('plano')
+        .eq('id', currentUserId)
+        .single()
+
+      if (data) {
+        const badge = document.getElementById('planoBadge')
+        if (data.plano === 'free') {
+          badge.textContent = 'Plano Grátis'
+          badge.className = 'badge free'
+        } else {
+          badge.textContent = `Plano ${data.plano.toUpperCase()}`
+          badge.className = 'badge ' + data.plano
+        }
+      }
+
+      // Estatísticas
+      const produtos = await getUserProducts(currentUserId)
+      document.getElementById('totalProdutos').textContent = produtos.length
+
+      const { count: vendas } = await supabaseClient
+        .from('vendas')
+        .select('*', { count: 'exact', head: true })
+        .eq('vendedor_id', currentUserId)
+
+      document.getElementById('totalVendas').textContent = vendas || 0
+
+      const { count: mensagens } = await supabaseClient
+        .from('mensagens')
+        .select('*', { count: 'exact', head: true })
+        .eq('destinatario_id', currentUserId)
+        .eq('lida', false)
+
+      document.getElementById('totalMensagens').textContent = mensagens || 0
+
+      // Limite restante (2 produtos grátis por mês)
+      const inicioMes = new Date()
+      inicioMes.setDate(1)
+      inicioMes.setHours(0, 0, 0, 0)
+
+      const { count: mesProdutos } = await supabaseClient
+        .from('produtos')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', currentUserId)
+        .gte('created_at', inicioMes.toISOString())
+
+      const restante = Math.max(0, 2 - (mesProdutos || 0))
+      document.getElementById('limiteRestante').textContent = restante
+    }
+
+    // ===== CARREGAR PRODUTOS =====
+    async function carregarProdutos() {
+      const data = await getUserProducts(currentUserId)
+
+      const container = document.getElementById('productList')
+      if (!data || data.length === 0) {
+        container.innerHTML = `
+              <div style="text-align:center; padding:40px; color:var(--ink-soft);">
+                🧶 Você ainda não tem produtos.<br>
+                <a href="#" onclick="switchTab('novo')" style="color:var(--clay); font-weight:600;">Clique aqui para criar seu primeiro produto</a>
+              </div>
+            `
+        return
+      }
+
+      container.innerHTML = data.map(p => `
+            <div class="product-item">
+              <div class="info">
+                <div class="thumb">
+                  ${p.fotos && p.fotos.length > 0 ? `<img src="${p.fotos[0]}" alt="${p.nome}" />` : '🧶'}
+                </div>
+                <div>
+                  <strong>${p.nome}</strong>
+                  <div style="font-size:12px; color:var(--ink-soft);">
+                    R$ ${Number(p.preco).toFixed(2)} • ${p.categorias?.nome || 'Sem categoria'} • 
+                    <span style="color:${p.status === 'ativo' ? 'var(--olive)' : 'var(--clay)'}">
+                      ${p.status === 'ativo' ? '✓ Ativo' : 'Rascunho'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div class="actions">
+                <button onclick="toggleStatus('${p.id}', '${p.status}')">
+                  ${p.status === 'ativo' ? 'Desativar' : 'Ativar'}
+                </button>
+                <button onclick="editarProduto('${p.id}')">✎ Editar</button>
+                <button class="delete" onclick="deletarProduto('${p.id}')">✕</button>
+              </div>
+            </div>
+          `).join('')
+    }
+
+    // ===== CARREGAR CATEGORIAS =====
+    async function carregarCategorias() {
+      const data = await getCategorias()
+      const select = document.getElementById('prodCategoria')
+      select.innerHTML = `
+            <option value="">Selecione...</option>
+            ${data.map(c => `<option value="${c.id}">${c.nome}</option>`).join('')}
+          `
+    }
+
+    // ===== CARREGAR LOJA =====
+    async function carregarLoja() {
+      const data = await getLoja(currentUserId)
+      lojaData = data
+
+      if (data) {
+        document.getElementById('lojaNome').value = data.nome_loja || ''
+        document.getElementById('lojaDescricao').value = data.descricao || ''
+        document.getElementById('lojaLogo').value = data.logo || ''
+        document.getElementById('lojaBanner').value = data.banner || ''
+        document.getElementById('lojaInstagram').value = data.instagram || ''
+        document.getElementById('lojaWhatsapp').value = data.whatsapp || ''
+      }
+    }
+
+    // ===== CRUD PRODUTOS =====
+    async function handleProductSubmit(e) {
+      e.preventDefault()
+
+      const nome = document.getElementById('prodNome').value
+      const preco = parseFloat(document.getElementById('prodPreco').value)
+      const categoria_id = document.getElementById('prodCategoria').value || null
+      const descricao = document.getElementById('prodDescricao').value
+      const fotos = document.getElementById('prodFotos').value.split(',').map(s => s.trim()).filter(Boolean)
+      const estoque = parseInt(document.getElementById('prodEstoque').value) || 1
+
+      // Busca loja do usuário
+      const loja = await getLoja(currentUserId)
+      if (!loja) {
+        alert('❌ Crie sua loja primeiro na aba "Minha Loja"')
+        return
+      }
+
+      // Verifica limite de produtos grátis
+      const { data: userData } = await supabaseClient
+        .from('users')
+        .select('plano')
+        .eq('id', currentUserId)
+        .single()
+
+      if (userData?.plano === 'free') {
+        const inicioMes = new Date()
+        inicioMes.setDate(1)
+        inicioMes.setHours(0, 0, 0, 0)
+
+        const { count } = await supabaseClient
+          .from('produtos')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', currentUserId)
+          .gte('created_at', inicioMes.toISOString())
+
+        if (count >= 2) {
+          alert('❌ Você atingiu o limite de 2 produtos grátis neste mês. Assine um plano para continuar.')
+          return
+        }
+      }
+
+      const produto = {
+        loja_id: loja.id,
+        user_id: currentUserId,
+        nome,
+        preco,
+        descricao,
+        fotos,
+        estoque,
+        categoria_id,
+        status: 'ativo',
+        mes_criacao: new Date().toISOString().split('T')[0]
+      }
+
+      const result = await criarProduto(produto)
+      if (result) {
+        document.getElementById('productForm').reset()
+        await carregarProdutos()
+        await carregarDadosUsuario()
+        switchTab('produtos')
+      }
+    }
+
+    // ===== LOJA FORM =====
+    async function handleLojaSubmit(e) {
+      e.preventDefault()
+
+      const updates = {
+        nome_loja: document.getElementById('lojaNome').value,
+        descricao: document.getElementById('lojaDescricao').value,
+        logo: document.getElementById('lojaLogo').value,
+        banner: document.getElementById('lojaBanner').value,
+        instagram: document.getElementById('lojaInstagram').value,
+        whatsapp: document.getElementById('lojaWhatsapp').value
+      }
+
+      const result = await atualizarLoja(currentUserId, updates)
+      if (result) {
+        lojaData = result
+        alert('✅ Loja atualizada com sucesso!')
+      }
+    }
+
+    // ===== TOGGLE STATUS =====
+    async function toggleStatus(id, currentStatus) {
+      const newStatus = currentStatus === 'ativo' ? 'inativo' : 'ativo'
+      const result = await atualizarProduto(id, { status: newStatus })
+      if (result) {
+        await carregarProdutos()
+      }
+    }
+
+    // ===== DELETE =====
+    async function deletarProduto(id) {
+      const success = await deletarProduto(id)
+      if (success) {
+        await carregarProdutos()
+        await carregarDadosUsuario()
+      }
+    }
+
+    // ===== EDIT =====
+    function editarProduto(id) {
+      alert('📝 Função de edição em desenvolvimento. Por enquanto, delete e recrie.')
+    }
+
+    // ===== TABS =====
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'))
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'))
+
+      const target = document.getElementById(`tab-${tab}`)
+      if (target) target.classList.add('active')
+
+      document.querySelectorAll('.tab-btn').forEach(el => {
+        if (el.textContent.includes(getTabLabel(tab))) {
+          el.classList.add('active')
+        }
+      })
+    }
+
+    function getTabLabel(tab) {
+      const map = {
+        'produtos': 'Meus Produtos',
+        'novo': 'Novo Produto',
+        'loja': 'Minha Loja',
+        'vendas': 'Vendas',
+        'mensagens': 'Mensagens'
+      }
+      return map[tab] || tab
+    }
+
+    // Expor funções globalmente
+    window.switchTab = switchTab
+    window.handleProductSubmit = handleProductSubmit
+    window.handleLojaSubmit = handleLojaSubmit
+    window.toggleStatus = toggleStatus
+    window.deletarProduto = deletarProduto
+    window.editarProduto = editarProduto
+
+    console.log('✅ Dashboard Obeh carregado com sucesso!')
+  </script>
+
+</body>
+</html>

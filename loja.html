@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Loja — Obeh</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Work+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+  </script>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .loja-container {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 0 28px;
+    }
+
+    .loja-produtos-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 24px;
+      margin-top: 24px;
+    }
+
+    .loja-header-public {
+      display: flex;
+      align-items: flex-start;
+      gap: 24px;
+      margin: 24px 0 32px;
+      flex-wrap: wrap;
+    }
+
+    .loja-avatar-public {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      overflow: hidden;
+      border: 3px solid var(--line);
+      flex-shrink: 0;
+      background: var(--bg-card);
+    }
+
+    .loja-avatar-public img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .loja-info-public {
+      flex: 1;
+    }
+
+    .loja-info-public h1 {
+      font-size: 28px;
+      margin-bottom: 4px;
+    }
+
+    .loja-info-public .desc {
+      color: var(--ink-soft);
+      font-size: 15px;
+      max-width: 600px;
+    }
+
+    .loja-social-public {
+      display: flex;
+      gap: 16px;
+      margin-top: 8px;
+    }
+
+    .loja-social-public a {
+      color: var(--ink-soft);
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .loja-social-public a:hover {
+      color: var(--clay);
+    }
+
+    .btn-chat {
+      margin-top: 12px;
+    }
+
+    .empty-products {
+      grid-column: 1/-1;
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--ink-soft);
+    }
+
+    .empty-products .icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+
+    @media (max-width: 1024px) {
+      .loja-produtos-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .loja-header-public {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+      }
+
+      .loja-social-public {
+        justify-content: center;
+      }
+
+      .loja-produtos-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .loja-produtos-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===== HEADER ===== -->
+  <header>
+    <div class="wrap nav">
+      <a href="index.html" class="logo">
+        <img src="https://i.postimg.cc/gjpXKcn5/imagem-2026-07-01-110451621.png" alt="Obeh Logo" style="height:40px;" />
+      </a>
+      <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+        <a href="index.html" class="btn btn-ghost" style="padding:6px 16px; font-size:12px;">← Voltar</a>
+        <button class="cart-btn" id="cartToggle" title="Carrinho">
+          🛒 <span id="cartCount">0</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="loja-container">
+    <!-- ===== BANNER ===== -->
+    <div class="loja-banner" id="lojaBanner">
+      <div class="placeholder">🖼️ Banner da loja</div>
+    </div>
+
+    <!-- ===== HEADER DA LOJA ===== -->
+    <div class="loja-header-public" id="lojaHeader">
+      <div class="loja-avatar-public" id="lojaAvatar">
+        <div style="display:flex; align-items:center; justify-content:center; height:100%; font-size:32px;">🧵</div>
+      </div>
+      <div class="loja-info-public">
+        <h1 id="lojaNome">Nome da Loja</h1>
+        <p class="desc" id="lojaDescricao">Descrição da loja...</p>
+        <div class="loja-social-public" id="lojaSocial">
+          <!-- Injetado via JS -->
+        </div>
+        <button class="btn btn-primary btn-chat" id="btnChat" onclick="abrirChat()">💬 Conversar com artesão</button>
+      </div>
+    </div>
+
+    <!-- ===== PRODUTOS ===== -->
+    <h2 style="font-size:22px; margin-bottom:16px;">🧶 Produtos da loja</h2>
+    <div class="loja-produtos-grid" id="lojaProdutos">
+      <!-- Injetado via JS -->
+    </div>
+  </div>
+
+  <!-- ===== CARRINHO MODAL ===== -->
+  <div id="cartModal">
+    <div class="cart-box">
+      <div class="cart-header">
+        <h3>🛒 Seu carrinho</h3>
+        <button class="close-cart" id="closeCart">✕</button>
+      </div>
+      <div id="cartItems">
+        <p class="empty">Seu carrinho está vazio</p>
+      </div>
+      <div id="cartTotal">
+        <span>Total</span>
+        <span>R$ 0,00</span>
+      </div>
+      <button class="btn btn-primary" id="checkoutBtn">Finalizar compra</button>
+    </div>
+  </div>
+
+  <script src="js/supabase.js"></script>
+  <script>
+    // ============================================
+    // LOJA.JS - PÁGINA PÚBLICA DA LOJA
+    // ============================================
+
+    let lojaId = null
+    let lojaData = null
+    let produtosLoja = []
+    let artesaoId = null
+
+    // ===== INICIALIZAÇÃO =====
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Pega o ID da loja da URL
+      const urlParams = new URLSearchParams(window.location.search)
+      lojaId = urlParams.get('id')
+
+      if (!lojaId) {
+        document.getElementById('lojaNome').textContent = 'Loja não encontrada'
+        document.getElementById('lojaProdutos').innerHTML = `
+              <div class="empty-products">
+                <div class="icon">🔍</div>
+                <p>Loja não encontrada. Verifique o link.</p>
+              </div>
+            `
+        return
+      }
+
+      await carregarLoja(lojaId)
+      await carregarProdutosLoja(lojaId)
+      carregarCarrinho()
+
+      // Atualiza contador do carrinho
+      atualizarCarrinhoUI()
+    })
+
+    // ===== CARREGAR LOJA =====
+    async function carregarLoja(id) {
+      const { data, error } = await supabaseClient
+        .from('lojas')
+        .select('*')
+        .eq('id', id)
+        .single()
+
+      if (error || !data) {
+        document.getElementById('lojaNome').textContent = 'Loja não encontrada'
+        return
+      }
+
+      lojaData = data
+      artesaoId = data.user_id
+
+      // Nome
+      document.getElementById('lojaNome').textContent = data.nome_loja || 'Loja sem nome'
+
+      // Descrição
+      document.getElementById('lojaDescricao').textContent = data.descricao || ''
+
+      // Banner
+      const bannerEl = document.getElementById('lojaBanner')
+      if (data.banner) {
+        bannerEl.innerHTML = `<img src="${data.banner}" alt="Banner da loja" />`
+      } else {
+        bannerEl.innerHTML = `<div class="placeholder">🖼️ Banner da loja</div>`
+      }
+
+      // Avatar/Logo
+      const avatarEl = document.getElementById('lojaAvatar')
+      if (data.logo) {
+        avatarEl.innerHTML = `<img src="${data.logo}" alt="Logo da loja" />`
+      } else {
+        avatarEl.innerHTML =
+          `<div style="display:flex; align-items:center; justify-content:center; height:100%; font-size:32px;">🧵</div>`
+      }
+
+      // Redes sociais
+      const socialEl = document.getElementById('lojaSocial')
+      let socialHtml = ''
+      if (data.instagram) {
+        socialHtml += `<a href="https://instagram.com/${data.instagram.replace('@', '')}" target="_blank">📸 ${data.instagram}</a>`
+      }
+      if (data.whatsapp) {
+        const whatsappClean = data.whatsapp.replace(/\D/g, '')
+        socialHtml +=
+          `<a href="https://wa.me/55${whatsappClean}" target="_blank">💬 WhatsApp</a>`
+      }
+      socialEl.innerHTML = socialHtml || ''
+
+      // Botão de chat
+      const btnChat = document.getElementById('btnChat')
+      btnChat.onclick = () => abrirChat(artesaoId)
+    }
+
+    // ===== CARREGAR PRODUTOS DA LOJA =====
+    async function carregarProdutosLoja(lojaId) {
+      const { data, error } = await supabaseClient
+        .from('produtos')
+        .select('*, categorias(nome)')
+        .eq('loja_id', lojaId)
+        .eq('status', 'ativo')
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        console.error('Erro ao carregar produtos:', error)
+        return
+      }
+
+      produtosLoja = data || []
+
+      const container = document.getElementById('lojaProdutos')
+
+      if (produtosLoja.length === 0) {
+        container.innerHTML = `
+              <div class="empty-products">
+                <div class="icon">🧶</div>
+                <p>Esta loja ainda não tem produtos publicados.</p>
+              </div>
+            `
+        return
+      }
+
+      container.innerHTML = produtosLoja.map(p => `
+            <div class="card" onclick="window.location.href='produto.html?id=${p.id}'">
+              <div class="card-media" style="background:#E9DFC7;">
+                ${p.fotos && p.fotos.length > 0
+                  ? `<img src="${p.fotos[0]}" alt="${p.nome}" loading="lazy" />`
+                  : `<span class="placeholder">🧵</span>`
+                }
+              </div>
+              <div class="card-body">
+                <div class="card-cat">${p.categorias?.nome || 'Artesanato'}</div>
+                <div class="card-title">${p.nome}</div>
+                <div class="card-maker">${lojaData?.nome_loja || 'Artesão'}</div>
+                <div class="card-foot">
+                  <div class="price">R$ ${Number(p.preco).toFixed(2)}</div>
+                  <button class="card-add" onclick="event.stopPropagation(); adicionarAoCarrinhoClique('${p.id}')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          `).join('')
+    }
+
+    // ===== CARRINHO =====
+    function carregarCarrinho() {
+      document.getElementById('cartToggle').addEventListener('click', () => {
+        const modal = document.getElementById('cartModal')
+        modal.style.display = modal.style.display === 'none' ? 'block' : 'block'
+        renderizarCarrinho()
+      })
+
+      document.getElementById('closeCart').addEventListener('click', () => {
+        document.getElementById('cartModal').style.display = 'none'
+      })
+
+      document.getElementById('cartModal').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) {
+          document.getElementById('cartModal').style.display = 'none'
+        }
+      })
+
+      document.getElementById('checkoutBtn').addEventListener('click', () => {
+        if (carrinho.length === 0) {
+          alert('🛒 Seu carrinho está vazio!')
+          return
+        }
+        alert('🛍️ Pedido finalizado com sucesso! (simulação)')
+        carrinho = []
+        atualizarCarrinhoUI()
+        renderizarCarrinho()
+        document.getElementById('cartModal').style.display = 'none'
+      })
+    }
+
+    function renderizarCarrinho() {
+      const container = document.getElementById('cartItems')
+      const total = document.getElementById('cartTotal').querySelector('span:last-child')
+
+      if (carrinho.length === 0) {
+        container.innerHTML = '<p class="empty">Seu carrinho está vazio</p>'
+        total.textContent = 'R$ 0,00'
+        return
+      }
+
+      container.innerHTML = carrinho.map(item => `
+            <div class="cart-item">
+              <div class="cart-item-info">
+                <div class="cart-item-name">${item.nome}</div>
+                <div class="cart-item-detail">R$ ${Number(item.preco).toFixed(2)} x ${item.quantidade}</div>
+              </div>
+              <div class="cart-item-actions">
+                <button onclick="atualizarQuantidadeCarrinho('${item.id}', -1)">−</button>
+                <span class="cart-item-qty">${item.quantidade}</span>
+                <button onclick="atualizarQuantidadeCarrinho('${item.id}', 1)">+</button>
+                <button class="remove-item" onclick="removerItemCarrinho('${item.id}')">✕</button>
+              </div>
+            </div>
+          `).join('')
+
+      const totalValue = getTotalCarrinho()
+      total.textContent = `R$ ${totalValue.toFixed(2)}`
+    }
+
+    function adicionarAoCarrinhoClique(produtoId) {
+      const produto = produtosLoja.find(p => p.id === produtoId)
+      if (!produto) return
+
+      adicionarAoCarrinho({
+        id: produto.id,
+        nome: produto.nome,
+        preco: produto.preco,
+        fotos: produto.fotos
+      })
+
+      renderizarCarrinho()
+      atualizarCarrinhoUI()
+
+      // Feedback visual
+      const btn = document.querySelector(`.card-add[onclick*="${produtoId}"]`)
+      if (btn) {
+        btn.style.transform = 'scale(1.3)'
+        btn.style.background = 'var(--clay)'
+        btn.style.color = 'white'
+        setTimeout(() => {
+          btn.style.transform = 'scale(1)'
+          btn.style.background = 'transparent'
+          btn.style.color = 'var(--ink)'
+        }, 300)
+      }
+    }
+
+    function atualizarQuantidadeCarrinho(produtoId, delta) {
+      atualizarQuantidade(produtoId, delta)
+      renderizarCarrinho()
+      atualizarCarrinhoUI()
+    }
+
+    function removerItemCarrinho(produtoId) {
+      removerDoCarrinho(produtoId)
+      renderizarCarrinho()
+      atualizarCarrinhoUI()
+    }
+
+    // ===== CHAT =====
+    function abrirChat(artesaoId) {
+      if (!artesaoId) {
+        alert('Artêsao não encontrado para conversar.')
+        return
+      }
+      window.location.href = `chat.html?user=${artesaoId}`
+    }
+
+    // ===== FUNÇÕES GLOBAIS =====
+    window.adicionarAoCarrinhoClique = adicionarAoCarrinhoClique
+    window.atualizarQuantidadeCarrinho = atualizarQuantidadeCarrinho
+    window.removerItemCarrinho = removerItemCarrinho
+    window.abrirChat = abrirChat
+
+    console.log('✅ Página da loja carregada com sucesso!')
+  </script>
+
+</body>
+</html>

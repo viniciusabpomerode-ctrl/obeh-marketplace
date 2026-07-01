@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Produto — Obeh</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Work+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+  </script>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .produto-container {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 0 28px 40px;
+    }
+
+    .produto-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 48px;
+      margin: 32px 0;
+    }
+
+    .produto-gallery {
+      position: relative;
+    }
+
+    .produto-gallery .main-image {
+      width: 100%;
+      aspect-ratio: 1/1;
+      background: #E9DFC7;
+      border-radius: 8px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .produto-gallery .main-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .produto-gallery .main-image .placeholder {
+      font-size: 64px;
+      opacity: 0.5;
+    }
+
+    .produto-info h1 {
+      font-size: 32px;
+      margin-bottom: 8px;
+    }
+
+    .produto-info .loja-link {
+      color: var(--clay);
+      font-weight: 500;
+      font-size: 15px;
+      cursor: pointer;
+    }
+
+    .produto-info .loja-link:hover {
+      text-decoration: underline;
+    }
+
+    .produto-info .price-large {
+      font-family: 'Space Mono', monospace;
+      font-size: 28px;
+      font-weight: 700;
+      margin: 16px 0;
+    }
+
+    .produto-info .descricao {
+      color: var(--ink-soft);
+      font-size: 15px;
+      line-height: 1.6;
+      margin: 16px 0;
+    }
+
+    .produto-info .categoria-tag {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      text-transform: uppercase;
+      color: var(--olive);
+      background: var(--bg-card);
+      padding: 4px 12px;
+      border-radius: 999px;
+      display: inline-block;
+      margin-bottom: 12px;
+    }
+
+    .produto-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+      flex-wrap: wrap;
+    }
+
+    .produto-actions .btn {
+      padding: 14px 32px;
+      font-size: 15px;
+    }
+
+    .produto-actions .btn-primary {
+      flex: 1;
+      justify-content: center;
+    }
+
+    .produto-actions .btn-chat {
+      background: var(--olive);
+      border-color: var(--olive);
+      color: white;
+    }
+
+    .produto-actions .btn-chat:hover {
+      background: #5A6040;
+      border-color: #5A6040;
+    }
+
+    .produto-extra {
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid var(--line);
+    }
+
+    .produto-extra h3 {
+      font-size: 18px;
+      margin-bottom: 12px;
+    }
+
+    .produto-extra .detalhes {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      font-size: 14px;
+      color: var(--ink-soft);
+    }
+
+    .produto-extra .detalhes span {
+      display: flex;
+      gap: 8px;
+    }
+
+    .produto-extra .detalhes strong {
+      color: var(--ink);
+    }
+
+    @media (max-width: 768px) {
+      .produto-grid {
+        grid-template-columns: 1fr;
+        gap: 24px;
+      }
+
+      .produto-info h1 {
+        font-size: 26px;
+      }
+
+      .produto-info .price-large {
+        font-size: 24px;
+      }
+
+      .produto-actions {
+        flex-direction: column;
+      }
+
+      .produto-actions .btn {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .produto-extra .detalhes {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===== HEADER ===== -->
+  <header>
+    <div class="wrap nav">
+      <a href="index.html" class="logo">
+        <img src="https://i.postimg.cc/gjpXKcn5/imagem-2026-07-01-110451621.png" alt="Obeh Logo" style="height:40px;" />
+      </a>
+      <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+        <a href="javascript:history.back()" class="btn btn-ghost" style="padding:6px 16px; font-size:12px;">← Voltar</a>
+        <button class="cart-btn" id="cartToggle" title="Carrinho">
+          🛒 <span id="cartCount">0</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="produto-container">
+    <div class="produto-grid" id="produtoContent">
+      <!-- Injetado via JS -->
+    </div>
+  </div>
+
+  <!-- ===== CARRINHO MODAL ===== -->
+  <div id="cartModal">
+    <div class="cart-box">
+      <div class="cart-header">
+        <h3>🛒 Seu carrinho</h3>
+        <button class="close-cart" id="closeCart">✕</button>
+      </div>
+      <div id="cartItems">
+        <p class="empty">Seu carrinho está vazio</p>
+      </div>
+      <div id="cartTotal">
+        <span>Total</span>
+        <span>R$ 0,00</span>
+      </div>
+      <button class="btn btn-primary" id="checkoutBtn">Finalizar compra</button>
+    </div>
+  </div>
+
+  <script src="js/supabase.js"></script>
+  <script>
+    // ============================================
+    // PRODUTO.JS - PÁGINA DO PRODUTO
+    // ============================================
+
+    let produtoData = null
+    let lojaData = null
+
+    // ===== INICIALIZAÇÃO =====
+    document.addEventListener('DOMContentLoaded', async () => {
+      const urlParams = new URLSearchParams(window.location.search)
+      const produtoId = urlParams.get('id')
+
+      if (!produtoId) {
+        document.getElementById('produtoContent').innerHTML = `
+              <div style="grid-column:1/-1; text-align:center; padding:60px 20px; color:var(--ink-soft);">
+                <div style="font-size:48px; margin-bottom:16px;">🔍</div>
+                <p style="font-size:18px; font-weight:500;">Produto não encontrado</p>
+                <p style="font-size:14px; margin-top:8px;"><a href="index.html" style="color:var(--clay);">Voltar para a loja</a></p>
+              </div>
+            `
+        return
+      }
+
+      await carregarProduto(produtoId)
+      carregarCarrinho()
+      atualizarCarrinhoUI()
+    })
+
+    // ===== CARREGAR PRODUTO =====
+    async function carregarProduto(id) {
+      const { data, error } = await supabaseClient
+        .from('produtos')
+        .select(`
+            *,
+            lojas (
+              id,
+              nome_loja,
+              logo,
+              user_id
+            ),
+            categorias (nome)
+          `)
+        .eq('id', id)
+        .single()
+
+      if (error || !data) {
+        document.getElementById('produtoContent').innerHTML = `
+              <div style="grid-column:1/-1; text-align:center; padding:60px 20px; color:var(--ink-soft);">
+                <div style="font-size:48px; margin-bottom:16px;">🔍</div>
+                <p style="font-size:18px; font-weight:500;">Produto não encontrado</p>
+                <p style="font-size:14px; margin-top:8px;"><a href="index.html" style="color:var(--clay);">Voltar para a loja</a></p>
+              </div>
+            `
+        return
+      }
+
+      produtoData = data
+      lojaData = data.lojas
+
+      renderizarProduto(data)
+    }
+
+    // ===== RENDERIZAR PRODUTO =====
+    function renderizarProduto(p) {
+      const container = document.getElementById('produtoContent')
+
+      const fotos = p.fotos || []
+      const imagemPrincipal = fotos.length > 0 ? fotos[0] : null
+
+      container.innerHTML = `
+            <!-- Galeria -->
+            <div class="produto-gallery">
+              <div class="main-image">
+                ${imagemPrincipal
+                  ? `<img src="${imagemPrincipal}" alt="${p.nome}" />`
+                  : `<span class="placeholder">🧵</span>`
+                }
+              </div>
+              ${fotos.length > 1 ? `
+                <div style="display:flex; gap:8px; margin-top:12px; overflow-x:auto; padding-bottom:8px;">
+                  ${fotos.map(f => `
+                    <div style="width:60px; height:60px; border-radius:4px; overflow:hidden; border:1px solid var(--line); flex-shrink:0; cursor:pointer; background:#E9DFC7;" onclick="trocarImagem('${f}')">
+                      <img src="${f}" alt="Miniatura" style="width:100%; height:100%; object-fit:cover;" />
+                    </div>
+                  `).join('')}
+                </div>
+              ` : ''}
+            </div>
+
+            <!-- Informações -->
+            <div class="produto-info">
+              <div class="categoria-tag">${p.categorias?.nome || 'Artesanato'}</div>
+              <h1>${p.nome}</h1>
+              <div class="loja-link" onclick="window.location.href='loja.html?id=${lojaData?.id}'">
+                🏪 ${lojaData?.nome_loja || 'Artesão'}
+              </div>
+              <div class="price-large">R$ ${Number(p.preco).toFixed(2)}</div>
+              <div class="descricao">${p.descricao || 'Sem descrição detalhada.'}</div>
+
+              <div class="produto-actions">
+                <button class="btn btn-primary" onclick="adicionarAoCarrinhoClique()">
+                  🛒 Adicionar ao carrinho
+                </button>
+                <button class="btn btn-chat" onclick="abrirChat()">
+                  💬 Conversar com artesão
+                </button>
+              </div>
+
+              <div class="produto-extra">
+                <h3>📦 Detalhes do produto</h3>
+                <div class="detalhes">
+                  <span><strong>Estoque:</strong> ${p.estoque || 1} unidades</span>
+                  <span><strong>Categoria:</strong> ${p.categorias?.nome || 'Não definida'}</span>
+                  <span><strong>Status:</strong> ${p.status === 'ativo' ? '✅ Disponível' : '❌ Indisponível'}</span>
+                  <span><strong>Publicado em:</strong> ${new Date(p.created_at).toLocaleDateString('pt-BR')}</span>
+                </div>
+              </div>
+            </div>
+          `
+    }
+
+    // ===== TROCAR IMAGEM =====
+    function trocarImagem(url) {
+      const mainImage = document.querySelector('.produto-gallery .main-image img')
+      if (mainImage) {
+        mainImage.src = url
+      } else {
+        const mainDiv = document.querySelector('.produto-gallery .main-image')
+        mainDiv.innerHTML = `<img src="${url}" alt="Produto" />`
+      }
+    }
+
+    // ===== CARRINHO =====
+    function carregarCarrinho() {
+      document.getElementById('cartToggle').addEventListener('click', () => {
+        const modal = document.getElementById('cartModal')
+        modal.style.display = modal.style.display === 'none' ? 'block' : 'block'
+        renderizarCarrinho()
+      })
+
+      document.getElementById('closeCart').addEventListener('click', () => {
+        document.getElementById('cartModal').style.display = 'none'
+      })
+
+      document.getElementById('cartModal').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) {
+          document.getElementById('cartModal').style.display = 'none'
+        }
+      })
+
+      document.getElementById('checkoutBtn').addEventListener('click', () => {
+        if (carrinho.length === 0) {
+          alert('🛒 Seu carrinho está vazio!')
+          return
+        }
+        alert('🛍️ Pedido finalizado com sucesso! (simulação)')
+        carrinho = []
+        atualizarCarrinhoUI()
+        renderizarCarrinho()
+        document.getElementById('cartModal').style.display = 'none'
+      })
+    }
+
+    function renderizarCarrinho() {
+      const container = document.getElementById('cartItems')
+      const total = document.getElementById('cartTotal').querySelector('span:last-child')
+
+      if (carrinho.length === 0) {
+        container.innerHTML = '<p class="empty">Seu carrinho está vazio</p>'
+        total.textContent = 'R$ 0,00'
+        return
+      }
+
+      container.innerHTML = carrinho.map(item => `
+            <div class="cart-item">
+              <div class="cart-item-info">
+                <div class="cart-item-name">${item.nome}</div>
+                <div class="cart-item-detail">R$ ${Number(item.preco).toFixed(2)} x ${item.quantidade}</div>
+              </div>
+              <div class="cart-item-actions">
+                <button onclick="atualizarQuantidadeCarrinho('${item.id}', -1)">−</button>
+                <span class="cart-item-qty">${item.quantidade}</span>
+                <button onclick="atualizarQuantidadeCarrinho('${item.id}', 1)">+</button>
+                <button class="remove-item" onclick="removerItemCarrinho('${item.id}')">✕</button>
+              </div>
+            </div>
+          `).join('')
+
+      const totalValue = getTotalCarrinho()
+      total.textContent = `R$ ${totalValue.toFixed(2)}`
+    }
+
+    function adicionarAoCarrinhoClique() {
+      if (!produtoData) return
+
+      adicionarAoCarrinho({
+        id: produtoData.id,
+        nome: produtoData.nome,
+        preco: produtoData.preco,
+        fotos: produtoData.fotos
+      })
+
+      renderizarCarrinho()
+      atualizarCarrinhoUI()
+
+      // Feedback visual
+      const btn = document.querySelector('.produto-actions .btn-primary')
+      if (btn) {
+        btn.textContent = '✅ Adicionado!'
+        btn.style.background = 'var(--olive)'
+        btn.style.borderColor = 'var(--olive)'
+        setTimeout(() => {
+          btn.textContent = '🛒 Adicionar ao carrinho'
+          btn.style.background = 'var(--clay)'
+          btn.style.borderColor = 'var(--clay)'
+        }, 2000)
+      }
+    }
+
+    function atualizarQuantidadeCarrinho(produtoId, delta) {
+      atualizarQuantidade(produtoId, delta)
+      renderizarCarrinho()
+      atualizarCarrinhoUI()
+    }
+
+    function removerItemCarrinho(produtoId) {
+      removerDoCarrinho(produtoId)
+      renderizarCarrinho()
+      atualizarCarrinhoUI()
+    }
+
+    // ===== CHAT =====
+    function abrirChat() {
+      if (!lojaData || !lojaData.user_id) {
+        alert('Artêsao não encontrado para conversar.')
+        return
+      }
+      window.location.href = `chat.html?user=${lojaData.user_id}`
+    }
+
+    // ===== FUNÇÕES GLOBAIS =====
+    window.trocarImagem = trocarImagem
+    window.adicionarAoCarrinhoClique = adicionarAoCarrinhoClique
+    window.atualizarQuantidadeCarrinho = atualizarQuantidadeCarrinho
+    window.removerItemCarrinho = removerItemCarrinho
+    window.abrirChat = abrirChat
+
+    console.log('✅ Página do produto carregada com sucesso!')
+  </script>
+
+</body>
+</html>

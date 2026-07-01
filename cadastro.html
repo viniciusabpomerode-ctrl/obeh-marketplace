@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cadastro — Obeh</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Work+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+  </script>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <div class="wrap">
+    <div class="auth-container">
+      <div style="text-align:center; margin-bottom:16px;">
+        <img src="https://i.postimg.cc/gjpXKcn5/imagem-2026-07-01-110451621.png" alt="Obeh Logo" style="height:48px; width:auto; margin:0 auto;" />
+      </div>
+
+      <h1>🐑 Criar conta Obeh</h1>
+      <p class="sub">Comece a vender ou comprar artesanato</p>
+
+      <!-- Social Login -->
+      <div class="social-login">
+        <button class="btn btn-google" onclick="loginComGoogle()">
+          <span style="font-size:18px;">G</span> Google
+        </button>
+        <button class="btn btn-facebook" onclick="loginComFacebook()">
+          <span style="font-size:18px;">f</span> Facebook
+        </button>
+      </div>
+
+      <div class="auth-divider">ou crie com email</div>
+
+      <!-- Formulário de Cadastro -->
+      <form id="cadastroForm" onsubmit="handleCadastro(event)">
+        <div class="form-group">
+          <label for="nome">Nome completo</label>
+          <input type="text" id="nome" placeholder="Seu nome" required />
+        </div>
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" placeholder="seu@email.com" required />
+        </div>
+        <div class="form-group">
+          <label for="telefone">Telefone (WhatsApp)</label>
+          <input type="tel" id="telefone" placeholder="(11) 99999-9999" />
+        </div>
+        <div class="form-group">
+          <label for="password">Senha</label>
+          <input type="password" id="password" placeholder="Mínimo 6 caracteres" required minlength="6" />
+        </div>
+        <button type="submit" class="btn btn-primary auth-btn">Criar minha conta</button>
+      </form>
+
+      <div class="auth-link">
+        Já tem conta? <a href="login.html">Fazer login</a>
+      </div>
+      <div class="auth-link" style="margin-top:8px;">
+        <a href="index.html">← Voltar para a loja</a>
+      </div>
+      <div style="text-align:center; font-size:12px; color:var(--ink-soft); margin-top:16px;">
+        Ao criar uma conta, você concorda com nossos Termos de Uso e Política de Privacidade.
+      </div>
+    </div>
+  </div>
+
+  <script src="js/supabase.js"></script>
+  <script>
+    async function handleCadastro(e) {
+      e.preventDefault()
+      const nome = document.getElementById('nome').value
+      const email = document.getElementById('email').value
+      const telefone = document.getElementById('telefone').value
+      const password = document.getElementById('password').value
+
+      await cadastrarUsuario(email, password, nome, telefone)
+    }
+
+    // Redireciona se já estiver logado
+    document.addEventListener('DOMContentLoaded', async () => {
+      const user = await getCurrentUser()
+      if (user) {
+        window.location.href = 'dashboard.html'
+      }
+    })
+  </script>
+
+</body>
+</html>
