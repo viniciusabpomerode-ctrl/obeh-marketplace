@@ -1,0 +1,1453 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Obeh — Marketplace de Artesanato</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Work+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <style>
+    /* ===== RESET & VARIÁVEIS ===== */
+    :root {
+      --bg: #EDE6D6;
+      --bg-card: #F7F2E7;
+      --ink: #2B2620;
+      --ink-soft: #5A5348;
+      --clay: #B5502F;
+      --clay-dark: #8C3D22;
+      --olive: #6E7350;
+      --ochre: #C99A3C;
+      --line: #D8CBB0;
+      --white: #FFFBF3;
+      --radius: 4px;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    html {
+      scroll-behavior: smooth;
+    }
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: 'Work Sans', sans-serif;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+    img {
+      max-width: 100%;
+      display: block;
+    }
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+    ul {
+      list-style: none;
+    }
+    .wrap {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 0 28px;
+    }
+    .label {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--clay-dark);
+    }
+    h1,
+    h2,
+    h3 {
+      font-family: 'Fraunces', serif;
+      font-weight: 600;
+      line-height: 1.08;
+      letter-spacing: -0.01em;
+    }
+    .italic {
+      font-style: italic;
+      font-weight: 500;
+    }
+
+    /* ===== TEXTURA ===== */
+    .grain {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 999;
+      opacity: 0.035;
+      mix-blend-mode: multiply;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+
+    /* ===== HEADER ===== */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(237, 230, 214, 0.92);
+      backdrop-filter: blur(6px);
+      border-bottom: 1px solid var(--line);
+    }
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 0;
+      gap: 16px;
+    }
+    .logo {
+      font-family: 'Fraunces', serif;
+      font-weight: 600;
+      font-size: 24px;
+      letter-spacing: -0.01em;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .logo svg {
+      height: 44px;
+      width: auto;
+    }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .nav-links a {
+      position: relative;
+      padding-bottom: 3px;
+      white-space: nowrap;
+    }
+    .nav-links a:not(.btn):hover {
+      color: var(--clay-dark);
+    }
+    .nav-search {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 8px 16px;
+      background: var(--white);
+      font-size: 13px;
+      color: var(--ink-soft);
+      flex: 1;
+      max-width: 200px;
+    }
+    .nav-search svg {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+      opacity: 0.6;
+    }
+    .nav-search input {
+      border: none;
+      background: none;
+      outline: none;
+      font-family: 'Work Sans';
+      font-size: 13px;
+      width: 100%;
+      color: var(--ink);
+    }
+
+    /* CARRINHO NO HEADER */
+    .cart-btn {
+      position: relative;
+      cursor: pointer;
+      padding: 6px;
+      display: flex;
+      align-items: center;
+    }
+    .cart-btn svg {
+      width: 26px;
+      height: 26px;
+      stroke: var(--ink);
+    }
+    #cartCount {
+      position: absolute;
+      top: -4px;
+      right: -6px;
+      background: var(--clay);
+      color: white;
+      font-size: 10px;
+      font-weight: 700;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Space Mono', monospace;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: 'Work Sans';
+      font-weight: 600;
+      font-size: 13.5px;
+      padding: 10px 20px;
+      border-radius: 999px;
+      border: 1.5px solid var(--ink);
+      cursor: pointer;
+      transition: all 0.18s ease;
+      white-space: nowrap;
+    }
+    .btn-primary {
+      background: var(--clay);
+      border-color: var(--clay);
+      color: var(--white);
+    }
+    .btn-primary:hover {
+      background: var(--clay-dark);
+      border-color: var(--clay-dark);
+    }
+    .btn-ghost {
+      background: transparent;
+      color: var(--ink);
+    }
+    .btn-ghost:hover {
+      background: var(--ink);
+      color: var(--white);
+    }
+    .mobile-toggle {
+      display: none;
+      background: none;
+      border: none;
+      cursor: pointer;
+    }
+
+    /* ===== HERO ===== */
+    .hero {
+      padding: 56px 0 40px;
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 40px;
+      align-items: center;
+    }
+    .hero h1 {
+      font-size: clamp(36px, 4.4vw, 56px);
+      max-width: 560px;
+    }
+    .hero .stitch {
+      display: inline-block;
+      position: relative;
+      padding: 0 4px;
+    }
+    .hero .stitch svg {
+      position: absolute;
+      left: 0;
+      bottom: -6px;
+      width: 100%;
+      height: 10px;
+    }
+    .hero p.sub {
+      margin-top: 18px;
+      font-size: 17px;
+      color: var(--ink-soft);
+      max-width: 440px;
+    }
+    .hero-ctas {
+      display: flex;
+      gap: 14px;
+      margin-top: 28px;
+      flex-wrap: wrap;
+    }
+    .hero-trust {
+      display: flex;
+      gap: 26px;
+      margin-top: 36px;
+      flex-wrap: wrap;
+    }
+    .hero-trust div {
+      font-family: 'Space Mono', monospace;
+      font-size: 12px;
+      color: var(--ink-soft);
+    }
+    .hero-trust strong {
+      display: block;
+      font-family: 'Fraunces', serif;
+      font-size: 22px;
+      color: var(--ink);
+      font-weight: 600;
+    }
+    .hero-art {
+      position: relative;
+      height: 400px;
+    }
+    .hero-art svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* ===== ABAS CLIENTE / ARTESÃO ===== */
+    .role-tabs {
+      display: flex;
+      gap: 8px;
+      background: var(--bg-card);
+      border-radius: 999px;
+      padding: 6px;
+      border: 1px solid var(--line);
+      max-width: 380px;
+      margin: -10px auto 32px;
+    }
+    .role-tab {
+      flex: 1;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 999px;
+      background: transparent;
+      color: var(--ink-soft);
+      font-weight: 500;
+      cursor: pointer;
+      font-family: 'Work Sans', sans-serif;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+    .role-tab.active {
+      background: var(--clay);
+      color: white;
+      font-weight: 600;
+    }
+    .role-tab:hover:not(.active) {
+      background: rgba(181, 80, 47, 0.08);
+    }
+
+    /* ===== CATEGORIAS ===== */
+    .cat-strip {
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      padding: 16px 0;
+      overflow-x: auto;
+    }
+    .cat-row {
+      display: flex;
+      gap: 12px;
+      width: max-content;
+      padding: 0 28px;
+      margin: 0 auto;
+      max-width: 1180px;
+    }
+    .chip {
+      font-family: 'Space Mono', monospace;
+      font-size: 12.5px;
+      letter-spacing: 0.03em;
+      padding: 9px 18px;
+      border: 1px dashed var(--ink-soft);
+      border-radius: 999px;
+      background: var(--bg-card);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .chip:hover,
+    .chip.active {
+      background: var(--olive);
+      border-color: var(--olive);
+      color: var(--white);
+      border-style: solid;
+    }
+    .chip .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+      opacity: 0.5;
+    }
+
+    /* ===== SEÇÃO ===== */
+    .section {
+      padding: 64px 0;
+    }
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 34px;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    .section-head h2 {
+      font-size: clamp(26px, 2.8vw, 36px);
+    }
+    .section-head p {
+      color: var(--ink-soft);
+      font-size: 14.5px;
+      max-width: 360px;
+      margin-top: 6px;
+    }
+    .see-all {
+      font-family: 'Space Mono', monospace;
+      font-size: 12px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--ink);
+      padding-bottom: 3px;
+      flex-shrink: 0;
+    }
+
+    /* ===== GRID DE PRODUTOS ===== */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 24px;
+    }
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+      position: relative;
+      transition: transform 0.22s ease, box-shadow 0.22s ease;
+    }
+    .card:hover {
+      transform: translateY(-4px) rotate(-0.4deg);
+      box-shadow: 0 14px 26px -14px rgba(43, 38, 32, 0.35);
+    }
+    .card-media {
+      aspect-ratio: 1/1;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .card-media svg {
+      width: 56%;
+      height: 56%;
+      opacity: 0.92;
+    }
+    .tag-hole {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--bg);
+      border: 1px solid var(--line);
+      z-index: 2;
+    }
+    .fav {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: rgba(247, 242, 231, 0.9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 2;
+      border: 1px solid var(--line);
+    }
+    .fav svg {
+      width: 15px;
+      height: 15px;
+      stroke: var(--ink);
+      fill: none;
+      transition: all 0.15s ease;
+    }
+    .fav.on svg {
+      fill: var(--clay);
+      stroke: var(--clay);
+    }
+    .card-body {
+      padding: 16px 16px 18px;
+      border-top: 1px dashed var(--line);
+    }
+    .card-cat {
+      font-family: 'Space Mono', monospace;
+      font-size: 10.5px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--olive);
+    }
+    .card-title {
+      font-family: 'Fraunces', serif;
+      font-weight: 500;
+      font-size: 16.5px;
+      margin-top: 5px;
+      line-height: 1.25;
+    }
+    .card-maker {
+      font-size: 12.5px;
+      color: var(--ink-soft);
+      margin-top: 3px;
+    }
+    .card-foot {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 12px;
+    }
+    .price {
+      font-family: 'Space Mono', monospace;
+      font-weight: 700;
+      font-size: 15px;
+    }
+    .card-add {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: 1.5px solid var(--ink);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      flex-shrink: 0;
+      background: transparent;
+    }
+    .card-add:hover {
+      background: var(--ink);
+      color: var(--white);
+    }
+    .card-add svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    /* ===== STEPS ===== */
+    .steps {
+      background: var(--ink);
+      color: var(--white);
+      border-radius: 6px;
+      padding: 56px 48px;
+      display: grid;
+      grid-template-columns: 0.8fr 1fr 1fr 1fr;
+      gap: 40px;
+      align-items: start;
+    }
+    .steps .intro h2 {
+      color: var(--white);
+      font-size: clamp(26px, 3vw, 34px);
+    }
+    .steps .intro p {
+      color: #C7BFAE;
+      font-size: 14px;
+      margin-top: 12px;
+    }
+    .step-num {
+      font-family: 'Space Mono', monospace;
+      font-size: 12px;
+      color: var(--ochre);
+      letter-spacing: 0.1em;
+    }
+    .step h3 {
+      font-size: 19px;
+      margin-top: 10px;
+      color: var(--white);
+      font-weight: 500;
+    }
+    .step p {
+      font-size: 13.5px;
+      color: #C7BFAE;
+      margin-top: 8px;
+    }
+    .step-line {
+      width: 100%;
+      height: 1px;
+      background: #494236;
+      margin-top: 20px;
+    }
+
+    /* ===== PLANOS ===== */
+    .sell-cta {
+      padding: 8px 0 0;
+    }
+    .sell-head {
+      text-align: center;
+      max-width: 560px;
+      margin: 0 auto 40px;
+    }
+    .sell-head .label {
+      justify-content: center;
+      display: flex;
+    }
+    .sell-head h2 {
+      font-size: clamp(28px, 3.4vw, 40px);
+      margin-top: 10px;
+    }
+    .sell-head p {
+      color: var(--ink-soft);
+      margin-top: 14px;
+      font-size: 15.5px;
+    }
+    .plans {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 22px;
+    }
+    .plan {
+      background: var(--bg-card);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 32px 26px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+    .plan.reco {
+      border-color: var(--clay);
+      box-shadow: 0 0 0 1px var(--clay);
+    }
+    .plan-badge {
+      position: absolute;
+      top: -13px;
+      left: 26px;
+      background: var(--clay);
+      color: var(--white);
+      font-family: 'Space Mono', monospace;
+      font-size: 10.5px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 5px 12px;
+      border-radius: 999px;
+    }
+    .plan-name {
+      font-family: 'Fraunces', serif;
+      font-size: 21px;
+      font-weight: 600;
+    }
+    .plan-desc {
+      font-size: 13px;
+      color: var(--ink-soft);
+      margin-top: 6px;
+      min-height: 36px;
+    }
+    .plan-price {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      margin-top: 20px;
+    }
+    .plan-price .num {
+      font-family: 'Fraunces', serif;
+      font-size: 38px;
+      font-weight: 600;
+    }
+    .plan-price .per {
+      font-size: 13px;
+      color: var(--ink-soft);
+    }
+    .plan-list {
+      margin-top: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 11px;
+      flex: 1;
+    }
+    .plan-list li {
+      display: flex;
+      gap: 10px;
+      font-size: 13.5px;
+      align-items: flex-start;
+    }
+    .plan-list svg {
+      width: 15px;
+      height: 15px;
+      flex-shrink: 0;
+      margin-top: 2px;
+      stroke: var(--olive);
+    }
+    .plan .btn {
+      margin-top: 26px;
+      justify-content: center;
+      width: 100%;
+    }
+    .mp-note {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 34px;
+      padding: 16px 20px;
+      background: var(--bg-card);
+      border: 1px dashed var(--line);
+      border-radius: 6px;
+      font-size: 13px;
+      color: var(--ink-soft);
+      max-width: 720px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .mp-note svg {
+      width: 22px;
+      height: 22px;
+      flex-shrink: 0;
+      stroke: var(--clay-dark);
+    }
+
+    /* ===== CARRINHO MODAL ===== */
+    #cartModal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: rgba(43, 38, 32, 0.5);
+      backdrop-filter: blur(2px);
+      padding: 20px;
+    }
+    #cartModal .cart-box {
+      max-width: 480px;
+      width: 100%;
+      margin: 40px auto;
+      background: var(--bg-card);
+      border-radius: 8px;
+      padding: 28px;
+      border: 1px solid var(--line);
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    #cartModal .cart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    #cartModal .cart-header h3 {
+      font-family: 'Fraunces', serif;
+      font-size: 24px;
+    }
+    #cartModal .close-cart {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: var(--ink-soft);
+    }
+    #cartItems {
+      min-height: 100px;
+    }
+    #cartItems .empty {
+      color: var(--ink-soft);
+      text-align: center;
+      padding: 20px 0;
+    }
+    .cart-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px dashed var(--line);
+    }
+    .cart-item-info {
+      flex: 1;
+    }
+    .cart-item-name {
+      font-weight: 500;
+    }
+    .cart-item-detail {
+      font-size: 13px;
+      color: var(--ink-soft);
+    }
+    .cart-item-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .cart-item-actions button {
+      background: none;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      width: 26px;
+      height: 26px;
+      cursor: pointer;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .cart-item-actions .remove-item {
+      border: none;
+      color: var(--clay);
+      font-size: 14px;
+    }
+    .cart-item-qty {
+      font-weight: 600;
+      min-width: 20px;
+      text-align: center;
+    }
+    #cartTotal {
+      border-top: 1px solid var(--line);
+      padding-top: 16px;
+      margin-top: 12px;
+      display: flex;
+      justify-content: space-between;
+      font-weight: 600;
+      font-size: 18px;
+    }
+    #cartModal .btn-primary {
+      width: 100%;
+      justify-content: center;
+      margin-top: 16px;
+    }
+
+    /* ===== FOOTER ===== */
+    footer {
+      border-top: 1px solid var(--line);
+      padding: 56px 0 34px;
+      margin-top: 40px;
+    }
+    .foot-grid {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr 1fr 1fr;
+      gap: 40px;
+    }
+    .foot-logo {
+      font-family: 'Fraunces', serif;
+      font-weight: 600;
+      font-size: 21px;
+    }
+    .foot-tag {
+      font-size: 13px;
+      color: var(--ink-soft);
+      margin-top: 10px;
+      max-width: 220px;
+    }
+    .foot-col h4 {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+      margin-bottom: 14px;
+    }
+    .foot-col a {
+      display: block;
+      font-size: 13.5px;
+      margin-bottom: 10px;
+      color: var(--ink);
+    }
+    .foot-col a:hover {
+      color: var(--clay-dark);
+    }
+    .foot-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 50px;
+      padding-top: 22px;
+      border-top: 1px solid var(--line);
+      font-size: 12px;
+      color: var(--ink-soft);
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    /* ===== RESPONSIVO ===== */
+    @media (max-width: 980px) {
+      .hero {
+        grid-template-columns: 1fr;
+        padding-top: 32px;
+      }
+      .hero-art {
+        height: 260px;
+        order: -1;
+      }
+      .grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .steps {
+        grid-template-columns: 1fr;
+        padding: 40px 26px;
+      }
+      .plans {
+        grid-template-columns: 1fr;
+        max-width: 420px;
+        margin: 0 auto;
+      }
+      .foot-grid {
+        grid-template-columns: 1fr 1fr;
+        row-gap: 30px;
+      }
+      .nav-search {
+        max-width: 140px;
+      }
+      .role-tabs {
+        max-width: 320px;
+      }
+    }
+    @media (max-width: 720px) {
+      .nav-links {
+        position: fixed;
+        top: 66px;
+        left: 0;
+        right: 0;
+        background: var(--bg);
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 20px 28px 28px;
+        border-bottom: 1px solid var(--line);
+        gap: 16px;
+        transform: translateY(-130%);
+        transition: transform 0.25s ease;
+        z-index: 40;
+      }
+      .nav-links.open {
+        transform: translateY(0);
+      }
+      .nav-search {
+        order: 3;
+        max-width: none;
+        width: 100%;
+      }
+      .mobile-toggle {
+        display: block;
+      }
+      .grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+      .foot-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+      .hero-trust {
+        gap: 16px;
+      }
+      .hero-trust strong {
+        font-size: 18px;
+      }
+      .steps {
+        padding: 28px 18px;
+        gap: 28px;
+      }
+      .cart-btn svg {
+        width: 22px;
+        height: 22px;
+      }
+      #cartCount {
+        width: 18px;
+        height: 18px;
+        font-size: 9px;
+        top: -2px;
+        right: -4px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="grain"></div>
+
+  <!-- ===== HEADER ===== -->
+  <header>
+    <div class="wrap nav">
+      <a href="#" class="logo">
+        <!-- LOGO OVELHA COSTURANDO (OBEH) -->
+        <svg viewBox="0 0 120 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Corpo (nuvem fofa) -->
+          <ellipse cx="50" cy="45" rx="32" ry="22" fill="#F5F0E8" stroke="#2B2620" stroke-width="1.6"/>
+          <circle cx="40" cy="38" r="6" fill="#F5F0E8" stroke="#2B2620" stroke-width="1.2"/>
+          <circle cx="50" cy="34" r="7" fill="#F5F0E8" stroke="#2B2620" stroke-width="1.2"/>
+          <circle cx="60" cy="38" r="6" fill="#F5F0E8" stroke="#2B2620" stroke-width="1.2"/>
+          <circle cx="45" cy="48" r="6" fill="#F5F0E8" stroke="#2B2620" stroke-width="1.2"/>
+          <circle cx="55" cy="48" r="6" fill="#F5F0E8" stroke="#2B2620" stroke-width="1.2"/>
+          <!-- Cabeça -->
+          <ellipse cx="78" cy="38" rx="14" ry="16" fill="#F5F0E8" stroke="#2B2620" stroke-width="1.6"/>
+          <!-- Olhos -->
+          <circle cx="82" cy="34" r="2.5" fill="#2B2620"/>
+          <circle cx="82" cy="34" r="1" fill="white"/>
+          <!-- Focinho -->
+          <ellipse cx="90" cy="42" rx="4" ry="3" fill="#E8D5C4" stroke="#2B2620" stroke-width="1.2"/>
+          <!-- Orelhas -->
+          <ellipse cx="72" cy="26" rx="5" ry="8" fill="#F5F0E8" stroke="#2B2620" stroke-width="1.2" transform="rotate(-20 72 26)"/>
+          <ellipse cx="84" cy="24" rx="5" ry="8" fill="#F5F0E8" stroke="#2B2620" stroke-width="1.2" transform="rotate(10 84 24)"/>
+          <!-- Pernas -->
+          <rect x="32" y="60" width="6" height="14" rx="2" fill="#F5F0E8" stroke="#2B2620" stroke-width="1.2"/>
+          <rect x="44" y="60" width="6" height="14" rx="2" fill="#F5F0E8" stroke="#2B2620" stroke-width="1.2"/>
+          <rect x="56" y="60" width="6" height="14" rx="2" fill="#F5F0E8" stroke="#2B2620" stroke-width="1.2"/>
+          <rect x="68" y="60" width="6" height="14" rx="2" fill="#F5F0E8" stroke="#2B2620" stroke-width="1.2"/>
+          <!-- Patas -->
+          <circle cx="35" cy="74" r="4" fill="#2B2620"/>
+          <circle cx="47" cy="74" r="4" fill="#2B2620"/>
+          <circle cx="59" cy="74" r="4" fill="#2B2620"/>
+          <circle cx="71" cy="74" r="4" fill="#2B2620"/>
+          <!-- Linha (costurando) -->
+          <path d="M60 30 C 65 15, 85 10, 95 20" stroke="#C99A3C" stroke-width="2" fill="none" stroke-dasharray="3 2"/>
+          <!-- Agulha -->
+          <line x1="95" y1="20" x2="108" y2="12" stroke="#8C8C8C" stroke-width="2.5" stroke-linecap="round"/>
+          <circle cx="108" cy="12" r="2" fill="#8C8C8C"/>
+          <circle cx="100" cy="16" r="1.5" fill="#C99A3C"/>
+          <!-- Rabo -->
+          <path d="M22 42 C 12 38, 8 48, 18 50" stroke="#2B2620" stroke-width="1.6" fill="none"/>
+          <!-- Nome OBEH -->
+          <text x="50" y="85" font-family="'Fraunces', serif" font-size="22" font-weight="600" fill="#2B2620" text-anchor="middle" letter-spacing="2">OBEH</text>
+        </svg>
+      </a>
+
+      <button class="mobile-toggle" id="mobileToggle" aria-label="Abrir menu">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2B2620" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+      </button>
+
+      <nav class="nav-links" id="navLinks">
+        <div class="nav-search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          <input type="text" placeholder="Buscar peças...">
+        </div>
+        <a href="#categorias">Categorias</a>
+        <a href="#como-funciona">Como funciona</a>
+        <a href="#vender">Vender</a>
+        <a href="#" class="btn btn-ghost">Entrar</a>
+        <a href="#vender" class="btn btn-primary">Comece a vender</a>
+
+        <!-- CARRINHO -->
+        <div class="cart-btn" id="cartToggle">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#2B2620" stroke-width="2">
+            <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
+            <path d="M3 6h18"/>
+            <path d="M16 10a4 4 0 01-8 0"/>
+          </svg>
+          <span id="cartCount">0</span>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ===== ABAS CLIENTE / ARTESÃO ===== -->
+  <div class="wrap">
+    <div class="role-tabs">
+      <button class="role-tab active" data-role="cliente">🛍️ Sou Cliente</button>
+      <button class="role-tab" data-role="artesao">🧶 Sou Artesão</button>
+    </div>
+  </div>
+
+  <!-- ===== HERO ===== -->
+  <section class="hero">
+    <div class="wrap" style="display:contents;">
+      <div>
+        <p class="label">Marketplace de artesanato brasileiro</p>
+        <h1 id="heroTitle">Cada peça carrega <span class="stitch italic">a marca<svg viewBox="0 0 140 10" fill="none"><path d="M2 7c15-6 25 4 40-2s25 4 40-2 25 4 40-2" stroke="#C99A3C" stroke-width="2.2" stroke-linecap="round"/></svg></span> de quem fez.</h1>
+        <p class="sub" id="heroSub">Compre direto de quem faz com as próprias mãos — cerâmica, tecelagem, madeira, couro e muito mais. Sem intermediário, com a história de cada artesão.</p>
+        <div class="hero-ctas" id="heroCtas">
+          <a href="#vitrine" class="btn btn-primary">Explorar peças</a>
+          <a href="#vender" class="btn btn-ghost">Quero vender</a>
+        </div>
+        <div class="hero-trust">
+          <div><strong>3.200+</strong>peças únicas</div>
+          <div><strong>480</strong>ateliês ativos</div>
+          <div><strong>100%</strong>pagamento direto ao artesão</div>
+        </div>
+      </div>
+
+      <div class="hero-art">
+        <svg viewBox="0 0 420 420" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="210" cy="210" r="190" fill="#E4DAC2"/>
+          <path d="M150 340C110 300 100 240 120 190C140 140 190 120 210 90C230 120 280 140 300 190C320 240 310 300 270 340C240 365 180 365 150 340Z" fill="#B5502F" opacity="0.92"/>
+          <path d="M175 175C175 175 170 260 210 300C250 260 245 175 245 175" stroke="#F7F2E7" stroke-width="2" opacity="0.5"/>
+          <ellipse cx="210" cy="150" rx="34" ry="14" fill="#8C3D22" opacity="0.5"/>
+          <path d="M60 320c30-10 50 10 80 4" stroke="#6E7350" stroke-width="6" stroke-linecap="round"/>
+          <path d="M300 80c-18 14-10 34 6 44" stroke="#C99A3C" stroke-width="6" stroke-linecap="round"/>
+          <circle cx="330" cy="300" r="22" fill="#6E7350" opacity="0.85"/>
+          <circle cx="70" cy="110" r="14" fill="#C99A3C" opacity="0.9"/>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== CATEGORIAS ===== -->
+  <div class="cat-strip" id="categorias">
+    <div class="cat-row" id="catRow">
+      <div class="chip active"><span class="dot"></span>Todas</div>
+      <div class="chip"><span class="dot"></span>Cerâmica</div>
+      <div class="chip"><span class="dot"></span>Tecelagem</div>
+      <div class="chip"><span class="dot"></span>Madeira</div>
+      <div class="chip"><span class="dot"></span>Couro</div>
+      <div class="chip"><span class="dot"></span>Joias</div>
+      <div class="chip"><span class="dot"></span>Papel</div>
+      <div class="chip"><span class="dot"></span>Bordado</div>
+      <div class="chip"><span class="dot"></span>Cestaria</div>
+    </div>
+  </div>
+
+  <!-- ===== VITRINE ===== -->
+  <section class="section" id="vitrine">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <h2>Selecionado à mão</h2>
+          <p>Peças novas de ateliês de todo o Brasil, escolhidas pela equipe Obeh nesta semana.</p>
+        </div>
+        <a href="#" class="see-all">Ver tudo →</a>
+      </div>
+
+      <div class="grid" id="productGrid">
+        <!-- Produtos injetados pelo JS -->
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== COMO FUNCIONA ===== -->
+  <section class="section" id="como-funciona" style="padding-top:0;">
+    <div class="wrap">
+      <div class="steps">
+        <div class="intro">
+          <h2>Do barro à<br>sua casa.</h2>
+          <p>Um caminho simples entre quem faz e quem leva pra casa.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">01 — Cadastro</div>
+          <h3>O artesão publica</h3>
+          <p>Cria a loja, sobe fotos e descreve a peça. Os 2 primeiros produtos do mês são grátis.</p>
+          <div class="step-line"></div>
+        </div>
+        <div class="step">
+          <div class="step-num">02 — Venda</div>
+          <h3>O comprador escolhe</h3>
+          <p>Navega por categoria, região ou técnica, e compra com segurança pelo Mercado Pago.</p>
+          <div class="step-line"></div>
+        </div>
+        <div class="step">
+          <div class="step-num">03 — Recebimento</div>
+          <h3>O dinheiro vai direto</h3>
+          <p>O pagamento cai na conta Mercado Pago do próprio artesão. Sem retenção, sem intermediário.</p>
+          <div class="step-line"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== PLANOS ===== -->
+  <section class="section sell-cta" id="vender">
+    <div class="wrap">
+      <div class="sell-head">
+        <p class="label">Para quem faz</p>
+        <h2>Tem um talento pra vender?</h2>
+        <p>Comece de graça. Cresça quando suas peças começarem a vender mais rápido do que você imaginava.</p>
+      </div>
+
+      <div class="plans">
+        <div class="plan">
+          <div class="plan-name">Grátis</div>
+          <div class="plan-desc">Pra quem está começando ou vende poucas peças por mês.</div>
+          <div class="plan-price"><span class="num">R$0</span><span class="per">/mês</span></div>
+          <ul class="plan-list">
+            <li><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M5 13l4 4L19 7"/></svg>Até 2 produtos publicados por mês</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M5 13l4 4L19 7"/></svg>Loja personalizada com sua história</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M5 13l4 4L19 7"/></svg>Recebimento direto via Mercado Pago</li>
+          </ul>
+          <a href="#" class="btn btn-ghost">Criar loja grátis</a>
+        </div>
+
+        <div class="plan reco">
+          <div class="plan-badge">Mais escolhido</div>
+          <div class="plan-name">Loja Basic</div>
+          <div class="plan-desc">Pra quem já tem um catálogo e quer vender sem limites mensais.</div>
+          <div class="plan-price"><span class="num">R$7,99</span><span class="per">/mês</span></div>
+          <ul class="plan-list">
+            <li><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M5 13l4 4L19 7"/></svg>Produtos ilimitados</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M5 13l4 4L19 7"/></svg>Selo de loja verificada</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M5 13l4 4L19 7"/></svg>Estatísticas básicas de visitas</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M5 13l4 4L19 7"/></svg>Recebimento direto via Mercado Pago</li>
+          </ul>
+          <a href="#" class="btn btn-primary">Assinar Basic</a>
+        </div>
+
+        <div class="plan">
+          <div class="plan-name">Loja Pro</div>
+          <div class="plan-desc">Pra ateliês com movimento — mais visibilidade e ferramentas de venda.</div>
+          <div class="plan-price"><span class="num">R$15,99</span><span class="per">/mês</span></div>
+          <ul class="plan-list">
+            <li><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M5 13l4 4L19 7"/></svg>Tudo do plano Basic</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M5 13l4 4L19 7"/></svg>Destaque nas buscas e na home</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M5 13l4 4L19 7"/></svg>Cupons de desconto personalizados</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M5 13l4 4L19 7"/></svg>Estatísticas completas de vendas</li>
+          </ul>
+          <a href="#" class="btn btn-ghost">Assinar Pro</a>
+        </div>
+      </div>
+
+      <div class="mp-note">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><rect x="3" y="6" width="18" height="14" rx="2"/><path d="M3 10h18"/><path d="M7 15h4"/></svg>
+        <div>O pagamento é processado direto na conta Mercado Pago de cada artesão — o Obeh não retém nem intermedia o valor da venda. As assinaturas de loja são cobradas à parte.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== CARRINHO MODAL ===== -->
+  <div id="cartModal">
+    <div class="cart-box">
+      <div class="cart-header">
+        <h3>🛒 Seu carrinho</h3>
+        <button class="close-cart" id="closeCart">✕</button>
+      </div>
+      <div id="cartItems">
+        <p class="empty">Seu carrinho está vazio</p>
+      </div>
+      <div id="cartTotal">
+        <span>Total</span>
+        <span>R$ 0,00</span>
+      </div>
+      <button class="btn btn-primary" id="checkoutBtn">Finalizar compra</button>
+    </div>
+  </div>
+
+  <!-- ===== FOOTER ===== -->
+  <footer>
+    <div class="wrap">
+      <div class="foot-grid">
+        <div>
+          <div class="foot-logo">Obeh</div>
+          <p class="foot-tag">Marketplace de artesanato feito por mãos brasileiras, de norte a sul.</p>
+        </div>
+        <div class="foot-col">
+          <h4>Comprar</h4>
+          <a href="#">Categorias</a>
+          <a href="#">Ateliês em destaque</a>
+          <a href="#">Como comprar</a>
+        </div>
+        <div class="foot-col">
+          <h4>Vender</h4>
+          <a href="#">Criar loja</a>
+          <a href="#">Planos e preços</a>
+          <a href="#">Central do vendedor</a>
+        </div>
+        <div class="foot-col">
+          <h4>Obeh</h4>
+          <a href="#">Sobre</a>
+          <a href="#">Ajuda</a>
+          <a href="#">Contato</a>
+        </div>
+      </div>
+      <div class="foot-bottom">
+        <span>© 2026 Obeh Marketplace. Todos os direitos reservados.</span>
+        <span>Feito com 🧵 e aconchego.</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ===== JAVASCRIPT ===== -->
+  <script>
+    // ===== MOBILE MENU =====
+    const toggle = document.getElementById('mobileToggle');
+    const links = document.getElementById('navLinks');
+    toggle.addEventListener('click', () => links.classList.toggle('open'));
+
+    // ===== CATEGORY CHIPS =====
+    document.querySelectorAll('.chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+      });
+    });
+
+    // ===== FAVORITOS =====
+    document.querySelectorAll('.fav').forEach(el => {
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        el.classList.toggle('on');
+      });
+    });
+
+    // ===== ROLES (CLIENTE x ARTESÃO) =====
+    const roleTabs = document.querySelectorAll('.role-tab');
+    const heroTitle = document.getElementById('heroTitle');
+    const heroSub = document.getElementById('heroSub');
+    const heroCtas = document.getElementById('heroCtas');
+
+    roleTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        roleTabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+
+        const role = tab.dataset.role;
+        if (role === 'cliente') {
+          heroTitle.innerHTML =
+            `Cada peça carrega <span class="stitch italic">a marca<svg viewBox="0 0 140 10" fill="none"><path d="M2 7c15-6 25 4 40-2s25 4 40-2 25 4 40-2" stroke="#C99A3C" stroke-width="2.2" stroke-linecap="round"/></svg></span> de quem fez.`;
+          heroSub.textContent = 'Compre direto de quem faz com as próprias mãos — cerâmica, tecelagem, madeira, couro e muito mais. Sem intermediário, com a história de cada artesão.';
+          heroCtas.innerHTML = `
+            <a href="#vitrine" class="btn btn-primary">Explorar peças</a>
+            <a href="#vender" class="btn btn-ghost">Quero vender</a>
+          `;
+        } else {
+          heroTitle.innerHTML =
+            `Transforme seu <span class="stitch italic">talento<svg viewBox="0 0 140 10" fill="none"><path d="M2 7c15-6 25 4 40-2s25 4 40-2 25 4 40-2" stroke="#C99A3C" stroke-width="2.2" stroke-linecap="round"/></svg></span> em renda.`;
+          heroSub.textContent = 'Cadastre sua loja grátis, publique até 2 produtos por mês sem custo. Quando crescer, assine um plano e venda sem limites. O pagamento vai direto para sua conta.';
+          heroCtas.innerHTML = `
+            <a href="#vender" class="btn btn-primary">Criar minha loja</a>
+            <a href="#vender" class="btn btn-ghost">Ver planos</a>
+          `;
+        }
+      });
+    });
+
+    // ===== PRODUTOS =====
+    const icons = {
+      ceramica: `<svg viewBox="0 0 100 100" fill="none"><path d="M30 78C22 68 20 50 26 38C32 26 44 20 50 14C56 20 68 26 74 38C80 50 78 68 70 78C62 86 38 86 30 78Z" stroke="#2B2620" stroke-width="2.5"/><ellipse cx="50" cy="30" rx="15" ry="6" stroke="#2B2620" stroke-width="2.5"/></svg>`,
+      tecelagem: `<svg viewBox="0 0 100 100" fill="none"><rect x="18" y="18" width="64" height="64" rx="2" stroke="#2B2620" stroke-width="2.5"/><path d="M18 34h64M18 50h64M18 66h64M34 18v64M50 18v64M66 18v64" stroke="#2B2620" stroke-width="1.4" opacity="0.55"/></svg>`,
+      madeira: `<svg viewBox="0 0 100 100" fill="none"><path d="M50 15C60 30 75 40 75 58C75 72 64 82 50 82C36 82 25 72 25 58C25 40 40 30 50 15Z" stroke="#2B2620" stroke-width="2.5"/><path d="M50 40v42M42 55c4 4 12 4 16 0M40 66c5 5 15 5 20 0" stroke="#2B2620" stroke-width="1.6"/></svg>`,
+      couro: `<svg viewBox="0 0 100 100" fill="none"><rect x="22" y="30" width="56" height="42" rx="4" stroke="#2B2620" stroke-width="2.5"/><path d="M22 42h56M35 30v-6a4 4 0 014-4h22a4 4 0 014 4v6" stroke="#2B2620" stroke-width="2.2"/></svg>`,
+      joias: `<svg viewBox="0 0 100 100" fill="none"><path d="M50 20l14 16H36l14-16z" stroke="#2B2620" stroke-width="2.5" stroke-linejoin="round"/><path d="M22 36h56L50 80 22 36z" stroke="#2B2620" stroke-width="2.5" stroke-linejoin="round"/></svg>`,
+      papel: `<svg viewBox="0 0 100 100" fill="none"><path d="M28 18h32l12 14v50a2 2 0 01-2 2H28a2 2 0 01-2-2V20a2 2 0 012-2z" stroke="#2B2620" stroke-width="2.5" stroke-linejoin="round"/><path d="M60 18v14h12" stroke="#2B2620" stroke-width="2.5" stroke-linejoin="round"/></svg>`,
+      bordado: `<svg viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="30" stroke="#2B2620" stroke-width="2.5"/><path d="M35 50c4-10 12-16 15-16s3 22 6 22 8-16 13-6" stroke="#2B2620" stroke-width="2" stroke-linecap="round"/></svg>`,
+      cestaria: `<svg viewBox="0 0 100 100" fill="none"><path d="M25 40h50l-6 38a4 4 0 01-4 3.4H35a4 4 0 01-4-3.4L25 40z" stroke="#2B2620" stroke-width="2.5" stroke-linejoin="round"/><path d="M25 40c0-6 11-11 25-11s25 5 25 11" stroke="#2B2620" stroke-width="2.2"/><path d="M32 48h36M30 58h40M32 68h36" stroke="#2B2620" stroke-width="1.4" opacity="0.55"/></svg>`
+    };
+
+    const bgTints = ['#E9DFC7', '#E3DECF', '#EAD9CC', '#DCE0CB', '#EFE2D0', '#E5DED0'];
+
+    const products = [
+      { cat: 'Cerâmica', name: 'Vaso Trança de Barro', maker: 'Ateliê Terra Viva — MG', price: 'R$ 168',
+      icon: 'ceramica' },
+      { cat: 'Tecelagem', name: 'Manta Rústica Fio Cru', maker: 'Tear de Beatriz — RS', price: 'R$ 240',
+      icon: 'tecelagem' },
+      { cat: 'Madeira', name: 'Tábua Entalhada de Cumaru', maker: 'Marcenaria Raiz Forte — PA', price: 'R$ 132',
+        icon: 'madeira' },
+      { cat: 'Couro', name: 'Bolsa Sacola Couro Cru', maker: 'Curtume Sertão — CE', price: 'R$ 289', icon: 'couro' },
+      { cat: 'Joias', name: 'Brinco Semente de Açaí', maker: 'Selva Joias — AM', price: 'R$ 74', icon: 'joias' },
+      { cat: 'Papel', name: 'Caderno Capa em Sisal', maker: 'Papelaria do Cerrado — GO', price: 'R$ 58', icon: 'papel' },
+      { cat: 'Bordado', name: 'Toalha Bordado Richelieu', maker: 'Linhas do Sertão — PE', price: 'R$ 96',
+      icon: 'bordado' },
+      { cat: 'Cestaria', name: 'Cesto de Taboa Trançada', maker: 'Mãos do Pantanal — MS', price: 'R$ 145',
+        icon: 'cestaria' }
+    ];
+
+    const grid = document.getElementById('productGrid');
+    grid.innerHTML = products.map((p, i) => `
+      <div class="card">
+        <div class="card-media" style="background:${bgTints[i % bgTints.length]}">
+          <div class="tag-hole"></div>
+          <div class="fav">
+            <svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-10-9.3C0.3 8 2 4.5 5.6 4c2-.3 3.8.7 4.9 2.3.5.7.9 1.5 1.5 1.5s1-.8 1.5-1.5C14.6 4.7 16.4 3.7 18.4 4c3.6.5 5.3 4 3.6 7.7C19.5 16.4 12 21 12 21z"/></svg>
+          </div>
+          ${icons[p.icon]}
+        </div>
+        <div class="card-body">
+          <div class="card-cat">${p.cat}</div>
+          <div class="card-title">${p.name}</div>
+          <div class="card-maker">${p.maker}</div>
+          <div class="card-foot">
+            <div class="price">${p.price}</div>
+            <button class="card-add" data-add>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    `).join('');
+
+    // ===== CARRINHO =====
+    let cart = [];
+    const cartCount = document.getElementById('cartCount');
+    const cartModal = document.getElementById('cartModal');
+    const cartItems = document.getElementById('cartItems');
+    const cartTotal = document.getElementById('cartTotal');
+
+    // Abrir/fechar modal
+    document.getElementById('cartToggle').addEventListener('click', () => {
+      cartModal.style.display = cartModal.style.display === 'none' ? 'block' : 'block';
+    });
+    document.getElementById('closeCart').addEventListener('click', () => {
+      cartModal.style.display = 'none';
+    });
+    cartModal.addEventListener('click', (e) => {
+      if (e.target === cartModal) cartModal.style.display = 'none';
+    });
+
+    // Adicionar ao carrinho
+    document.querySelectorAll('[data-add]').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const card = btn.closest('.card');
+        const name = card.querySelector('.card-title').textContent;
+        const priceText = card.querySelector('.price').textContent;
+        const priceNum = parseFloat(priceText.replace('R$ ', '').replace(',', '.'));
+
+        const existing = cart.find(item => item.name === name);
+        if (existing) {
+          existing.qty += 1;
+        } else {
+          cart.push({ name, price: priceNum, qty: 1 });
+        }
+        updateCartUI();
+
+        // Feedback visual
+        btn.style.transform = 'scale(1.3)';
+        setTimeout(() => btn.style.transform = 'scale(1)', 200);
+      });
+    });
+
+    function updateCartUI() {
+      const totalItems = cart.reduce((sum, item) => sum + item.qty, 0);
+      cartCount.textContent = totalItems;
+
+      if (totalItems === 0) {
+        cartItems.innerHTML = '<p class="empty">Seu carrinho está vazio</p>';
+        cartTotal.querySelector('span:last-child').textContent = 'R$ 0,00';
+        return;
+      }
+
+      cartItems.innerHTML = cart.map(item => `
+        <div class="cart-item">
+          <div class="cart-item-info">
+            <div class="cart-item-name">${item.name}</div>
+            <div class="cart-item-detail">R$ ${item.price.toFixed(2)} x ${item.qty}</div>
+          </div>
+          <div class="cart-item-actions">
+            <button onclick="changeQty('${item.name}', -1)">−</button>
+            <span class="cart-item-qty">${item.qty}</span>
+            <button onclick="changeQty('${item.name}', 1)">+</button>
+            <button class="remove-item" onclick="removeItem('${item.name}')">✕</button>
+          </div>
+        </div>
+      `).join('');
+
+      const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+      cartTotal.querySelector('span:last-child').textContent = `R$ ${total.toFixed(2)}`;
+    }
+
+    window.changeQty = (name, delta) => {
+      const item = cart.find(i => i.name === name);
+      if (!item) return;
+      item.qty += delta;
+      if (item.qty <= 0) {
+        cart = cart.filter(i => i.name !== name);
+      }
+      updateCartUI();
+    };
+
+    window.removeItem = (name) => {
+      cart = cart.filter(i => i.name !== name);
+      updateCartUI();
+    };
+
+    // Favoritos (re-aplicar depois de renderizar)
+    document.querySelectorAll('.fav').forEach(el => {
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        el.classList.toggle('on');
+      });
+    });
+
+    // Checkout
+    document.getElementById('checkoutBtn').addEventListener('click', () => {
+      if (cart.length === 0) {
+        alert('Seu carrinho está vazio!');
+        return;
+      }
+      alert('🛍️ Pedido finalizado com sucesso! (simulação)');
+      cart = [];
+      updateCartUI();
+      cartModal.style.display = 'none';
+    });
+
+    // Fechar menu mobile ao clicar em link
+    document.querySelectorAll('.nav-links a').forEach(link => {
+      link.addEventListener('click', () => {
+        links.classList.remove('open');
+      });
+    });
+  </script>
+</body>
+</html>
