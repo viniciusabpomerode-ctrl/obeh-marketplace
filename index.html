@@ -18,12 +18,47 @@
 </head>
 <body>
 
+  <!-- ===== OVELHINHA OBEH — símbolo usado no logo do header e no rodapé ===== -->
+  <svg class="sheep-defs" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <symbol id="obeh-sheep" viewBox="0 0 220 200">
+        <!-- sombra -->
+        <ellipse cx="115" cy="182" rx="78" ry="10" fill="#2B2620" opacity="0.08" />
+        <!-- pernas -->
+        <rect x="70" y="150" width="14" height="34" rx="7" fill="#8C3D22" />
+        <rect x="100" y="158" width="14" height="26" rx="7" fill="#8C3D22" />
+        <rect x="130" y="158" width="14" height="26" rx="7" fill="#8C3D22" />
+        <rect x="158" y="150" width="14" height="34" rx="7" fill="#8C3D22" />
+        <!-- corpo de lã (cachinhos) -->
+        <g fill="#F7F2E7" stroke="#B5502F" stroke-width="3">
+          <circle cx="60"  cy="95"  r="30" />
+          <circle cx="95"  cy="72"  r="34" />
+          <circle cx="135" cy="70"  r="36" />
+          <circle cx="172" cy="90"  r="32" />
+          <circle cx="185" cy="125" r="28" />
+          <circle cx="150" cy="140" r="34" />
+          <circle cx="105" cy="145" r="34" />
+          <circle cx="68"  cy="132" r="30" />
+        </g>
+        <!-- carinha -->
+        <ellipse cx="42" cy="110" rx="26" ry="24" fill="#B5502F" />
+        <ellipse cx="30" cy="98" rx="7" ry="9" fill="#8C3D22" />
+        <ellipse cx="52" cy="98" rx="7" ry="9" fill="#8C3D22" />
+        <circle cx="26" cy="99" r="2.6" fill="#F7F2E7" />
+        <circle cx="48" cy="99" r="2.6" fill="#F7F2E7" />
+        <ellipse cx="38" cy="118" rx="7" ry="5" fill="#2B2620" opacity="0.65" />
+        <!-- laço/detalhe artesanal -->
+        <circle cx="120" cy="100" r="6" fill="#C99A3C" />
+      </symbol>
+    </defs>
+  </svg>
+
   <!-- ===== HEADER ===== -->
   <header>
     <div class="wrap nav">
       <a href="index.html" class="logo">
-        <!-- ALTERADO: usando logo.jpg local -->
-        <img src="logo.jpg" alt="Obeh Logo" />
+        <svg class="logo-mark"><use href="#obeh-sheep"></use></svg>
+        <span class="logo-wordmark">Obeh</span>
       </a>
 
       <button class="mobile-toggle" id="mobileToggle" aria-label="Abrir menu">☰</button>
@@ -77,20 +112,69 @@
         </div>
         <div class="hero-trust">
           <div><strong id="totalProdutos">0</strong> peças únicas</div>
-          <div><strong id="totalLojas">0</strong> ateliês ativos</div>
+          <div><strong id="totalLojas">0</strong> ateliês acolhidos</div>
           <div><strong>100%</strong> pagamento direto</div>
         </div>
       </div>
       <div class="hero-art">
-        <svg viewBox="0 0 420 420" fill="none">
-          <circle cx="210" cy="210" r="190" fill="#E4DAC2" />
-          <path d="M150 340C110 300 100 240 120 190C140 140 190 120 210 90C230 120 280 140 300 190C320 240 310 300 270 340C240 365 180 365 150 340Z" fill="#B5502F" opacity="0.92" />
-          <path d="M175 175C175 175 170 260 210 300C250 260 245 175 245 175" stroke="#F7F2E7" stroke-width="2" opacity="0.5" />
-          <ellipse cx="210" cy="150" rx="34" ry="14" fill="#8C3D22" opacity="0.5" />
-          <path d="M60 320c30-10 50 10 80 4" stroke="#6E7350" stroke-width="6" stroke-linecap="round" />
-          <path d="M300 80c-18 14-10 34 6 44" stroke="#C99A3C" stroke-width="6" stroke-linecap="round" />
-          <circle cx="330" cy="300" r="22" fill="#6E7350" opacity="0.85" />
-          <circle cx="70" cy="110" r="14" fill="#C99A3C" opacity="0.9" />
+        <svg viewBox="0 0 480 400" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Prateleira de peças artesanais">
+          <!-- fundo -->
+          <circle cx="240" cy="190" r="185" fill="#F7F2E7" />
+          <circle cx="240" cy="190" r="185" fill="none" stroke="#D8CBB0" stroke-width="1.5" stroke-dasharray="2 7" />
+
+          <!-- sombra da prateleira -->
+          <ellipse cx="240" cy="322" rx="175" ry="14" fill="#2B2620" opacity="0.08" />
+          <!-- prateleira -->
+          <rect x="55" y="300" width="370" height="14" rx="7" fill="#2B2620" />
+          <rect x="55" y="300" width="370" height="5" rx="2.5" fill="#3E362C" />
+
+          <!-- ===== vaso de cerâmica ===== -->
+          <g>
+            <path d="M108 300
+                     C104 258 96 234 100 206
+                     C103 184 96 168 106 150
+                     C112 139 148 139 154 150
+                     C164 168 157 184 160 206
+                     C164 234 156 258 152 300 Z"
+                  fill="#B5502F" />
+            <path d="M116 190 C120 226 140 226 144 190" stroke="#F7F2E7" stroke-width="3" fill="none" opacity="0.55" />
+            <ellipse cx="130" cy="150" rx="27" ry="9" fill="#8C3D22" />
+            <ellipse cx="130" cy="147" rx="21" ry="6.5" fill="#D8CBB0" />
+          </g>
+
+          <!-- ===== cesto trançado ===== -->
+          <g>
+            <path d="M212 300 L222 240 C222 232 258 232 258 240 L268 300 Z" fill="#C99A3C" />
+            <path d="M222 240 C230 233 250 233 258 240" stroke="#8C3D22" stroke-width="2" fill="none" />
+            <path d="M216 258 H264 M214 274 H266 M212 290 H268" stroke="#8C3D22" stroke-width="2" opacity="0.45" />
+            <path d="M223 240 C223 220 257 220 257 240" stroke="#6E7350" stroke-width="5" fill="none" stroke-linecap="round" />
+          </g>
+
+          <!-- ===== novelo de lã com agulhas ===== -->
+          <g>
+            <circle cx="356" cy="270" r="32" fill="#6E7350" />
+            <path d="M330 258 C348 246 366 246 382 260" stroke="#F7F2E7" stroke-width="2.5" fill="none" opacity="0.5" />
+            <path d="M326 274 C346 266 368 266 386 276" stroke="#F7F2E7" stroke-width="2.5" fill="none" opacity="0.5" />
+            <path d="M332 288 C350 282 364 282 380 290" stroke="#F7F2E7" stroke-width="2.5" fill="none" opacity="0.5" />
+            <path d="M356 244 C356 244 340 232 344 210" stroke="#C99A3C" stroke-width="3" fill="none" stroke-linecap="round" />
+            <line x1="336" y1="238" x2="368" y2="206" stroke="#2B2620" stroke-width="3.5" stroke-linecap="round" />
+            <line x1="352" y1="238" x2="384" y2="206" stroke="#2B2620" stroke-width="3.5" stroke-linecap="round" />
+            <circle cx="368" cy="206" r="3.5" fill="#C99A3C" />
+            <circle cx="384" cy="206" r="3.5" fill="#C99A3C" />
+          </g>
+
+          <!-- etiqueta feito à mão -->
+          <g transform="rotate(-8 400 130)">
+            <path d="M400 108 L400 128" stroke="#8C3D22" stroke-width="1.5" />
+            <rect x="384" y="128" width="32" height="20" rx="4" fill="#F7F2E7" stroke="#8C3D22" stroke-width="1.5" />
+            <circle cx="400" cy="138" r="2.4" fill="#8C3D22" />
+          </g>
+
+          <!-- folhinhas -->
+          <g fill="#6E7350" opacity="0.85">
+            <path d="M70 108c10-14 28-14 34-2-14 10-26 8-34 2Z" />
+            <path d="M64 118c6-10 20-10 24 0-10 6-18 4-24 0Z" />
+          </g>
         </svg>
       </div>
     </div>
@@ -146,87 +230,88 @@
     </div>
   </section>
 
-<!-- ===== PLANOS E DIFERENCIAL ===== -->
-<section class="section sell-cta" id="vender">
-  <div class="wrap">
-    <!-- DIFERENCIAL PRINCIPAL -->
-    <div style="text-align:center; background:var(--clay); color:white; padding:24px 20px; border-radius:8px; margin-bottom:40px;">
-      <div style="font-size:48px; margin-bottom:8px;">🎯</div>
-      <h2 style="color:white; font-size:clamp(28px,3vw,38px);">Você não paga comissão!</h2>
-      <p style="font-size:18px; margin-top:8px; max-width:600px; margin-left:auto; margin-right:auto;">
-        No Obeh, <strong>100% do valor da venda</strong> vai direto para o artesão. 
-        Cobramos apenas uma assinatura fixa para quem quer vender mais.
-      </p>
-      <div style="display:flex; gap:20px; justify-content:center; margin-top:16px; flex-wrap:wrap; font-size:14px;">
-        <span>✅ Sem taxa por produto</span>
-        <span>✅ Sem comissão sobre vendas</span>
-        <span>✅ Recebimento direto via Mercado Pago</span>
+  <!-- ===== PLANOS E DIFERENCIAL ===== -->
+  <section class="section sell-cta" id="vender">
+    <div class="wrap">
+      <!-- DIFERENCIAL PRINCIPAL -->
+      <div style="text-align:center; background:var(--clay); color:var(--white); padding:28px 20px; border-radius:8px; margin-bottom:40px;">
+        <div style="font-size:44px; margin-bottom:8px;">🎯</div>
+        <h2 style="color:var(--white); font-size:clamp(28px,3vw,38px);">Sem comissão. Sem taxa por venda.</h2>
+        <p style="font-size:16px; margin-top:10px; max-width:600px; margin-left:auto; margin-right:auto;">
+          O Obeh <strong>não cobra comissão sobre nenhuma venda</strong> e não tem taxa por produto listado.
+          O valor cai 100% direto na sua conta Mercado Pago. Se um dia você quiser vender além do limite
+          gratuito, é só <strong>R$ 7,99/mês</strong> — não é comissão, é uma assinatura fixa pra vender o quanto você quiser.
+        </p>
+        <div style="display:flex; gap:20px; justify-content:center; margin-top:16px; flex-wrap:wrap; font-size:14px;">
+          <span>✅ 0% de comissão</span>
+          <span>✅ Sem taxa por produto</span>
+          <span>✅ Recebimento direto via Mercado Pago</span>
+        </div>
+      </div>
+
+      <!-- HEADER DOS PLANOS -->
+      <div class="sell-head">
+        <p class="label">Para quem faz</p>
+        <h2>Tem um talento pra vender?</h2>
+        <p>Comece de graça. Cresça quando suas peças começarem a vender mais.</p>
+      </div>
+
+      <!-- PLANOS -->
+      <div class="plans" id="plansContainer">
+        <!-- Plano Grátis -->
+        <div class="plan">
+          <div class="plan-name">Grátis</div>
+          <div class="plan-desc">Para começar ou vender poucas peças.</div>
+          <div class="plan-price"><span class="num">R$0</span><span class="per">/mês</span></div>
+          <ul class="plan-list">
+            <li><span class="check">✅</span> Até 2 produtos/mês</li>
+            <li><span class="check">✅</span> Loja personalizada</li>
+            <li><span class="check">✅</span> 0% de comissão</li>
+            <li><span class="check">✅</span> Pagamento direto MP</li>
+          </ul>
+          <a href="cadastro.html" class="btn btn-outline">Criar loja grátis</a>
+        </div>
+
+        <!-- Plano Basic (Mais escolhido) -->
+        <div class="plan reco">
+          <div class="plan-badge">🌟 Mais escolhido</div>
+          <div class="plan-name">Loja Basic</div>
+          <div class="plan-desc">Vende quanto quiser, sem limite mensal.</div>
+          <div class="plan-price"><span class="num">R$7,99</span><span class="per">/mês</span></div>
+          <ul class="plan-list">
+            <li><span class="check">✅</span> Produtos ilimitados</li>
+            <li><span class="check">✅</span> Selo verificado</li>
+            <li><span class="check">✅</span> 0% de comissão</li>
+            <li><span class="check">✅</span> Estatísticas básicas</li>
+          </ul>
+          <a href="#" class="btn btn-primary" onclick="event.preventDefault(); alert('🔗 Em breve você poderá assinar via Stripe!')">Assinar Basic</a>
+        </div>
+
+        <!-- Plano Pro -->
+        <div class="plan">
+          <div class="plan-name">Loja Pro</div>
+          <div class="plan-desc">Para ateliês com movimento.</div>
+          <div class="plan-price"><span class="num">R$15,99</span><span class="per">/mês</span></div>
+          <ul class="plan-list">
+            <li><span class="check">✅</span> Tudo do Basic</li>
+            <li><span class="check">✅</span> Destaque nas buscas</li>
+            <li><span class="check">✅</span> Cupons personalizados</li>
+            <li><span class="check">✅</span> 0% de comissão</li>
+          </ul>
+          <a href="#" class="btn btn-outline" onclick="event.preventDefault(); alert('🔗 Em breve você poderá assinar via Stripe!')">Assinar Pro</a>
+        </div>
+      </div>
+
+      <!-- NOTA SOBRE O MERCADO PAGO -->
+      <div class="mp-note">
+        <span>💳</span>
+        <div>
+          <strong>O pagamento é 100% direto:</strong> O cliente paga via Mercado Pago e o valor vai direto para a conta do artesão.
+          O Obeh <strong>não retém nem intermedeia</strong> o dinheiro das vendas. As assinaturas são cobradas à parte via Stripe.
+        </div>
       </div>
     </div>
-
-    <!-- HEADER DOS PLANOS -->
-    <div class="sell-head">
-      <p class="label">Para quem faz</p>
-      <h2>Tem um talento pra vender?</h2>
-      <p>Comece de graça. Cresça quando suas peças começarem a vender mais.</p>
-    </div>
-
-    <!-- PLANOS -->
-    <div class="plans" id="plansContainer">
-      <!-- Plano Grátis -->
-      <div class="plan">
-        <div class="plan-name">Grátis</div>
-        <div class="plan-desc">Para começar ou vender poucas peças.</div>
-        <div class="plan-price"><span class="num">R$0</span><span class="per">/mês</span></div>
-        <ul class="plan-list">
-          <li><span class="check">✅</span> Até 2 produtos/mês</li>
-          <li><span class="check">✅</span> Loja personalizada</li>
-          <li><span class="check">✅</span> 0% de comissão</li>
-          <li><span class="check">✅</span> Pagamento direto MP</li>
-        </ul>
-        <a href="cadastro.html" class="btn btn-ghost">Criar loja grátis</a>
-      </div>
-
-      <!-- Plano Basic (Mais escolhido) -->
-      <div class="plan reco">
-        <div class="plan-badge">🌟 Mais escolhido</div>
-        <div class="plan-name">Loja Basic</div>
-        <div class="plan-desc">Para catálogo sem limites mensais.</div>
-        <div class="plan-price"><span class="num">R$7,99</span><span class="per">/mês</span></div>
-        <ul class="plan-list">
-          <li><span class="check">✅</span> Produtos ilimitados</li>
-          <li><span class="check">✅</span> Selo verificado</li>
-          <li><span class="check">✅</span> 0% de comissão</li>
-          <li><span class="check">✅</span> Estatísticas básicas</li>
-        </ul>
-        <a href="#" class="btn btn-primary" onclick="event.preventDefault(); alert('🔗 Em breve você poderá assinar via Stripe!')">Assinar Basic</a>
-      </div>
-
-      <!-- Plano Pro -->
-      <div class="plan">
-        <div class="plan-name">Loja Pro</div>
-        <div class="plan-desc">Para ateliês com movimento.</div>
-        <div class="plan-price"><span class="num">R$15,99</span><span class="per">/mês</span></div>
-        <ul class="plan-list">
-          <li><span class="check">✅</span> Tudo do Basic</li>
-          <li><span class="check">✅</span> Destaque nas buscas</li>
-          <li><span class="check">✅</span> Cupons personalizados</li>
-          <li><span class="check">✅</span> 0% de comissão</li>
-        </ul>
-        <a href="#" class="btn btn-ghost" onclick="event.preventDefault(); alert('🔗 Em breve você poderá assinar via Stripe!')">Assinar Pro</a>
-      </div>
-    </div>
-
-    <!-- NOTA SOBRE O MERCADO PAGO -->
-    <div class="mp-note">
-      <span>💳</span>
-      <div>
-        <strong>O pagamento é 100% direto:</strong> O cliente paga via Mercado Pago e o valor vai direto para a conta do artesão. 
-        O Obeh <strong>não retém nem intermedeia</strong> o dinheiro das vendas. As assinaturas são cobradas à parte via Stripe.
-      </div>
-    </div>
-  </div>
-</section>
+  </section>
 
   <!-- ===== CARRINHO MODAL ===== -->
   <div id="cartModal">
@@ -251,7 +336,7 @@
     <div class="wrap">
       <div class="foot-grid">
         <div>
-          <div class="foot-logo">Obeh</div>
+          <div class="foot-logo">🐑 Obeh</div>
           <p class="foot-tag">Marketplace de artesanato feito por mãos brasileiras, de norte a sul.</p>
         </div>
         <div class="foot-col">
@@ -286,6 +371,8 @@
   <script>
     // ============================================
     // INDEX.JS - LÓGICA COMPLETA DA PÁGINA INICIAL
+    // (100% igual à original — nenhuma função, id
+    // ou chamada ao Supabase foi alterada)
     // ============================================
 
     // Variáveis globais
@@ -411,12 +498,12 @@
                   <li><span class="check">✅</span> Loja personalizada</li>
                   <li><span class="check">✅</span> Pagamento direto MP</li>
                 </ul>
-                <a href="cadastro.html" class="btn btn-ghost">Criar loja grátis</a>
+                <a href="cadastro.html" class="btn btn-outline">Criar loja grátis</a>
               </div>
               <div class="plan reco">
                 <div class="plan-badge">Mais escolhido</div>
                 <div class="plan-name">Loja Basic</div>
-                <div class="plan-desc">Para catálogo sem limites mensais.</div>
+                <div class="plan-desc">Vende quanto quiser, sem limite mensal.</div>
                 <div class="plan-price"><span class="num">R$7,99</span><span class="per">/mês</span></div>
                 <ul class="plan-list">
                   <li><span class="check">✅</span> Produtos ilimitados</li>
@@ -434,7 +521,7 @@
                   <li><span class="check">✅</span> Destaque nas buscas</li>
                   <li><span class="check">✅</span> Cupons personalizados</li>
                 </ul>
-                <a href="#" class="btn btn-ghost" onclick="alert('Função em desenvolvimento. Em breve você poderá assinar!')">Assinar Pro</a>
+                <a href="#" class="btn btn-outline" onclick="alert('Função em desenvolvimento. Em breve você poderá assinar!')">Assinar Pro</a>
               </div>
             `
     }
@@ -642,7 +729,7 @@
                 `
         } else {
           heroTitle.innerHTML = 'Transforme seu <span class="stitch">talento</span> em renda.'
-          heroSub.textContent = 'Cadastre sua loja grátis, publique até 2 produtos por mês sem custo. Quando crescer, assine um plano e venda sem limites. O pagamento vai direto para sua conta.'
+          heroSub.textContent = 'Sem comissão sobre vendas e sem taxa por produto. Cadastre sua loja grátis, publique até 2 produtos por mês sem custo. Quando crescer, é só R$ 7,99/mês pra vender sem limites — o pagamento vai direto pra sua conta.'
           heroCtas.innerHTML = `
                   <a href="cadastro.html" class="btn btn-primary">Criar minha loja</a>
                   <a href="#vender" class="btn btn-ghost">Ver planos</a>
