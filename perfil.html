@@ -108,6 +108,10 @@
       if (!user) return
 
       currentUser = user
+
+      // Garante que perfil existe no banco
+      await ensureUserAndLoja(user)
+
       await carregarPerfil(user.id)
     })
 
@@ -117,7 +121,7 @@
         .from('users')
         .select('*')
         .eq('id', userId)
-        .single()
+        .maybeSingle()
 
       if (error || !data) {
         alert('Erro ao carregar perfil.')

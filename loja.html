@@ -203,16 +203,27 @@
 
     // ===== INICIALIZAÇÃO =====
     document.addEventListener('DOMContentLoaded', async () => {
-      // Pega o ID da loja da URL
+      // Pega o ID da loja da URL ou resolve pela conta logada
       const urlParams = new URLSearchParams(window.location.search)
       lojaId = urlParams.get('id')
+
+      if (!lojaId) {
+        const user = await getCurrentUser()
+        if (user) {
+          const lojaDoUsuario = await getLoja(user.id)
+          if (lojaDoUsuario?.id) {
+            lojaId = lojaDoUsuario.id
+            window.history.replaceState({}, '', `loja.html?id=${lojaId}`)
+          }
+        }
+      }
 
       if (!lojaId) {
         document.getElementById('lojaNome').textContent = 'Loja não encontrada'
         document.getElementById('lojaProdutos').innerHTML = `
               <div class="empty-products">
                 <div class="icon">🔍</div>
-                <p>Loja não encontrada. Verifique o link.</p>
+                <p>Entre na sua conta para ver sua loja ou verifique o link.</p>
               </div>
             `
         return
