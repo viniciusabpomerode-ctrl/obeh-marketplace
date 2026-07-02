@@ -233,6 +233,66 @@ async function atualizarLoja(userId, updates) {
 }
 
 // ============================================
+// GARANTE PERFIL E LOJA (fallback caso o trigger do banco falhe)
+// ============================================
+
+async function ensureUserAndLoja(user) {
+  if (!user) return
+
+  // Garante que existe um perfil na tabela "users"
+  const { data: perfilExistente, error: perfilCheckError } = await supabaseClient
+    .from('users')
+    .select('id')
+    .eq('id', user.id)
+    .maybeSingle()
+
+  if (perfilCheckError) {
+    console.error('Erro ao verificar perfil do usuário:', perfilCheckError)
+  }
+
+  if (!perfilExistente) {
+    const { error: perfilError } = await supabaseClient
+      .from('users')
+      .insert({
+        id: user.id,
+        email: user.email,
+        nome: user.user_metadata?.nome || user.email,
+        telefone: user.user_metadata?.telefone || null,
+        plano: 'free'
+      })
+
+    if (perfilError) {
+      console.error('Erro ao criar perfil de usuário:', perfilError)
+    }
+  }
+
+  // Garante que existe uma loja para o usuário
+  await ensureLoja(user.id, {
+    nome_loja: `Loja de ${user.user_metadata?.nome || user.email}`
+  })
+}
+
+async function ensureLoja(userId, defaults = {}) {
+  const lojaExistente = await getLoja(userId)
+  if (lojaExistente) return lojaExistente
+
+  const { data, error } = await supabaseClient
+    .from('lojas')
+    .insert({
+      user_id: userId,
+      nome_loja: defaults.nome_loja || 'Minha loja',
+      ativa: true
+    })
+    .select()
+
+  if (error) {
+    console.error('Erro ao criar loja:', error)
+    return null
+  }
+  return data[0]
+}
+
+// ============================================
 // FUNÇÕES DE CATEGORIAS
 // ============================================
 
@@ -358,6 +418,8 @@ window.atualizarProduto = atualizarProduto
 window.deletarProduto = deletarProduto
 window.getLoja = getLoja
 window.atualizarLoja = atualizarLoja
+window.ensureUserAndLoja = ensureUserAndLoja
+window.ensureLoja = ensureLoja
 window.getCategorias = getCategorias
 window.adicionarAoCarrinho = adicionarAoCarrinho
 window.removerDoCarrinho = removerDoCarrinho
