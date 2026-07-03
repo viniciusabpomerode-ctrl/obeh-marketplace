@@ -170,6 +170,14 @@
     <div class="loja-produtos-grid" id="lojaProdutos">
       <!-- Injetado via JS -->
     </div>
+
+    <!-- ===== CURSOS ===== -->
+    <div id="lojaCursosSection" style="display:none; margin-top:40px;">
+      <h2 style="font-size:22px; margin-bottom:16px;">🎓 Cursos da loja</h2>
+      <div class="loja-produtos-grid" id="lojaCursos">
+        <!-- Injetado via JS -->
+      </div>
+    </div>
   </div>
 
   <!-- ===== CARRINHO MODAL ===== -->
@@ -231,6 +239,7 @@
 
       await carregarLoja(lojaId)
       await carregarProdutosLoja(lojaId)
+      await carregarCursosLoja(lojaId)
       carregarCarrinho()
 
       // Atualiza contador do carrinho
@@ -363,46 +372,26 @@
         }
       })
 
-      document.getElementById('checkoutBtn').addEventListener('click', async () => {
+      document.getElementById('checkoutBtn').addEventListener('click', () => {
         if (carrinho.length === 0) {
           alert('🛒 Seu carrinho está vazio!')
           return
         }
 
-        const btn = document.getElementById('checkoutBtn')
-        const textoOriginal = btn.textContent
-        btn.disabled = true
-        btn.textContent = 'Redirecionando...'
+        const mpLink = (lojaData && lojaData.mercado_pago_link) ? lojaData.mercado_pago_link.trim() : ''
 
-        try {
-          const resposta = await fetch('/.netlify/functions/create-checkout-session', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              itens: carrinho.map(item => ({
-                nome: item.nome,
-                preco: item.preco,
-                quantidade: item.quantidade,
-                imagem: Array.isArray(item.fotos) ? item.fotos[0] : undefined
-              })),
-              successUrl: window.location.origin + window.location.pathname + '?compra=sucesso',
-              cancelUrl: window.location.origin + window.location.pathname + '?compra=cancelada'
-            })
-          })
-
-          const dados = await resposta.json()
-
-          if (!resposta.ok || !dados.url) {
-            throw new Error(dados.error || 'Não foi possível iniciar o checkout.')
-          }
-
-          window.location.href = dados.url
-        } catch (err) {
-          console.error('Erro ao redirecionar para o Stripe:', err)
-          alert('❌ Erro ao iniciar o pagamento: ' + err.message)
-          btn.disabled = false
-          btn.textContent = textoOriginal
+        if (!mpLink) {
+          alert('⚠️ Este artesão ainda não cadastrou um link de pagamento do Mercado Pago. Entre em contato pelo WhatsApp ou Instagram da loja para combinar o pagamento.')
+          return
         }
+
+        alert('💳 Você será redirecionado ao Mercado Pago do artesão. O pagamento é direto — o Obeh não retém nem intermedeia esse valor.')
+        window.open(mpLink, '_blank')
+
+        carrinho = []
+        atualizarCarrinhoUI()
+        renderizarCarrinho()
+        document.getElementById('cartModal').style.display = 'none'
       })
     }
 
@@ -433,6 +422,34 @@
 
       const totalValue = getTotalCarrinho()
       total.textContent = `R$ ${totalValue.toFixed(2)}`
+    }
+
+    // ===== CARREGAR CURSOS DA LOJA =====
+    async function carregarCursosLoja(lojaId) {
+      const cursos = await getCursosDaLoja(lojaId)
+      const section = document.getElementById('lojaCursosSection')
+      const container = document.getElementById('lojaCursos')
+
+      if (!cursos || cursos.length === 0) {
+        section.style.display = 'none'
+        return
+      }
+
+      section.style.display = 'block'
+      container.innerHTML = cursos.map(c => `
+            <div class="card" onclick="window.location.href='curso.html?id=${c.id}'">
+              <div class="card-media" style="background:${c.capa_url ? 'transparent' : '#E9DFC7'}">
+                ${c.capa_url ? `<img src="${c.capa_url}" alt="${c.titulo}" />` : `<span class="placeholder">🎓</span>`}
+              </div>
+              <div class="card-body">
+                <div class="card-cat">Curso</div>
+                <div class="card-title">${c.titulo}</div>
+                <div class="card-foot">
+                  <div class="price">R$ ${Number(c.preco).toFixed(2)}</div>
+                </div>
+              </div>
+            </div>
+          `).join('')
     }
 
     function adicionarAoCarrinhoClique(produtoId) {
