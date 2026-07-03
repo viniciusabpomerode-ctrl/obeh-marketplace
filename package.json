@@ -8,11 +8,3 @@
     "@aws-sdk/s3-request-presigner": "^3.400.0"
   }
 }
-{
-  "name": "obeh-marketplace",
-  "version": "1.0.0",
-  "private": true,
-  "dependencies": {
-    "stripe": "^11.0.0"
-  }
-}
