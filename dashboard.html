@@ -60,6 +60,7 @@
       <button class="tab-btn active" onclick="switchTab('produtos')">📦 Meus Produtos</button>
       <button class="tab-btn" onclick="switchTab('novo')">➕ Novo Produto</button>
       <button class="tab-btn" onclick="switchTab('loja')">🏪 Minha Loja</button>
+      <button class="tab-btn" onclick="switchTab('cursos')">🎓 Cursos</button>
       <button class="tab-btn" onclick="switchTab('vendas')">💰 Vendas</button>
       <button class="tab-btn" onclick="switchTab('mensagens')">💬 Mensagens</button>
     </div>
@@ -144,8 +145,77 @@
               <input type="text" id="lojaWhatsapp" placeholder="(11) 99999-9999" />
             </div>
           </div>
+          <div class="form-group">
+            <label>Link de pagamento Mercado Pago *</label>
+            <input type="text" id="lojaMercadoPago" placeholder="https://link.mercadopago.com.br/sua-loja" />
+            <small style="color:var(--ink-soft); display:block; margin-top:4px;">
+              É pra esse link que o comprador vai ser levado ao clicar em "comprar". O pagamento cai direto na sua conta — o Obeh não retém nem intermedeia.
+              Crie o seu em <a href="https://www.mercadopago.com.br/link-de-pagamento" target="_blank" rel="noopener">mercadopago.com.br/link-de-pagamento</a>.
+            </small>
+          </div>
           <button type="submit" class="btn btn-primary">Salvar loja</button>
         </form>
+      </div>
+    </div>
+
+    <!-- ===== TAB: CURSOS (plano Ultra) ===== -->
+    <div id="tab-cursos" class="tab-content">
+      <div id="cursosUpsell" style="display:none; text-align:center; padding:40px; color:var(--ink-soft);">
+        🎓 Vender cursos na plataforma é um recurso do <strong>Plano Ultra</strong>.<br>
+        <a href="index.html#vender" style="color:var(--clay); font-weight:600;">Conheça o Plano Ultra</a>
+      </div>
+      <div id="cursosArea" style="display:none;">
+        <div class="product-list" id="cursoList"></div>
+        <hr style="margin:24px 0; border:none; border-top:1px solid rgba(0,0,0,0.08);" />
+        <h3 style="margin-bottom:16px;">Novo curso</h3>
+        <form id="cursoForm" onsubmit="handleCursoSubmit(event)">
+          <div class="form-group">
+            <label>Título do curso *</label>
+            <input type="text" id="cursoTitulo" required />
+          </div>
+          <div class="form-group">
+            <label>Descrição</label>
+            <textarea id="cursoDescricao" placeholder="Do que se trata o curso..."></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Imagem de capa (URL)</label>
+              <input type="text" id="cursoCapa" placeholder="https://imagem-capa.jpg" />
+            </div>
+            <div class="form-group">
+              <label>Preço (R$) *</label>
+              <input type="number" id="cursoPreco" step="0.01" min="0" required />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>PDF do curso (URL, opcional)</label>
+            <input type="text" id="cursoPdf" placeholder="https://link-do-pdf.pdf" />
+          </div>
+          <button type="submit" class="btn btn-primary">Salvar curso</button>
+        </form>
+
+        <div id="topicosPanel" style="display:none; margin-top:32px; padding:20px; background:rgba(0,0,0,0.03); border-radius:12px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <h4 id="topicosPanelTitulo" style="margin:0;">Tópicos do curso</h4>
+            <button type="button" onclick="fecharTopicos()" class="btn btn-ghost" style="padding:4px 12px; font-size:12px;">Fechar</button>
+          </div>
+          <div id="topicosList"></div>
+          <form id="topicoForm" onsubmit="handleTopicoSubmit(event)" style="margin-top:16px;">
+            <div class="form-group">
+              <label>Título do tópico *</label>
+              <input type="text" id="topicoTitulo" required />
+            </div>
+            <div class="form-group">
+              <label>Descrição</label>
+              <textarea id="topicoDescricao"></textarea>
+            </div>
+            <div class="form-group">
+              <label>Vídeo (URL do YouTube, Vimeo, etc.)</label>
+              <input type="text" id="topicoVideo" placeholder="https://youtube.com/watch?v=..." />
+            </div>
+            <button type="submit" class="btn btn-primary">Adicionar tópico</button>
+          </form>
+        </div>
       </div>
     </div>
 
@@ -173,6 +243,8 @@
     let currentUser = null
     let currentUserId = null
     let lojaData = null
+    let currentPlano = null
+    let cursoAtualId = null
 
     // ===== INICIALIZAÇÃO =====
     document.addEventListener('DOMContentLoaded', async () => {
@@ -210,12 +282,24 @@
       if (data) {
         const badge = document.getElementById('planoBadge')
         const plano = data.plano || 'free'
+        currentPlano = plano
         if (plano === 'free') {
           badge.textContent = 'Plano Grátis'
           badge.className = 'badge free'
         } else {
           badge.textContent = `Plano ${plano.toUpperCase()}`
           badge.className = 'badge ' + plano
+        }
+
+        const cursosUpsell = document.getElementById('cursosUpsell')
+        const cursosArea = document.getElementById('cursosArea')
+        if (plano === 'ultra') {
+          cursosUpsell.style.display = 'none'
+          cursosArea.style.display = 'block'
+          await carregarCursos()
+        } else {
+          cursosUpsell.style.display = 'block'
+          cursosArea.style.display = 'none'
         }
       }
 
@@ -317,6 +401,7 @@
         document.getElementById('lojaBanner').value = data.banner || ''
         document.getElementById('lojaInstagram').value = data.instagram || ''
         document.getElementById('lojaWhatsapp').value = data.whatsapp || ''
+        document.getElementById('lojaMercadoPago').value = data.mercado_pago_link || ''
       }
     }
 
@@ -420,7 +505,8 @@
           logo: logoValue,
           banner: bannerValue,
           instagram: document.getElementById('lojaInstagram').value.trim(),
-          whatsapp: document.getElementById('lojaWhatsapp').value.trim()
+          whatsapp: document.getElementById('lojaWhatsapp').value.trim(),
+          mercado_pago_link: document.getElementById('lojaMercadoPago').value.trim()
         }
 
         if (!updates.nome_loja) {
@@ -486,10 +572,173 @@
         'produtos': 'Meus Produtos',
         'novo': 'Novo Produto',
         'loja': 'Minha Loja',
+        'cursos': 'Cursos',
         'vendas': 'Vendas',
         'mensagens': 'Mensagens'
       }
       return map[tab] || tab
+    }
+
+    // ===== CURSOS (plano Ultra) =====
+    async function carregarCursos() {
+      const data = await getUserCursos(currentUserId)
+      const container = document.getElementById('cursoList')
+
+      if (!data || data.length === 0) {
+        container.innerHTML = `
+              <div style="text-align:center; padding:24px; color:var(--ink-soft);">
+                🎓 Você ainda não criou nenhum curso.
+              </div>
+            `
+        return
+      }
+
+      container.innerHTML = data.map(c => `
+            <div class="product-item">
+              <div class="info">
+                <div class="thumb">
+                  ${c.capa_url ? `<img src="${c.capa_url}" alt="${c.titulo}" />` : '🎓'}
+                </div>
+                <div>
+                  <strong>${c.titulo}</strong>
+                  <div style="font-size:12px; color:var(--ink-soft);">
+                    R$ ${Number(c.preco).toFixed(2)} • 
+                    <span style="color:${c.status === 'ativo' ? 'var(--olive)' : 'var(--clay)'}">
+                      ${c.status === 'ativo' ? '✓ Ativo' : 'Rascunho'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div class="actions">
+                <button onclick="abrirTopicos('${c.id}', '${c.titulo.replace(/'/g, "\\'")}')">🎬 Tópicos</button>
+                <button onclick="toggleCursoStatus('${c.id}', '${c.status}')">
+                  ${c.status === 'ativo' ? 'Desativar' : 'Ativar'}
+                </button>
+                <button class="delete" onclick="handleDeleteCurso('${c.id}')">✕</button>
+              </div>
+            </div>
+          `).join('')
+    }
+
+    async function handleCursoSubmit(e) {
+      e.preventDefault()
+
+      const titulo = document.getElementById('cursoTitulo').value.trim()
+      const descricao = document.getElementById('cursoDescricao').value.trim()
+      const capa_url = document.getElementById('cursoCapa').value.trim()
+      const pdf_url = document.getElementById('cursoPdf').value.trim()
+      const preco = parseFloat(document.getElementById('cursoPreco').value) || 0
+
+      if (!titulo) {
+        alert('❌ Informe o título do curso.')
+        return
+      }
+
+      let loja = await getLoja(currentUserId)
+      if (!loja) {
+        loja = await ensureLoja(currentUserId, { nome_loja: 'Minha loja' })
+      }
+      if (!loja) {
+        alert('❌ Não foi possível preparar sua loja para salvar o curso.')
+        return
+      }
+
+      const curso = {
+        loja_id: loja.id,
+        user_id: currentUserId,
+        titulo,
+        descricao,
+        capa_url,
+        pdf_url,
+        preco,
+        status: 'ativo'
+      }
+
+      const result = await criarCurso(curso)
+      if (result) {
+        document.getElementById('cursoForm').reset()
+        await carregarCursos()
+      }
+    }
+
+    async function toggleCursoStatus(id, currentStatus) {
+      const newStatus = currentStatus === 'ativo' ? 'rascunho' : 'ativo'
+      const result = await atualizarCurso(id, { status: newStatus })
+      if (result) {
+        await carregarCursos()
+      }
+    }
+
+    async function handleDeleteCurso(id) {
+      if (!confirm('Excluir este curso e todos os seus tópicos? Essa ação não pode ser desfeita.')) return
+      const success = await deletarCurso(id)
+      if (success) {
+        await carregarCursos()
+        if (cursoAtualId === id) fecharTopicos()
+      }
+    }
+
+    // ===== TÓPICOS DO CURSO =====
+    async function abrirTopicos(cursoId, tituloCurso) {
+      cursoAtualId = cursoId
+      document.getElementById('topicosPanelTitulo').textContent = `Tópicos de "${tituloCurso}"`
+      document.getElementById('topicosPanel').style.display = 'block'
+      await carregarTopicos()
+      document.getElementById('topicosPanel').scrollIntoView({ behavior: 'smooth' })
+    }
+
+    function fecharTopicos() {
+      cursoAtualId = null
+      document.getElementById('topicosPanel').style.display = 'none'
+      document.getElementById('topicoForm').reset()
+    }
+
+    async function carregarTopicos() {
+      const data = await getTopicosCurso(cursoAtualId)
+      const container = document.getElementById('topicosList')
+
+      if (!data || data.length === 0) {
+        container.innerHTML = `<p style="color:var(--ink-soft); font-size:13px;">Nenhum tópico ainda.</p>`
+        return
+      }
+
+      container.innerHTML = data.map((t, i) => `
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid rgba(0,0,0,0.08);">
+              <div>
+                <strong>${i + 1}. ${t.titulo}</strong>
+                ${t.video_url ? ' 🎬' : ''}
+              </div>
+              <button class="delete" onclick="handleDeleteTopico('${t.id}')">✕</button>
+            </div>
+          `).join('')
+    }
+
+    async function handleTopicoSubmit(e) {
+      e.preventDefault()
+
+      if (!cursoAtualId) return
+
+      const titulo = document.getElementById('topicoTitulo').value.trim()
+      const descricao = document.getElementById('topicoDescricao').value.trim()
+      const video_url = document.getElementById('topicoVideo').value.trim()
+
+      if (!titulo) {
+        alert('❌ Informe o título do tópico.')
+        return
+      }
+
+      const result = await criarTopicoCurso({ curso_id: cursoAtualId, titulo, descricao, video_url })
+      if (result) {
+        document.getElementById('topicoForm').reset()
+        await carregarTopicos()
+      }
+    }
+
+    async function handleDeleteTopico(id) {
+      const success = await deletarTopicoCurso(id)
+      if (success) {
+        await carregarTopicos()
+      }
     }
 
     // Expor funções globalmente
@@ -499,6 +748,13 @@
     window.toggleStatus = toggleStatus
     window.deletarProduto = handleDeleteProduto
     window.editarProduto = editarProduto
+    window.handleCursoSubmit = handleCursoSubmit
+    window.toggleCursoStatus = toggleCursoStatus
+    window.handleDeleteCurso = handleDeleteCurso
+    window.abrirTopicos = abrirTopicos
+    window.fecharTopicos = fecharTopicos
+    window.handleTopicoSubmit = handleTopicoSubmit
+    window.handleDeleteTopico = handleDeleteTopico
 
     console.log('✅ Dashboard Obeh carregado com sucesso!')
   </script>
