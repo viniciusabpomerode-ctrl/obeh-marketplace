@@ -397,7 +397,10 @@
       carregarPlanos()
       carregarCarrinho()
 
-      // 3. Event listeners (configurados abaixo no escopo do script)
+      // 3. Confirma assinatura pendente (retorno do Stripe)
+      await confirmarAssinaturaPendente()
+
+      // 4. Event listeners (configurados abaixo no escopo do script)
     })
 
     // ===== CARREGAR CATEGORIAS =====
@@ -514,7 +517,7 @@
               <div class="plan">
                 <div class="plan-name">Loja Pro</div>
                 <div class="plan-desc">Para ateliês com movimento.</div>
-                <div class="plan-price"><span class="num">R$9,99</span><span class="per">/mês</span></div>
+                <div class="plan-price"><span class="num">R$14,99</span><span class="per">/mês</span></div>
                 <ul class="plan-list">
                   <li><span class="check">✅</span> Tudo do Basic</li>
                   <li><span class="check">✅</span> Destaque nas buscas</li>
@@ -526,8 +529,7 @@
                 <div class="plan-badge">Promoção</div>
                 <div class="plan-name">Loja Ultra</div>
                 <div class="plan-desc">Venda cursos na plataforma.</div>
-                <div class="plan-price"><span class="num">R$14,99</span><span class="per">/mês</span></div>
-                <div class="plan-note">Primeiro mês por R$14,99 - oferta limitada</div>
+                <div class="plan-price"><span class="num">R$29,99</span><span class="per">/mês</span></div>
                 <ul class="plan-list">
                   <li><span class="check">✅</span> Tudo do Pro</li>
                   <li><span class="check">✅</span> Venda cursos na plataforma</li>
@@ -560,52 +562,48 @@
         }
       })
 
-      document.getElementById('checkoutBtn').addEventListener('click', async () => {
+      document.getElementById('checkoutBtn').addEventListener('click', () => {
         if (carrinho.length === 0) {
-          alert('🛒 Seu carrinho está vazio!')
+          alert('🛒 Seu carrinho está vazio! ')
           return
         }
 
-        const btn = document.getElementById('checkoutBtn')
-        const textoOriginal = btn.textContent
-        btn.disabled = true
-        btn.textContent = 'Redirecionando...'
-
-        try {
-          const resposta = await fetch('/.netlify/functions/create-checkout-session', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              itens: carrinho.map(item => ({
-                nome: item.nome,
-                preco: item.preco,
-                quantidade: item.quantidade,
-                imagem: Array.isArray(item.fotos) ? item.fotos[0] : undefined
-              })),
-              successUrl: window.location.origin + window.location.pathname + '?compra=sucesso',
-              cancelUrl: window.location.origin + window.location.pathname + '?compra=cancelada'
-            })
-          })
-
-          const dados = await resposta.json()
-
-          if (!resposta.ok || !dados.url) {
-            throw new Error(dados.error || 'Não foi possível iniciar o checkout.')
+        // Agrupa os itens por loja: cada artesão recebe direto no seu Mercado Pago
+        const porLoja = {}
+        carrinho.forEach(item => {
+          const key = item.loja_id || 'sem-loja'
+          if (!porLoja[key]) {
+            porLoja[key] = { nome: item.loja_nome || 'Loja', mpLink: (item.mp_link || '').trim(), total: 0 }
           }
+          porLoja[key].total += Number(item.preco) * item.quantidade
+        })
 
-          window.location.href = dados.url
-        } catch (err) {
-          console.error('Erro ao redirecionar para o Stripe:', err)
-          alert('❌ Erro ao iniciar o pagamento: ' + err.message)
-          btn.disabled = false
-          btn.textContent = textoOriginal
+        const grupos = Object.values(porLoja)
+        const semLink = grupos.filter(g => !g.mpLink)
+        const comLink = grupos.filter(g => g.mpLink)
+
+        if (semLink.length > 0) {
+          alert('⚠️ ' + semLink.map(g => g.nome).join(', ') + ' ainda não cadastrou um link de pagamento do Mercado Pago. Entre em contato pela loja para combinar o pagamento.')
         }
+
+        if (comLink.length === 0) return
+
+        let resumo = '💳 Você será redirecionado ao Mercado Pago de cada artesão. O pagamento é direto — o Obeh não retém nem intermedeia esse valor.\n\n'
+        comLink.forEach(g => { resumo += `${g.nome}: R$ ${g.total.toFixed(2)}\n` })
+        alert(resumo)
+
+        comLink.forEach(g => window.open(g.mpLink, '_blank'))
+
+        carrinho = []
+        atualizarCarrinhoUI()
+        renderizarCarrinho()
+        document.getElementById('cartModal').style.display = 'none'
       })
     }
 
     function renderizarCarrinho() {
       const container = document.getElementById('cartItems')
-      const total = document.getElementById('cartTotal').querySelector('span:last-child')
+      const total = document.getElementById('cartTotal').querySelector(span:last-child')
 
       if (carrinho.length === 0) {
         container.innerHTML = '<p class="empty">Seu carrinho está vazio</p>'
@@ -640,7 +638,10 @@
         id: produto.id,
         nome: produto.nome,
         preco: produto.preco,
-        fotos: produto.fotos
+        fotos: produto.fotos,
+        loja_id: produto.loja_id,
+        loja_nome: produto.lojas?.nome_loja || 'Loja',
+        mp_link: produto.lojas?.mercado_pago_link || ''
       })
 
       renderizarCarrinho()
