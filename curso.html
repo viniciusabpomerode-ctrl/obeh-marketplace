@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Curso — Obeh</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Work+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+  </script>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .curso-container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 28px 60px;
+    }
+
+    .curso-capa {
+      width: 100%;
+      aspect-ratio: 16/7;
+      background: #E9DFC7;
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 28px 0 20px;
+    }
+
+    .curso-capa img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .curso-capa .placeholder {
+      font-size: 72px;
+      opacity: 0.5;
+    }
+
+    .curso-header h1 {
+      font-size: 30px;
+      margin-bottom: 6px;
+    }
+
+    .curso-loja {
+      color: var(--clay);
+      font-weight: 500;
+    }
+
+    .curso-preco {
+      font-size: 26px;
+      font-weight: 700;
+      margin: 16px 0;
+    }
+
+    .curso-desc {
+      color: var(--ink-soft);
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+
+    .curso-topicos {
+      margin-top: 32px;
+    }
+
+    .topico-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      border: 1px solid rgba(0,0,0,0.08);
+      border-radius: 10px;
+      margin-bottom: 10px;
+    }
+
+    .topico-item .topico-num {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--clay);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .topico-item.locked .topico-num {
+      background: var(--ink-soft);
+    }
+
+    .topico-video {
+      margin-top: 8px;
+    }
+
+    .topico-video iframe {
+      width: 100%;
+      aspect-ratio: 16/9;
+      border: none;
+      border-radius: 8px;
+    }
+
+    .comprar-box {
+      background: rgba(0,0,0,0.03);
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    .desbloqueado-box {
+      background: #eaf3e6;
+      border-radius: 12px;
+      padding: 14px 20px;
+      margin-top: 20px;
+      color: #3a5a2f;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===== HEADER ===== -->
+  <header>
+    <div class="wrap nav">
+      <a href="index.html" class="logo">
+        <img src="https://i.postimg.cc/gjpXKcn5/imagem-2026-07-01-110451621.png" alt="Obeh Logo" style="height:40px;" />
+      </a>
+      <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+        <a href="javascript:history.back()" class="btn btn-ghost" style="padding:6px 16px; font-size:12px;">← Voltar</a>
+      </div>
+    </div>
+  </header>
+
+  <div class="curso-container" id="cursoContent">
+    <!-- Injetado via JS -->
+  </div>
+
+  <script src="js/supabase.js"></script>
+  <script>
+    // ============================================
+    // CURSO.JS - PÁGINA DE VISUALIZAÇÃO/COMPRA DE CURSO
+    // ============================================
+
+    let cursoData = null
+    let currentUserData = null
+    let compraData = null
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const params = new URLSearchParams(window.location.search)
+      const cursoId = params.get('id')
+
+      if (!cursoId) {
+        document.getElementById('cursoContent').innerHTML = `
+              <div style="text-align:center; padding:60px 20px; color:var(--ink-soft);">
+                <div style="font-size:48px; margin-bottom:16px;">🔍</div>
+                <p style="font-size:18px; font-weight:500;">Curso não encontrado</p>
+                <p style="font-size:14px; margin-top:8px;"><a href="index.html" style="color:var(--clay);">Voltar para o início</a></p>
+              </div>
+            `
+        return
+      }
+
+      currentUserData = await getCurrentUser()
+      await carregarCurso(cursoId)
+    })
+
+    async function carregarCurso(id) {
+      const data = await getCurso(id)
+
+      if (!data) {
+        document.getElementById('cursoContent').innerHTML = `
+              <div style="text-align:center; padding:60px 20px; color:var(--ink-soft);">
+                <div style="font-size:48px; margin-bottom:16px;">🔍</div>
+                <p style="font-size:18px; font-weight:500;">Curso não encontrado</p>
+                <p style="font-size:14px; margin-top:8px;"><a href="index.html" style="color:var(--clay);">Voltar para o início</a></p>
+              </div>
+            `
+        return
+      }
+
+      cursoData = data
+
+      const isDono = currentUserData && currentUserData.id === data.user_id
+      let liberado = isDono
+
+      if (currentUserData && !liberado) {
+        compraData = await getCompraCurso(id, currentUserData.id)
+        liberado = !!compraData
+      }
+
+      const topicos = await getTopicosCurso(id)
+      renderizarCurso(data, topicos, liberado)
+    }
+
+    function embedVideo(url) {
+      if (!url) return ''
+      let embedUrl = url
+
+      const yt = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]+)/)
+      if (yt) embedUrl = `https://www.youtube.com/embed/${yt[1]}`
+
+      const vimeo = url.match(/vimeo\.com\/(\d+)/)
+      if (vimeo) embedUrl = `https://player.vimeo.com/video/${vimeo[1]}`
+
+      return `<div class="topico-video"><iframe src="${embedUrl}" allowfullscreen></iframe></div>`
+    }
+
+    function renderizarCurso(c, topicos, liberado) {
+      const container = document.getElementById('cursoContent')
+      const mpLink = (c.lojas && c.lojas.mercado_pago_link) ? c.lojas.mercado_pago_link.trim() : ''
+
+      container.innerHTML = `
+            <div class="curso-capa">
+              ${c.capa_url ? `<img src="${c.capa_url}" alt="${c.titulo}" />` : `<span class="placeholder">🎓</span>`}
+            </div>
+            <div class="curso-header">
+              <h1>${c.titulo}</h1>
+              <div class="curso-loja">por ${c.lojas?.nome_loja || 'Artesão'}</div>
+              <div class="curso-preco">R$ ${Number(c.preco).toFixed(2)}</div>
+              ${c.descricao ? `<p class="curso-desc">${c.descricao}</p>` : ''}
+            </div>
+
+            ${liberado ? `
+              <div class="desbloqueado-box">✅ Você tem acesso a este curso.</div>
+              ${c.pdf_url ? `<p style="margin-top:16px;"><a href="${c.pdf_url}" target="_blank" rel="noopener" class="btn btn-outline">📄 Baixar material em PDF</a></p>` : ''}
+            ` : `
+              <div class="comprar-box">
+                <p style="margin-bottom:12px;">Compre este curso para desbloquear todos os tópicos e vídeos.</p>
+                ${mpLink
+                  ? `<button class="btn btn-primary" onclick="comprarCurso()">💳 Comprar via Mercado Pago</button>
+                     <p style="font-size:12px; color:var(--ink-soft); margin-top:10px;">Pagamento direto ao artesão. O Obeh não retém nem intermedeia esse valor.</p>`
+                  : `<p style="color:var(--ink-soft);">⚠️ Este artesão ainda não cadastrou um link de pagamento do Mercado Pago.</p>`
+                }
+              </div>
+            `}
+
+            <div class="curso-topicos">
+              <h3 style="margin-bottom:14px;">Conteúdo do curso (${topicos.length} tópico${topicos.length === 1 ? '' : 's'})</h3>
+              ${topicos.length === 0
+                ? `<p style="color:var(--ink-soft);">Nenhum tópico publicado ainda.</p>`
+                : topicos.map((t, i) => `
+                    <div class="topico-item ${liberado ? '' : 'locked'}" style="flex-direction:column; align-items:stretch;">
+                      <div style="display:flex; align-items:center; gap:12px;">
+                        <div class="topico-num">${liberado ? (i + 1) : '🔒'}</div>
+                        <div>
+                          <strong>${t.titulo}</strong>
+                          ${liberado && t.descricao ? `<div style="font-size:13px; color:var(--ink-soft); margin-top:2px;">${t.descricao}</div>` : ''}
+                        </div>
+                      </div>
+                      ${liberado && t.video_url ? embedVideo(t.video_url) : ''}
+                    </div>
+                  `).join('')
+              }
+            </div>
+          `
+    }
+
+    async function comprarCurso() {
+      if (!currentUserData) {
+        alert('⚠️ Você precisa estar logado para comprar um curso.')
+        window.location.href = 'login.html'
+        return
+      }
+
+      const mpLink = (cursoData.lojas && cursoData.lojas.mercado_pago_link) ? cursoData.lojas.mercado_pago_link.trim() : ''
+      if (!mpLink) return
+
+      alert('💳 Você será redirecionado ao Mercado Pago do artesão. Depois de pagar, seu acesso ao curso é liberado automaticamente aqui na página.')
+      window.open(mpLink, '_blank')
+
+      await registrarCompraCurso(cursoData.id, currentUserData.id, cursoData.preco)
+      await carregarCurso(cursoData.id)
+    }
+
+    window.comprarCurso = comprarCurso
+  </script>
+
+</body>
+</html>
