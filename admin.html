@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Administração — Obeh</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Work+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+  </script>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .admin-wrap {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 32px 28px 60px;
+    }
+    .admin-wrap h1 {
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+    .admin-sub {
+      color: var(--ink-soft);
+      margin-bottom: 28px;
+      font-size: 14px;
+    }
+    .loja-card {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 18px 20px;
+      margin-bottom: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .loja-card .info h3 {
+      font-size: 17px;
+      margin-bottom: 4px;
+    }
+    .loja-card .info p {
+      font-size: 13px;
+      color: var(--ink-soft);
+      margin: 2px 0;
+    }
+    .loja-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .btn-aprovar {
+      background: #2f7a4d;
+      color: #fff;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .btn-recusar {
+      background: none;
+      border: 1px solid #c94a4a;
+      color: #c94a4a;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--ink-soft);
+    }
+    #bloqueado {
+      display: none;
+      text-align: center;
+      padding: 80px 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===== HEADER ===== -->
+  <header>
+    <div class="wrap nav">
+      <a href="index.html" class="logo">
+        <img src="https://i.postimg.cc/gjpXKcn5/imagem-2026-07-01-110451621.png" alt="Obeh Logo" style="height:40px;" />
+      </a>
+      <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+        <span id="userEmail" style="font-size:13px; color:var(--ink-soft);"></span>
+        <a href="index.html" class="btn btn-ghost" style="padding:6px 16px; font-size:12px;">← Voltar à loja</a>
+      </div>
+    </div>
+  </header>
+
+  <div id="bloqueado">
+    <p style="font-size:15px;">🔒 Esta área é restrita à administração da Obeh.</p>
+  </div>
+
+  <div class="admin-wrap" id="adminArea" style="display:none;">
+    <h1>🛡️ Aprovação de lojas</h1>
+    <p class="admin-sub">Lojas novas ficam pendentes até serem aprovadas. Revise antes de liberar a loja no marketplace.</p>
+
+    <div id="lojasPendentes">
+      <p style="color:var(--ink-soft); font-size:14px;">Carregando...</p>
+    </div>
+  </div>
+
+  <!-- ===== SCRIPTS ===== -->
+  <script src="js/supabase.js"></script>
+  <script>
+    const ADMIN_EMAIL = 'viniciusbirnecker@gmail.com'
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const user = await verificarUsuarioLogado()
+      if (!user) return
+
+      if ((user.email || '').toLowerCase() !== ADMIN_EMAIL) {
+        document.getElementById('bloqueado').style.display = 'block'
+        return
+      }
+
+      document.getElementById('userEmail').textContent = user.email
+      document.getElementById('adminArea').style.display = 'block'
+      await carregarLojasPendentes()
+    })
+
+    async function carregarLojasPendentes() {
+      const container = document.getElementById('lojasPendentes')
+      const { data, error } = await supabaseClient
+        .from('lojas')
+        .select('*, users(nome, email, telefone)')
+        .eq('ativa', false)
+        .order('created_at', { ascending: true })
+
+      if (error) {
+        container.innerHTML = `<p style="color:#c94a4a;">Erro ao carregar lojas: ${error.message}</p>`
+        return
+      }
+
+      if (!data || data.length === 0) {
+        container.innerHTML = `<div class="empty-state"><p style="font-size:32px;">✅</p><p>Nenhuma loja pendente no momento.</p></div>`
+        return
+      }
+
+      container.innerHTML = data.map(loja => `
+        <div class="loja-card" id="loja-${loja.id}">
+          <div class="info">
+            <h3>${loja.nome_loja || 'Sem nome'}</h3>
+            <p>👤 ${loja.users?.nome || '—'} · ${loja.users?.email || '—'}</p>
+            <p>📞 ${loja.users?.telefone || 'Sem telefone'}</p>
+            <p>🗓️ Cadastrada em ${new Date(loja.created_at).toLocaleDateString('pt-BR')}</p>
+            ${loja.descricao ? `<p>📝 ${loja.descricao}</p>` : ''}
+          </div>
+          <div class="loja-actions">
+            <button class="btn-aprovar" onclick="aprovarLoja('${loja.id}')">Aprovar</button>
+            <button class="btn-recusar" onclick="recusarLoja('${loja.id}')">Recusar</button>
+          </div>
+        </div>
+      `).join('')
+    }
+
+    async function aprovarLoja(id) {
+      const { error } = await supabaseClient
+        .from('lojas')
+        .update({ ativa: true })
+        .eq('id', id)
+
+      if (error) {
+        alert('❌ Erro ao aprovar loja: ' + error.message)
+        return
+      }
+
+      const card = document.getElementById(`loja-${id}`)
+      if (card) card.remove()
+      alert('✅ Loja aprovada! Já está visível no marketplace.')
+      await carregarLojasPendentes()
+    }
+
+    async function recusarLoja(id) {
+      if (!confirm('Tem certeza que deseja recusar e remover esta loja? Essa ação não pode ser desfeita.')) return
+
+      const { error } = await supabaseClient
+        .from('lojas')
+        .delete()
+        .eq('id', id)
+
+      if (error) {
+        alert('❌ Erro ao recusar loja: ' + error.message)
+        return
+      }
+
+      const card = document.getElementById(`loja-${id}`)
+      if (card) card.remove()
+      await carregarLojasPendentes()
+    }
+  </script>
+</body>
+</html>
