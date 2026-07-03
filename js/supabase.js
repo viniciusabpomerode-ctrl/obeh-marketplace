@@ -111,7 +111,7 @@ async function cadastrarUsuario(email, password, nome, telefone) {
       .insert({
         user_id: data.user.id,
         nome_loja: `Loja de ${nome}`,
-        ativa: true
+        ativa: false
       })
 
     if (lojaError) {
@@ -310,7 +310,7 @@ async function ensureLoja(userId, defaults = {}) {
     .insert({
       user_id: userId,
       nome_loja: defaults.nome_loja || 'Minha loja',
-      ativa: true
+      ativa: false
     })
     .select()
 
