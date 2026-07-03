@@ -103,8 +103,10 @@
             <textarea id="prodDescricao" placeholder="Descreva sua peça..."></textarea>
           </div>
           <div class="form-group">
-            <label>Fotos (URLs separadas por vírgula)</label>
-            <input type="text" id="prodFotos" placeholder="https://imagem1.jpg, https://imagem2.jpg" />
+            <label>Fotos (até 4 imagens, 500KB cada)</label>
+            <input type="file" id="prodFotosFiles" accept="image/*" multiple onchange="handleProdFotosChange(event)" />
+            <div id="prodFotosPreview" style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;"></div>
+            <small id="prodFotosStatus" style="color:var(--ink-soft); display:block; margin-top:4px;"></small>
           </div>
           <div class="form-group">
             <label>Estoque</label>
@@ -130,12 +132,12 @@
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label>Logo (arquivo ou URL)</label>
+              <label>Logo (arquivo até 500KB ou URL)</label>
               <input type="file" id="lojaLogoFile" accept="image/*" />
               <input type="text" id="lojaLogo" placeholder="https://imagem-logo.jpg" style="margin-top:8px;" />
             </div>
             <div class="form-group">
-              <label>Banner (arquivo ou URL)</label>
+              <label>Banner (arquivo até 500KB ou URL)</label>
               <input type="file" id="lojaBannerFile" accept="image/*" />
               <input type="text" id="lojaBanner" placeholder="https://imagem-banner.jpg" style="margin-top:8px;" />
             </div>
@@ -240,6 +242,7 @@
   </div>
 
   <script src="js/supabase.js"></script>
+  <script src="js/upload-r2.js"></script>
   <script>
     // ============================================
     // DASHBOARD.JS - LÓGICA COMPLETA
@@ -417,6 +420,54 @@
     }
 
     // ===== CRUD PRODUTOS =====
+    // ===== UPLOAD DE FOTOS DO PRODUTO (R2) =====
+    let prodFotosArr = []
+    let prodFotosUploading = false
+
+    function renderProdFotosPreview() {
+      const preview = document.getElementById('prodFotosPreview')
+      preview.innerHTML = prodFotosArr.map((url, i) => `
+        <div style="position:relative;">
+          <img src="${url}" style="width:64px; height:64px; object-fit:cover; border-radius:8px; border:1px solid var(--line);" />
+          <button type="button" onclick="removeProdFoto(${i})" style="position:absolute; top:-6px; right:-6px; background:#c94a4a; color:#fff; border:none; border-radius:50%; width:18px; height:18px; font-size:11px; line-height:1; cursor:pointer;">×</button>
+        </div>
+      `).join('')
+    }
+
+    function removeProdFoto(index) {
+      prodFotosArr.splice(index, 1)
+      renderProdFotosPreview()
+    }
+
+    async function handleProdFotosChange(event) {
+      const files = Array.from(event.target.files || [])
+      const status = document.getElementById('prodFotosStatus')
+      event.target.value = ''
+      if (!files.length) return
+
+      if (prodFotosArr.length + files.length > 4) {
+        alert('❌ Você pode adicionar no máximo 4 fotos por produto.')
+        return
+      }
+
+      prodFotosUploading = true
+      status.textContent = `Enviando ${files.length} imagem(ns)...`
+
+      try {
+        for (const file of files) {
+          const url = await uploadImagemR2(file, 'produtos')
+          prodFotosArr.push(url)
+          renderProdFotosPreview()
+        }
+        status.textContent = ''
+      } catch (error) {
+        alert('❌ ' + (error.message || 'Erro ao enviar imagem.'))
+        status.textContent = ''
+      } finally {
+        prodFotosUploading = false
+      }
+    }
+
     async function handleProductSubmit(e) {
       e.preventDefault()
 
@@ -425,7 +476,11 @@
       const categoriaSelecionada = document.getElementById('prodCategoria').value || ''
       const categoria_id = categoriaSelecionada.startsWith('fallback-') ? null : (categoriaSelecionada || null)
       const descricao = document.getElementById('prodDescricao').value
-      const fotos = document.getElementById('prodFotos').value.split(',').map(s => s.trim()).filter(Boolean)
+      if (prodFotosUploading) {
+        alert('❌ Aguarde o envio das fotos terminar.')
+        return
+      }
+      const fotos = prodFotosArr.slice()
       const estoque = parseInt(document.getElementById('prodEstoque').value) || 1
 
       // Busca ou cria loja do usuário
@@ -494,23 +549,12 @@
       const result = await criarProduto(produto)
       if (result) {
         document.getElementById('productForm').reset()
+        prodFotosArr = []
+        renderProdFotosPreview()
         await carregarProdutos()
         await carregarDadosUsuario()
         switchTab('produtos')
       }
-    }
-
-    async function readFileAsDataUrl(file, maxBytes = 1024 * 1024) {
-      if (!file) return ''
-      if (file.size > maxBytes) {
-        throw new Error(`A imagem "${file.name}" é grande demais. Use até 1 MB ou cole uma URL.`)
-      }
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader()
-        reader.onload = () => resolve(reader.result)
-        reader.onerror = reject
-        reader.readAsDataURL(file)
-      })
     }
 
     // ===== LOJA FORM =====
@@ -520,8 +564,8 @@
       try {
         const logoFile = document.getElementById('lojaLogoFile').files[0]
         const bannerFile = document.getElementById('lojaBannerFile').files[0]
-        const logoValue = logoFile ? await readFileAsDataUrl(logoFile) : document.getElementById('lojaLogo').value.trim()
-        const bannerValue = bannerFile ? await readFileAsDataUrl(bannerFile) : document.getElementById('lojaBanner').value.trim()
+        const logoValue = logoFile ? await uploadImagemR2(logoFile, 'lojas') : document.getElementById('lojaLogo').value.trim()
+        const bannerValue = bannerFile ? await uploadImagemR2(bannerFile, 'lojas') : document.getElementById('lojaBanner').value.trim()
 
         const updates = {
           nome_loja: document.getElementById('lojaNome').value.trim(),
@@ -768,6 +812,8 @@
     // Expor funções globalmente
     window.switchTab = switchTab
     window.handleProductSubmit = handleProductSubmit
+    window.handleProdFotosChange = handleProdFotosChange
+    window.removeProdFoto = removeProdFoto
     window.handleLojaSubmit = handleLojaSubmit
     window.toggleStatus = toggleStatus
     window.deletarProduto = handleDeleteProduto
