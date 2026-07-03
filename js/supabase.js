@@ -12,6 +12,32 @@ const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey)
 // FUNÇÕES DE AUTENTICAÇÃO
 // ============================================
 
+// Marca o primeiro login do usuário (usado para a janela de promoção de 5h)
+async function registrarPrimeiroLogin(userId) {
+  if (!userId) return
+  try {
+    const { data, error } = await supabaseClient
+      .from('users')
+      .select('primeiro_login_em')
+      .eq('id', userId)
+      .maybeSingle()
+
+    if (error) {
+      console.error('Erro ao verificar primeiro login:', error)
+      return
+    }
+
+    if (data && !data.primeiro_login_em) {
+      await supabaseClient
+        .from('users')
+        .update({ primeiro_login_em: new Date().toISOString() })
+        .eq('id', userId)
+    }
+  } catch (e) {
+    console.error('Erro ao registrar primeiro login:', e)
+  }
+}
+
 // Login com email/senha
 async function login(email, password) {
   const { data, error } = await supabaseClient.auth.signInWithPassword({
@@ -21,6 +47,9 @@ async function login(email, password) {
   if (error) {
     alert('❌ Erro ao fazer login: ' + error.message)
     return false
+  }
+  if (data?.user?.id) {
+    await registrarPrimeiroLogin(data.user.id)
   }
   window.location.href = 'dashboard.html'
   return true
@@ -587,6 +616,7 @@ window.cadastrarUsuario = cadastrarUsuario
 window.logout = logout
 window.getCurrentUser = getCurrentUser
 window.verificarUsuarioLogado = verificarUsuarioLogado
+window.registrarPrimeiroLogin = registrarPrimeiroLogin
 window.getProducts = getProducts
 window.getUserProducts = getUserProducts
 window.criarProduto = criarProduto
