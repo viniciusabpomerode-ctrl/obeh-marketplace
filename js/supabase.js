@@ -129,7 +129,7 @@ async function getProducts() {
     .from('produtos')
     .select(`
       *,
-      lojas (nome_loja, logo, banner),
+      lojas (nome_loja, logo, banner, mercado_pago_link),
       categorias (nome)
     `)
     .eq('status', 'ativo')
@@ -293,6 +293,182 @@ async function ensureLoja(userId, defaults = {}) {
 }
 
 // ============================================
+// FUNÇÕES DE CURSOS (plano Ultra)
+// ============================================
+
+async function getCursos() {
+  const { data, error } = await supabaseClient
+    .from('cursos')
+    .select(`
+      *,
+      lojas (nome_loja, mercado_pago_link)
+    `)
+    .eq('status', 'ativo')
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error('Erro ao buscar cursos:', error)
+    return []
+  }
+  return data
+}
+
+async function getCursosDaLoja(lojaId) {
+  const { data, error } = await supabaseClient
+    .from('cursos')
+    .select('*')
+    .eq('loja_id', lojaId)
+    .eq('status', 'ativo')
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error('Erro ao buscar cursos da loja:', error)
+    return []
+  }
+  return data
+}
+
+async function getUserCursos(userId) {
+  const { data, error } = await supabaseClient
+    .from('cursos')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error('Erro ao buscar cursos do usuário:', error)
+    return []
+  }
+  return data
+}
+
+async function getCurso(id) {
+  const { data, error } = await supabaseClient
+    .from('cursos')
+    .select(`
+      *,
+      lojas (nome_loja, mercado_pago_link, whatsapp, instagram)
+    `)
+    .eq('id', id)
+    .single()
+
+  if (error) {
+    console.error('Erro ao buscar curso:', error)
+    return null
+  }
+  return data
+}
+
+async function criarCurso(curso) {
+  const { data, error } = await supabaseClient
+    .from('cursos')
+    .insert(curso)
+    .select()
+
+  if (error) {
+    alert('❌ Erro ao criar curso: ' + error.message)
+    return null
+  }
+  return data[0]
+}
+
+async function atualizarCurso(id, updates) {
+  const { data, error } = await supabaseClient
+    .from('cursos')
+    .update(updates)
+    .eq('id', id)
+    .select()
+
+  if (error) {
+    alert('❌ Erro ao atualizar curso: ' + error.message)
+    return null
+  }
+  return data[0]
+}
+
+async function deletarCurso(id) {
+  const { error } = await supabaseClient
+    .from('cursos')
+    .delete()
+    .eq('id', id)
+
+  if (error) {
+    alert('❌ Erro ao excluir curso: ' + error.message)
+    return false
+  }
+  return true
+}
+
+async function getTopicosCurso(cursoId) {
+  const { data, error } = await supabaseClient
+    .from('curso_topicos')
+    .select('*')
+    .eq('curso_id', cursoId)
+    .order('ordem', { ascending: true })
+    .order('created_at', { ascending: true })
+
+  if (error) {
+    console.error('Erro ao buscar tópicos do curso:', error)
+    return []
+  }
+  return data
+}
+
+async function criarTopicoCurso(topico) {
+  const { data, error } = await supabaseClient
+    .from('curso_topicos')
+    .insert(topico)
+    .select()
+
+  if (error) {
+    alert('❌ Erro ao criar tópico: ' + error.message)
+    return null
+  }
+  return data[0]
+}
+
+async function deletarTopicoCurso(id) {
+  const { error } = await supabaseClient
+    .from('curso_topicos')
+    .delete()
+    .eq('id', id)
+
+  if (error) {
+    alert('❌ Erro ao excluir tópico: ' + error.message)
+    return false
+  }
+  return true
+}
+
+async function registrarCompraCurso(cursoId, userId, valor) {
+  const { data, error } = await supabaseClient
+    .from('compras_curso')
+    .insert({ curso_id: cursoId, user_id: userId, valor, status: 'pendente' })
+    .select()
+
+  if (error) {
+    console.error('Erro ao registrar compra do curso:', error)
+    return null
+  }
+  return data[0]
+}
+
+async function getCompraCurso(cursoId, userId) {
+  const { data, error } = await supabaseClient
+    .from('compras_curso')
+    .select('*')
+    .eq('curso_id', cursoId)
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  if (error) {
+    console.error('Erro ao verificar compra do curso:', error)
+    return null
+  }
+  return data
+}
+
+// ============================================
 // FUNÇÕES DE CATEGORIAS
 // ============================================
 
@@ -421,6 +597,18 @@ window.atualizarLoja = atualizarLoja
 window.ensureUserAndLoja = ensureUserAndLoja
 window.ensureLoja = ensureLoja
 window.getCategorias = getCategorias
+window.getCursos = getCursos
+window.getCursosDaLoja = getCursosDaLoja
+window.getUserCursos = getUserCursos
+window.getCurso = getCurso
+window.criarCurso = criarCurso
+window.atualizarCurso = atualizarCurso
+window.deletarCurso = deletarCurso
+window.getTopicosCurso = getTopicosCurso
+window.criarTopicoCurso = criarTopicoCurso
+window.deletarTopicoCurso = deletarTopicoCurso
+window.registrarCompraCurso = registrarCompraCurso
+window.getCompraCurso = getCompraCurso
 window.adicionarAoCarrinho = adicionarAoCarrinho
 window.removerDoCarrinho = removerDoCarrinho
 window.atualizarQuantidade = atualizarQuantidade
