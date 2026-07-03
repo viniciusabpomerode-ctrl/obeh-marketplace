@@ -35,6 +35,11 @@
       </div>
     </div>
 
+    <!-- ===== BANNER: LOJA PENDENTE DE APROVAÇÃO ===== -->
+    <div id="lojaPendenteBanner" style="display:none; background:#fff7e6; border:1px solid #f0c36d; color:#7a5b00; padding:14px 18px; border-radius:10px; margin-bottom:20px; font-size:14px;">
+      ⏳ Sua loja está em análise. Assim que for aprovada pela equipe Obeh, ela ficará visível no marketplace para os compradores. Você já pode cadastrar produtos normalmente enquanto aguarda.
+    </div>
+
     <!-- ===== ESTATÍSTICAS ===== -->
     <div class="dashboard-grid" id="statsGrid">
       <div class="stat-card">
@@ -405,6 +410,9 @@
         document.getElementById('lojaInstagram').value = data.instagram || ''
         document.getElementById('lojaWhatsapp').value = data.whatsapp || ''
         document.getElementById('lojaMercadoPago').value = data.mercado_pago_link || ''
+
+        const banner = document.getElementById('lojaPendenteBanner')
+        if (banner) banner.style.display = data.ativa ? 'none' : 'block'
       }
     }
 
@@ -453,6 +461,19 @@
 
         if (count >= 2) {
           alert('❌ Você atingiu o limite de 2 produtos grátis neste mês. Assine um plano para continuar.')
+          return
+        }
+      }
+
+      // Verifica limite de 25 produtos do plano Basic (taxa de 10% sobre vendas neste plano)
+      if (userData && userData.plano === 'basic') {
+        const { count: totalBasic } = await supabaseClient
+          .from('produtos')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', currentUserId)
+
+        if (totalBasic >= 25) {
+          alert('❌ O plano Basic permite até 25 produtos cadastrados. Faça upgrade para o plano Pro ou Ultra para cadastrar mais.')
           return
         }
       }
