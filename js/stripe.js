@@ -4,45 +4,17 @@
 // Importante: assinaturas de plano são cobradas via Stripe.
 // A compra de produtos artesanais NÃO passa pelo Stripe — o pagamento
 // vai direto para o Mercado Pago de cada artesão (ver checkout do carrinho).
+//
+// O pagamento da assinatura acontece embutido no próprio site (assinar.html),
+// usando o Stripe Embedded Checkout — o cliente nunca sai do domínio do Obeh.
 
-async function redirectToCheckout(plano) {
+function redirectToCheckout(plano) {
   const planosValidos = ['basic', 'pro', 'ultra']
   if (!planosValidos.includes(plano)) {
     alert('❌ Plano inválido.')
     return
   }
-
-  const user = await getCurrentUser()
-  if (!user) {
-    alert('⚠️ Você precisa estar logado para assinar um plano.')
-    window.location.href = 'login.html'
-    return
-  }
-
-  try {
-    const resposta = await fetch('/.netlify/functions/create-subscription-session', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        plano,
-        userId: user.id,
-        email: user.email,
-        successUrl: window.location.origin + window.location.pathname + '?assinatura=sucesso&plano=' + plano,
-        cancelUrl: window.location.origin + window.location.pathname + '?assinatura=cancelada'
-      })
-    })
-
-    const dados = await resposta.json()
-
-    if (!resposta.ok || !dados.url) {
-      throw new Error(dados.error || 'Não foi possível iniciar a assinatura.')
-    }
-
-    window.location.href = dados.url
-  } catch (err) {
-    console.error('Erro ao redirecionar para o Stripe:', err)
-    alert('❌ Erro ao iniciar a assinatura: ' + err.message)
-  }
+  window.location.href = `assinar.html?plano=${plano}`
 }
 
 // ===== CONFIRMA ASSINATURA AO VOLTAR DO STRIPE =====
