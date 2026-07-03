@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Assinar plano — Obeh</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Work+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+  </script>
+  <script src="https://js.stripe.com/v3/"></script>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .assinar-container {
+      max-width: 560px;
+      margin: 0 auto;
+      padding: 40px 20px 80px;
+    }
+
+    .assinar-header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .assinar-header h1 {
+      font-size: 24px;
+      margin-bottom: 6px;
+    }
+
+    .assinar-header p {
+      color: var(--ink-soft);
+      font-size: 14px;
+    }
+
+    .plano-resumo {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg-card);
+      border-radius: 8px;
+      padding: 14px 18px;
+      margin-bottom: 24px;
+      font-family: 'Space Mono', monospace;
+      font-size: 14px;
+    }
+
+    .plano-resumo .preco-antigo {
+      text-decoration: line-through;
+      color: var(--ink-soft);
+      font-size: 12px;
+      margin-right: 8px;
+    }
+
+    .promo-tag {
+      background: var(--clay);
+      color: #fff;
+      font-size: 11px;
+      text-transform: uppercase;
+      padding: 3px 10px;
+      border-radius: 999px;
+      margin-top: 6px;
+      display: inline-block;
+    }
+
+    #checkoutContainer {
+      min-height: 400px;
+    }
+
+    .assinar-status {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--ink-soft);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===== HEADER ===== -->
+  <header>
+    <div class="wrap nav">
+      <a href="index.html" class="logo">
+        <img src="https://i.postimg.cc/gjpXKcn5/imagem-2026-07-01-110451621.png" alt="Obeh Logo" style="height:40px;" />
+      </a>
+      <a href="javascript:history.back()" class="btn btn-ghost" style="padding:6px 16px; font-size:12px;">← Voltar</a>
+    </div>
+  </header>
+
+  <div class="assinar-container">
+    <div class="assinar-header">
+      <h1>💳 Assinar plano</h1>
+      <p>Pagamento seguro processado pelo Stripe, sem sair do Obeh.</p>
+    </div>
+
+    <div id="planoResumoBox" class="plano-resumo">Carregando plano...</div>
+
+    <div id="checkoutContainer">
+      <div class="assinar-status" id="statusMsg">Preparando checkout...</div>
+    </div>
+  </div>
+
+  <script src="js/supabase.js"></script>
+  <script>
+    const STRIPE_PUBLISHABLE_KEY = 'pk_test_51ToRAf3vXW7W5vhxYtLPzBwUeDForTPNfuZV9V8P5RHYHdov1CqmmWYj2StUxYAXatkVw8bB4Tvp6PRswc4eZ1eg00Fw4AS1oK'
+    const PROMO_JANELA_HORAS = 5
+
+    const PLANO_INFO = {
+      basic: { nome: 'Loja Basic', regular: 9.99, promo: 6.99 },
+      pro: { nome: 'Loja Pro', regular: 14.99, promo: 9.99 },
+      ultra: { nome: 'Loja Ultra', regular: 29.99, promo: 14.99 }
+    }
+
+    function formatarPreco(v) {
+      return 'R$ ' + v.toFixed(2).replace('.', ',')
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const params = new URLSearchParams(window.location.search)
+      const plano = params.get('plano')
+      const planosValidos = ['basic', 'pro', 'ultra']
+
+      if (!plano || !planosValidos.includes(plano)) {
+        document.getElementById('planoResumoBox').textContent = 'Plano inválido.'
+        document.getElementById('statusMsg').textContent = '❌ Selecione um plano válido a partir da página inicial.'
+        return
+      }
+
+      const user = await getCurrentUser()
+      if (!user) {
+        document.getElementById('statusMsg').textContent = '⚠️ Você precisa estar logado para assinar. Redirecionando para o login...'
+        setTimeout(() => { window.location.href = 'login.html' }, 1500)
+        return
+      }
+
+      // Busca o timestamp do primeiro login pra saber se a promoção de 5h ainda vale
+      const { data: userData } = await supabaseClient
+        .from('users')
+        .select('primeiro_login_em')
+        .eq('id', user.id)
+        .maybeSingle()
+
+      const primeiroLoginEm = userData?.primeiro_login_em || null
+      let usaPromo = false
+      if (primeiroLoginEm) {
+        const horas = (Date.now() - new Date(primeiroLoginEm).getTime()) / (1000 * 60 * 60)
+        usaPromo = horas >= 0 && horas <= PROMO_JANELA_HORAS
+      }
+
+      const info = PLANO_INFO[plano]
+      const resumoBox = document.getElementById('planoResumoBox')
+      if (usaPromo) {
+        resumoBox.innerHTML = `
+              <div>
+                <div>${info.nome}</div>
+                <span class="promo-tag">🎉 Promoção de boas-vindas — vale por 5h</span>
+              </div>
+              <div><span class="preco-antigo">${formatarPreco(info.regular)}</span>${formatarPreco(info.promo)}/mês</div>
+            `
+      } else {
+        resumoBox.innerHTML = `<div>${info.nome}</div><div>${formatarPreco(info.regular)}/mês</div>`
+      }
+
+      try {
+        const resposta = await fetch('/.netlify/functions/create-subscription-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            plano,
+            userId: user.id,
+            email: user.email,
+            primeiroLoginEm,
+            returnUrl: window.location.origin + '/index.html?assinatura=sucesso&plano=' + plano
+          })
+        })
+
+        const dados = await resposta.json()
+
+        if (!resposta.ok || !dados.clientSecret) {
+          throw new Error(dados.error || 'Não foi possível iniciar a assinatura.')
+        }
+
+        document.getElementById('statusMsg').remove()
+
+        const stripe = Stripe(STRIPE_PUBLISHABLE_KEY)
+        const checkout = await stripe.initEmbeddedCheckout({
+          clientSecret: dados.clientSecret
+        })
+        checkout.mount('#checkoutContainer')
+      } catch (err) {
+        console.error('Erro ao iniciar checkout embutido:', err)
+        document.getElementById('statusMsg').textContent = '❌ Erro ao iniciar a assinatura: ' + err.message
+      }
+    })
+  </script>
+
+</body>
+</html>
