@@ -181,8 +181,8 @@
         document.getElementById('statusMsg').remove()
 
         const stripe = Stripe(STRIPE_PUBLISHABLE_KEY)
-        const checkout = await stripe.initEmbeddedCheckout({
-          clientSecret: dados.clientSecret
+        const checkout = await stripe.createEmbeddedCheckoutPage({
+          fetchClientSecret: async () => dados.clientSecret
         })
         checkout.mount('#checkoutContainer')
       } catch (err) {
