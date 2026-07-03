@@ -257,7 +257,8 @@
               id,
               nome_loja,
               logo,
-              user_id
+              user_id,
+              mercado_pago_link
             ),
             categorias (nome)
           `)
@@ -369,46 +370,26 @@
         }
       })
 
-      document.getElementById('checkoutBtn').addEventListener('click', async () => {
+      document.getElementById('checkoutBtn').addEventListener('click', () => {
         if (carrinho.length === 0) {
           alert('🛒 Seu carrinho está vazio!')
           return
         }
 
-        const btn = document.getElementById('checkoutBtn')
-        const textoOriginal = btn.textContent
-        btn.disabled = true
-        btn.textContent = 'Redirecionando...'
+        const mpLink = (lojaData && lojaData.mercado_pago_link) ? lojaData.mercado_pago_link.trim() : ''
 
-        try {
-          const resposta = await fetch('/.netlify/functions/create-checkout-session', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              itens: carrinho.map(item => ({
-                nome: item.nome,
-                preco: item.preco,
-                quantidade: item.quantidade,
-                imagem: Array.isArray(item.fotos) ? item.fotos[0] : undefined
-              })),
-              successUrl: window.location.origin + window.location.pathname + '?compra=sucesso',
-              cancelUrl: window.location.origin + window.location.pathname + '?compra=cancelada'
-            })
-          })
-
-          const dados = await resposta.json()
-
-          if (!resposta.ok || !dados.url) {
-            throw new Error(dados.error || 'Não foi possível iniciar o checkout.')
-          }
-
-          window.location.href = dados.url
-        } catch (err) {
-          console.error('Erro ao redirecionar para o Stripe:', err)
-          alert('❌ Erro ao iniciar o pagamento: ' + err.message)
-          btn.disabled = false
-          btn.textContent = textoOriginal
+        if (!mpLink) {
+          alert('⚠️ Este artesão ainda não cadastrou um link de pagamento do Mercado Pago. Entre em contato pelo WhatsApp ou Instagram da loja para combinar o pagamento.')
+          return
         }
+
+        alert('💳 Você será redirecionado ao Mercado Pago do artesão. O pagamento é direto — o Obeh não retém nem intermedeia esse valor.')
+        window.open(mpLink, '_blank')
+
+        carrinho = []
+        atualizarCarrinhoUI()
+        renderizarCarrinho()
+        document.getElementById('cartModal').style.display = 'none'
       })
     }
 
