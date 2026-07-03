@@ -210,8 +210,8 @@
               <textarea id="topicoDescricao"></textarea>
             </div>
             <div class="form-group">
-              <label>Vídeo (URL do YouTube, Vimeo, etc.)</label>
-              <input type="text" id="topicoVideo" placeholder="https://youtube.com/watch?v=..." />
+              <label>Vídeo (YouTube, Vimeo ou Google Drive)</label>
+              <input type="text" id="topicoVideo" placeholder="https://youtube.com/watch?v=... ou link de compartilhamento do Google Drive" />
             </div>
             <button type="submit" class="btn btn-primary">Adicionar tópico</button>
           </form>
@@ -258,6 +258,9 @@
 
       // Garante que perfil e loja existem (fallback do trigger)
       await ensureUserAndLoja(user)
+
+      // Marca o primeiro login (usado na janela de promoção de 5h no checkout)
+      await registrarPrimeiroLogin(user.id)
 
       const params = new URLSearchParams(window.location.search)
       const tabInicial = params.get('tab') || 'produtos'
