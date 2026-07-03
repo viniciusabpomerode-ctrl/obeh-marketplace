@@ -207,6 +207,9 @@
       const vimeo = url.match(/vimeo\.com\/(\d+)/)
       if (vimeo) embedUrl = `https://player.vimeo.com/video/${vimeo[1]}`
 
+      const drive = url.match(/drive\.google\.com\/file\/d\/([\w-]+)/) || url.match(/drive\.google\.com\/open\?id=([\w-]+)/)
+      if (drive) embedUrl = `https://drive.google.com/file/d/${drive[1]}/preview`
+
       return `<div class="topico-video"><iframe src="${embedUrl}" allowfullscreen></iframe></div>`
     }
 
