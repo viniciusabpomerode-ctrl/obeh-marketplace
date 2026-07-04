@@ -43,6 +43,55 @@ function mapearStatus(statusMp) {
   return 'pendente'
 }
 
+function mapearStatusPreapproval(statusMp) {
+  if (statusMp === 'authorized') return 'ativo'
+  if (statusMp === 'paused') return 'pausado'
+  if (statusMp === 'cancelled') return 'cancelado'
+  return 'pendente'
+}
+
+async function processarPreapproval(preapprovalId) {
+  if (!preapprovalId) return { statusCode: 200, body: 'ok' }
+
+  try {
+    const contasRes = await supabaseRequest('mercado_pago_contas?status=eq.conectado&select=access_token')
+    const contas = await contasRes.json()
+
+    let assinatura = null
+    for (const conta of contas) {
+      if (!conta.access_token) continue
+      try {
+        const res = await fetch(`https://api.mercadopago.com/preapproval/${preapprovalId}`, {
+          headers: { Authorization: `Bearer ${conta.access_token}` }
+        })
+        if (res.ok) {
+          assinatura = await res.json()
+          break
+        }
+      } catch (err) {
+        // tenta a próxima conta
+      }
+    }
+
+    if (!assinatura) {
+      console.error('mp-webhook: não foi possível encontrar a assinatura', preapprovalId, 'em nenhuma conta conectada.')
+      return { statusCode: 200, body: 'ok' }
+    }
+
+    const novoStatus = mapearStatusPreapproval(assinatura.status)
+
+    await supabaseRequest(`apoiadores?preapproval_id=eq.${preapprovalId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status: novoStatus, updated_at: new Date().toISOString() })
+    })
+
+    return { statusCode: 200, body: 'ok' }
+  } catch (err) {
+    console.error('Erro ao processar preapproval no webhook do Mercado Pago:', err)
+    return { statusCode: 200, body: 'ok' }
+  }
+}
+
 exports.handler = async (event) => {
   // O Mercado Pago manda o id do pagamento tanto via query string (?data.id=...&type=payment)
   // quanto no corpo da notificação, dependendo do formato (webhook novo vs IPN antigo).
@@ -56,6 +105,11 @@ exports.handler = async (event) => {
     } catch (err) {
       // corpo não é JSON, ignora
     }
+  }
+
+  // Assinaturas de apoio às lojas (Preapproval) são tratadas separadamente
+  if (topic === 'preapproval' || topic === 'subscription_preapproval') {
+    return await processarPreapproval(paymentId)
   }
 
   // Só nos interessa notificação de pagamento
