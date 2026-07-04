@@ -228,6 +228,7 @@
 
     <!-- ===== TAB: VENDAS ===== -->
     <div id="tab-vendas" class="tab-content">
+      <div id="vendasResumo" style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:20px;"></div>
       <div id="vendasList">
         <p style="color:var(--ink-soft); text-align:center; padding:40px;">Nenhuma venda ainda.</p>
       </div>
@@ -628,6 +629,9 @@
           el.classList.add('active')
         }
       })
+    if (tab === 'vendas') {
+        carregarVendas()
+      }
     }
 
     function getTabLabel(tab) {
@@ -804,8 +808,75 @@
       }
     }
 
-    // Expor funções globalmente
+        async function carregarVendas() {
+      const resumo = document.getElementById('vendasResumo')
+      const container = document.getElementById('vendasList')
+
+      const { data, error } = await supabaseClient
+        .from('vendas')
+        .select('*, produtos(nome)')
+        .eq('vendedor_id', currentUserId)
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        container.innerHTML = `<p style="color:#c94a4a;">Erro ao carregar vendas: ${error.message}</p>`
+        return
+      }
+
+      const vendas = data || []
+
+      if (vendas.length === 0) {
+        resumo.innerHTML = ''
+        container.innerHTML = '<p style="color:var(--ink-soft); text-align:center; padding:40px;">Nenhuma venda ainda.</p>'
+        return
+      }
+
+      const concluidas = vendas.filter(v => ['pago', 'concluida', 'aprovado', 'approved'].includes(v.status))
+      const totalFaturado = concluidas.reduce((acc, v) => acc + Number(v.valor_total || 0), 0)
+      const totalVendas = concluidas.length
+      const ticketMedio = totalVendas > 0 ? totalFaturado / totalVendas : 0
+
+      const contagemProdutos = {}
+      concluidas.forEach(v => {
+        const nome = v.produtos?.nome || 'Produto'
+        contagemProdutos[nome] = (contagemProdutos[nome] || 0) + (v.quantidade || 1)
+      })
+      const listaMaisVendidos = Object.entries(contagemProdutos).sort((a, b) => b[1] - a[1])
+      const maisVendido = listaMaisVendidos[0]
+
+      resumo.innerHTML = `
+        <div style="flex:1; min-width:160px; border:1px solid var(--line); border-radius:12px; padding:16px;">
+          <p style="font-size:13px; color:var(--ink-soft); margin-bottom:4px;">Faturamento total</p>
+          <p style="font-size:22px; font-weight:700;">R$ ${totalFaturado.toFixed(2).replace('.', ',')}</p>
+        </div>
+        <div style="flex:1; min-width:160px; border:1px solid var(--line); border-radius:12px; padding:16px;">
+          <p style="font-size:13px; color:var(--ink-soft); margin-bottom:4px;">Vendas concluídas</p>
+          <p style="font-size:22px; font-weight:700;">${totalVendas}</p>
+        </div>
+        <div style="flex:1; min-width:160px; border:1px solid var(--line); border-radius:12px; padding:16px;">
+          <p style="font-size:13px; color:var(--ink-soft); margin-bottom:4px;">Ticket médio</p>
+          <p style="font-size:22px; font-weight:700;">R$ ${ticketMedio.toFixed(2).replace('.', ',')}</p>
+        </div>
+        <div style="flex:1; min-width:160px; border:1px solid var(--line); border-radius:12px; padding:16px;">
+          <p style="font-size:13px; color:var(--ink-soft); margin-bottom:4px;">Mais vendido</p>
+          <p style="font-size:16px; font-weight:700;">${maisVendido ? maisVendido[0] : '—'}</p>
+        </div>
+      `
+
+      container.innerHTML = vendas.map(v => `
+        <div class="loja-card">
+          <div class="info">
+            <h3>${v.produtos?.nome || 'Produto'}</h3>
+            <p>Quantidade: ${v.quantidade || 1} · Total: R$ ${Number(v.valor_total || 0).toFixed(2).replace('.', ',')}</p>
+            <p>Status: ${v.status || '—'} · ${new Date(v.created_at).toLocaleDateString('pt-BR')}</p>
+          </div>
+        </div>
+      `).join('')
+    }
+
+// Expor funções globalmente
     window.switchTab = switchTab
+    window.carregarVendas = carregarVendas
     window.handleProductSubmit = handleProductSubmit
     window.handleProdFotosChange = handleProdFotosChange
     window.removeProdFoto = removeProdFoto
