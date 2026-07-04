@@ -158,6 +158,7 @@
       <div class="loja-info-public">
         <h1 id="lojaNome">Nome da Loja</h1>
         <p class="desc" id="lojaDescricao">Descrição da loja...</p>
+      <div id="lojaCategoriasPills" style="display:flex; gap:8px; flex-wrap:wrap; margin:10px 0;"></div>
         <div class="loja-social-public" id="lojaSocial">
           <!-- Injetado via JS -->
         </div>
@@ -238,6 +239,7 @@
       }
 
       await carregarLoja(lojaId)
+      await carregarCategoriasLoja(lojaId)
       await carregarProdutosLoja(lojaId)
       await carregarCursosLoja(lojaId)
       carregarCarrinho()
@@ -247,6 +249,23 @@
     })
 
     // ===== CARREGAR LOJA =====
+    async function carregarCategoriasLoja(id) {
+      const container = document.getElementById('lojaCategoriasPills')
+      if (!container) return
+
+      const { data, error } = await supabaseClient
+        .from('loja_categorias')
+        .select('categorias(nome, icone)')
+        .eq('loja_id', id)
+
+      if (error || !data || data.length === 0) {
+        container.innerHTML = ''
+        return
+      }
+
+      container.innerHTML = data.map(lc => `<span style="background:var(--sand,#f0ece4); padding:4px 12px; border-radius:999px; font-size:12px; font-weight:600;">${lc.categorias?.icone || ''} ${lc.categorias?.nome || ''}</span>`).join('')
+    }
+
     async function carregarLoja(id) {
       const { data, error } = await supabaseClient
         .from('lojas')
