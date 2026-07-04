@@ -106,6 +106,15 @@
     <div id="lojasPendentes">
       <p style="color:var(--ink-soft); font-size:14px;">Carregando...</p>
     </div>
+
+    <hr style="margin:40px 0; border:none; border-top:1px solid var(--line);" />
+
+    <h1>🏬 Todas as lojas</h1>
+    <p class="admin-sub">Veja e edite qualquer loja da plataforma, independente do dono.</p>
+    <input id="buscaLojas" type="text" placeholder="Buscar por nome da loja, dono ou e-mail..." style="width:100%; padding:10px 14px; border:1px solid var(--line); border-radius:8px; font-size:14px; margin-bottom:16px;" oninput="filtrarTodasLojas()" />
+    <div id="listaTodasLojas">
+      <p style="color:var(--ink-soft); font-size:14px;">Carregando...</p>
+    </div>
   </div>
 
   <!-- ===== SCRIPTS ===== -->
@@ -125,6 +134,7 @@
       document.getElementById('userEmail').textContent = user.email
       document.getElementById('adminArea').style.display = 'block'
       await carregarLojasPendentes()
+      await carregarTodasLojas()
     })
 
     async function carregarLojasPendentes() {
@@ -195,6 +205,111 @@
       const card = document.getElementById(`loja-${id}`)
       if (card) card.remove()
       await carregarLojasPendentes()
+    }
+
+    async function carregarTodasLojas() {
+      const container = document.getElementById('listaTodasLojas')
+      const { data, error } = await supabaseClient
+        .from('lojas')
+        .select('*, users(nome, email, telefone, plano)')
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        container.innerHTML = `<p style="color:#c94a4a;">Erro ao carregar lojas: ${error.message}</p>`
+        return
+      }
+
+      window.__todasLojasCache = data || []
+      renderTodasLojas(window.__todasLojasCache)
+    }
+
+    function renderTodasLojas(lista) {
+      const container = document.getElementById('listaTodasLojas')
+      if (!lista || lista.length === 0) {
+        container.innerHTML = '<div class="empty-state"><p>Nenhuma loja encontrada.</p></div>'
+        return
+      }
+
+      container.innerHTML = lista.map(loja => `
+        <div class="loja-card" id="admloja-${loja.id}" style="flex-direction:column; align-items:stretch;">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+            <div class="info">
+              <h3>${loja.nome_loja || 'Sem nome'}</h3>
+              <p>👤 ${loja.users?.nome || '—'} · ${loja.users?.email || '—'}</p>
+              <p>📦 Plano: ${loja.users?.plano || 'free'} · Status: ${loja.ativa ? '✅ Ativa' : '⛔ Inativa'}</p>
+            </div>
+            <div class="loja-actions">
+              <a href="loja.html?id=${loja.id}" target="_blank" class="btn btn-ghost" style="padding:8px 16px; font-size:13px;">Ver loja</a>
+              <button class="btn-aprovar" onclick="toggleEditLoja('${loja.id}')">Editar</button>
+            </div>
+          </div>
+          <div id="editForm-${loja.id}" style="display:none; margin-top:16px; border-top:1px solid var(--line); padding-top:16px;">
+            <label style="font-size:13px; font-weight:600;">Nome da loja</label>
+            <input id="edNome-${loja.id}" type="text" value="${(loja.nome_loja || '').replace(/"/g, '&quot;')}" style="width:100%; padding:8px 12px; border:1px solid var(--line); border-radius:8px; margin:6px 0 14px;" />
+
+            <label style="font-size:13px; font-weight:600;">Descrição</label>
+            <textarea id="edDesc-${loja.id}" style="width:100%; padding:8px 12px; border:1px solid var(--line); border-radius:8px; margin:6px 0 14px; min-height:70px;">${loja.descricao || ''}</textarea>
+
+            <label style="font-size:13px; font-weight:600;">Instagram</label>
+            <input id="edInsta-${loja.id}" type="text" value="${(loja.instagram || '').replace(/"/g, '&quot;')}" style="width:100%; padding:8px 12px; border:1px solid var(--line); border-radius:8px; margin:6px 0 14px;" />
+
+            <label style="font-size:13px; font-weight:600;">WhatsApp</label>
+            <input id="edWhats-${loja.id}" type="text" value="${(loja.whatsapp || '').replace(/"/g, '&quot;')}" style="width:100%; padding:8px 12px; border:1px solid var(--line); border-radius:8px; margin:6px 0 14px;" />
+
+            <label style="font-size:13px; font-weight:600;">Link Mercado Pago</label>
+            <input id="edMP-${loja.id}" type="text" value="${(loja.mercado_pago_link || '').replace(/"/g, '&quot;')}" style="width:100%; padding:8px 12px; border:1px solid var(--line); border-radius:8px; margin:6px 0 14px;" />
+
+            <label style="font-size:13px; font-weight:600;">
+              <input id="edAtiva-${loja.id}" type="checkbox" ${loja.ativa ? 'checked' : ''} /> Loja ativa (visível no marketplace)
+            </label>
+
+            <div style="display:flex; gap:8px; margin-top:14px;">
+              <button class="btn-aprovar" onclick="salvarEdicaoLoja('${loja.id}')">💾 Salvar alterações</button>
+              <button class="btn-recusar" onclick="toggleEditLoja('${loja.id}')">Cancelar</button>
+            </div>
+          </div>
+        </div>
+      `).join('')
+    }
+
+    function toggleEditLoja(id) {
+      const form = document.getElementById(`editForm-${id}`)
+      if (form) form.style.display = form.style.display === 'none' ? 'block' : 'none'
+    }
+
+    async function salvarEdicaoLoja(id) {
+      const updates = {
+        nome_loja: document.getElementById(`edNome-${id}`).value.trim(),
+        descricao: document.getElementById(`edDesc-${id}`).value.trim(),
+        instagram: document.getElementById(`edInsta-${id}`).value.trim(),
+        whatsapp: document.getElementById(`edWhats-${id}`).value.trim(),
+        mercado_pago_link: document.getElementById(`edMP-${id}`).value.trim(),
+        ativa: document.getElementById(`edAtiva-${id}`).checked
+      }
+
+      const { error } = await supabaseClient
+        .from('lojas')
+        .update(updates)
+        .eq('id', id)
+
+      if (error) {
+        alert('❌ Erro ao salvar: ' + error.message)
+        return
+      }
+
+      alert('✅ Loja atualizada com sucesso!')
+      await carregarTodasLojas()
+    }
+
+    function filtrarTodasLojas() {
+      const termo = document.getElementById('buscaLojas').value.toLowerCase()
+      const cache = window.__todasLojasCache || []
+      const filtradas = cache.filter(loja =>
+        (loja.nome_loja || '').toLowerCase().includes(termo) ||
+        (loja.users?.nome || '').toLowerCase().includes(termo) ||
+        (loja.users?.email || '').toLowerCase().includes(termo)
+      )
+      renderTodasLojas(filtradas)
     }
   </script>
 </body>
