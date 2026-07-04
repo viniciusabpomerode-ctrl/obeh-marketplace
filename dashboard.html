@@ -202,6 +202,46 @@
       </div>
 
       <div style="margin-top:32px; padding-top:24px; border-top:1px solid var(--line);">
+      <h3 style="font-size:16px; margin-bottom:6px;">🤝 Apoie e tenha benefícios</h3>
+      <p style="font-size:13px; color:var(--muted); margin-bottom:12px;">Ative um apoio mensal pra sua loja: fãs podem te apoiar todo mês via Mercado Pago e ganham acesso a conteúdo exclusivo que só você publica aqui.</p>
+      <label style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+        <input type="checkbox" id="apoioAtivo" />
+        Ativar apoio mensal pra esta loja
+      </label>
+      <div class="form-group">
+        <label>Valor mensal (R$)</label>
+        <input type="number" id="apoioValorMensal" step="0.01" min="1" placeholder="ex: 9.90" />
+      </div>
+      <div class="form-group">
+        <label>O que o apoiador ganha?</label>
+        <textarea id="apoioDescricao" placeholder="ex: acesso a conteúdo exclusivo, bastidores, descontos..."></textarea>
+      </div>
+      <button type="button" class="btn btn-primary" onclick="salvarApoio()">Salvar apoio</button>
+      <small id="apoioStatus" style="display:block; margin-top:6px;"></small>
+
+      <div style="margin-top:20px;">
+        <h4 style="font-size:14px; margin-bottom:8px;">Conteúdo exclusivo pros apoiadores</h4>
+        <div class="form-group">
+          <input type="text" id="conteudoTitulo" placeholder="Título do post" />
+        </div>
+        <div class="form-group">
+          <textarea id="conteudoCorpo" placeholder="Escreva algo só pra quem te apoia..."></textarea>
+        </div>
+        <div class="form-group">
+          <input type="text" id="conteudoLink" placeholder="Link (opcional, ex: vídeo, arquivo)" />
+        </div>
+        <button type="button" class="btn btn-ghost" onclick="publicarConteudoApoiadores()">Publicar</button>
+        <small id="conteudoStatus" style="display:block; margin-top:6px;"></small>
+        <div id="conteudoLista" style="margin-top:14px;"></div>
+      </div>
+
+      <div style="margin-top:20px;">
+        <h4 style="font-size:14px; margin-bottom:8px;">Seus apoiadores</h4>
+        <div id="apoiadoresLista"></div>
+      </div>
+    </div>
+
+    <div style="margin-top:32px; padding-top:24px; border-top:1px solid var(--line);">
         <h3 style="font-size:16px; margin-bottom:6px;">🆘 Precisa de ajuda?</h3>
         <p style="font-size:13px; color:var(--ink-soft); margin-bottom:12px;">Fale direto com a equipe Obeh sobre configuração da sua loja, banner, logo, descrição ou qualquer dúvida.</p>
         <input id="suporteAssunto" type="text" placeholder="Assunto" style="width:100%; padding:8px 12px; border:1px solid var(--line); border-radius:8px; margin-bottom:10px;" />
@@ -474,6 +514,7 @@
 
       await carregarCategoriasCheckboxes()
       await carregarStatusMercadoPago()
+      await carregarApoio()
     }
 
     async function carregarStatusMercadoPago() {
@@ -500,6 +541,134 @@
 
     function conectarMercadoPago() {
       window.location.href = `/.netlify/functions/mp-oauth-start?userId=${currentUserId}`
+    }
+
+    async function carregarApoio() {
+      if (!lojaData) return
+
+      const apoioAtivoEl = document.getElementById('apoioAtivo')
+      const valorEl = document.getElementById('apoioValorMensal')
+      const descEl = document.getElementById('apoioDescricao')
+      if (!apoioAtivoEl) return
+
+      apoioAtivoEl.checked = !!lojaData.apoio_ativo
+      valorEl.value = lojaData.apoio_valor_mensal || ''
+      descEl.value = lojaData.apoio_descricao || ''
+
+      await carregarConteudoApoiadores()
+      await carregarApoiadoresLista()
+    }
+
+    async function salvarApoio() {
+      const statusEl = document.getElementById('apoioStatus')
+      const ativo = document.getElementById('apoioAtivo').checked
+      const valor = parseFloat(document.getElementById('apoioValorMensal').value) || null
+      const descricao = document.getElementById('apoioDescricao').value.trim()
+
+      if (ativo && (!valor || valor <= 0)) {
+        statusEl.innerHTML = '❌ Informe um valor mensal válido pra ativar o apoio.'
+        return
+      }
+
+      const { error } = await supabaseClient
+        .from('lojas')
+        .update({ apoio_ativo: ativo, apoio_valor_mensal: valor, apoio_descricao: descricao })
+        .eq('id', lojaData.id)
+
+      if (error) {
+        statusEl.innerHTML = '❌ Não foi possível salvar. Tente novamente.'
+        return
+      }
+
+      lojaData.apoio_ativo = ativo
+      lojaData.apoio_valor_mensal = valor
+      lojaData.apoio_descricao = descricao
+      statusEl.innerHTML = '<span style="color:#2f8f4e;">✅ Apoio salvo!</span>'
+    }
+
+    async function carregarConteudoApoiadores() {
+      const lista = document.getElementById('conteudoLista')
+      if (!lista) return
+
+      const { data, error } = await supabaseClient
+        .from('conteudo_apoiadores')
+        .select('*')
+        .eq('loja_id', lojaData.id)
+        .order('created_at', { ascending: false })
+
+      if (error || !data || data.length === 0) {
+        lista.innerHTML = '<p style="font-size:13px; color:var(--muted);">Nenhum post publicado ainda.</p>'
+        return
+      }
+
+      lista.innerHTML = data.map(c => `
+        <div style="border:1px solid var(--line); border-radius:8px; padding:10px; margin-bottom:8px;">
+          <div style="font-weight:500;">${c.titulo}</div>
+          ${c.corpo ? `<div style="font-size:13px; margin-top:4px;">${c.corpo}</div>` : ''}
+          ${c.link ? `<a href="${c.link}" target="_blank" rel="noopener" style="font-size:13px;">${c.link}</a>` : ''}
+          <div style="margin-top:6px;">
+            <button class="btn btn-ghost" style="font-size:12px; padding:4px 10px;" onclick="deletarConteudoApoiadores('${c.id}')">Excluir</button>
+          </div>
+        </div>
+      `).join('')
+    }
+
+    async function publicarConteudoApoiadores() {
+      const statusEl = document.getElementById('conteudoStatus')
+      const titulo = document.getElementById('conteudoTitulo').value.trim()
+      const corpo = document.getElementById('conteudoCorpo').value.trim()
+      const link = document.getElementById('conteudoLink').value.trim()
+
+      if (!titulo) {
+        statusEl.innerHTML = '❌ Dê um título pro post.'
+        return
+      }
+
+      const { error } = await supabaseClient
+        .from('conteudo_apoiadores')
+        .insert({ loja_id: lojaData.id, titulo, corpo, link: link || null })
+
+      if (error) {
+        statusEl.innerHTML = '❌ Não foi possível publicar. Tente novamente.'
+        return
+      }
+
+      document.getElementById('conteudoTitulo').value = ''
+      document.getElementById('conteudoCorpo').value = ''
+      document.getElementById('conteudoLink').value = ''
+      statusEl.innerHTML = '<span style="color:#2f8f4e;">✅ Publicado!</span>'
+      await carregarConteudoApoiadores()
+    }
+
+    async function deletarConteudoApoiadores(id) {
+      if (!confirm('Excluir este post?')) return
+      await supabaseClient.from('conteudo_apoiadores').delete().eq('id', id)
+      await carregarConteudoApoiadores()
+    }
+
+    async function carregarApoiadoresLista() {
+      const lista = document.getElementById('apoiadoresLista')
+      if (!lista) return
+
+      const { data, error } = await supabaseClient
+        .from('apoiadores')
+        .select('*, users(nome, email)')
+        .eq('loja_id', lojaData.id)
+        .order('created_at', { ascending: false })
+
+      if (error || !data || data.length === 0) {
+        lista.innerHTML = '<p style="font-size:13px; color:var(--muted);">Você ainda não tem apoiadores.</p>'
+        return
+      }
+
+      const statusEmoji = { ativo: '✅', pendente: '⏳', pausado: '⏸️', cancelado: '❌' }
+
+      lista.innerHTML = data.map(a => `
+        <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--line); padding:8px 0; font-size:13px;">
+          <span>${a.users?.nome || a.users?.email || 'Apoiador'}</span>
+          <span>R$ ${Number(a.valor_mensal || 0).toFixed(2)}/mês ${statusEmoji[a.status] || ''} ${a.status}</span>
+        </div>
+      `).join('')
     }
 
     // ===== CRUD PRODUTOS =====
@@ -1100,6 +1269,9 @@
     window.switchTab = switchTab
     window.salvarCategoriasLoja = salvarCategoriasLoja
     window.conectarMercadoPago = conectarMercadoPago
+    window.salvarApoio = salvarApoio
+    window.publicarConteudoApoiadores = publicarConteudoApoiadores
+    window.deletarConteudoApoiadores = deletarConteudoApoiadores
     window.enviarSuporte = enviarSuporte
     window.bulkAtivar = bulkAtivar
     window.bulkDesativar = bulkDesativar
