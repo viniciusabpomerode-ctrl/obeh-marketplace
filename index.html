@@ -189,7 +189,7 @@
     <div class="cat-row" id="catRow">
       <!-- Injetado via JS -->
     </div>
-    <div class="cat-row" id="catRowOutras" style="display:none; margin-top:8px;">
+    <div id="catRowOutras" style="display:none; flex-wrap:wrap; gap:12px; width:100%; max-width:1180px; margin:10px auto 0; padding:10px 28px 0; border-top:1px dashed var(--line);">
       <!-- Categorias sem destaque, injetado via JS -->
     </div>
   </div>
@@ -446,15 +446,17 @@
                 </div>
               `).join('')}
               ${outras.length > 0 ? `
-                <div class="chip" onclick="toggleOutrasCategorias()" id="chipOutros">
-                  <span class="dot"></span>Outros ▾
+                <div class="chip" onclick="toggleOutrasCategorias()" id="chipOutros" style="font-weight:700;">
+                  <span class="dot"></span>➕ Mais categorias ▾
                 </div>
               ` : ''}
             `
 
       const containerOutras = document.getElementById('catRowOutras')
       if (outras.length > 0) {
-        containerOutras.innerHTML = outras.map(cat => `
+        containerOutras.innerHTML = `
+          <span style="font-size:12px; color:var(--ink-soft); align-self:center; flex-shrink:0; padding-right:4px;">Mais categorias:</span>
+        ` + outras.map(cat => `
           <div class="chip" onclick="filtrarPorCategoria('${cat.id}')">
             <span class="dot"></span>${cat.nome}
           </div>
@@ -469,7 +471,7 @@
       const chip = document.getElementById('chipOutros')
       const aberto = containerOutras.style.display === 'flex'
       containerOutras.style.display = aberto ? 'none' : 'flex'
-      if (chip) chip.innerHTML = `<span class="dot"></span>Outros ${aberto ? '▾' : '▴'}`
+      if (chip) chip.innerHTML = `<span class="dot"></span>➕ Mais categorias ${aberto ? '▾' : '▴'}`
     }
 
     // Preço (com riscado + badge de promoção quando em_promocao) usado nos cards de produto
