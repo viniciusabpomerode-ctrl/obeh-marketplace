@@ -6,30 +6,37 @@
 
 const GROQ_API_KEY = process.env.GROQ_API_KEY
 
-const SELETORES_PERMITIDOS = [
-  'body',
-  '.loja-header-public',
-  '.loja-avatar-public img',
-  '.card',
-  '.card-media',
-  '.card-cat',
-  '.card-title',
-  '.card-maker',
-  '.card-add',
-  '.price',
-  '.pasta-tile',
-  '.pasta-tile-img',
-  '.pasta-tile-nome',
-  '.loja-container',
-  '.loja-produtos-grid',
-  '.empty-products'
+const GLOSSARIO_SELETORES = [
+  { seletor: 'body', descricao: 'o fundo geral de toda a página da loja' },
+  { seletor: '.loja-header-public', descricao: 'o cabeçalho/topo da loja, onde ficam a logo, o banner e o nome da loja' },
+  { seletor: '.loja-avatar-public img', descricao: 'a logo/foto de perfil circular da loja' },
+  { seletor: '.card', descricao: 'cada cartão de produto mostrado na vitrine da loja' },
+  { seletor: '.card-media', descricao: 'a área da foto dentro do cartão de produto' },
+  { seletor: '.card-cat', descricao: 'a categoria do produto, escrita pequena acima do nome dele' },
+  { seletor: '.card-title', descricao: 'o nome do produto dentro do cartão' },
+  { seletor: '.card-maker', descricao: 'o nome do artesão/loja mostrado dentro do cartão de produto' },
+  { seletor: '.card-add', descricao: 'o botão redondo de adicionar o produto ao carrinho' },
+  { seletor: '.price', descricao: 'o preço do produto' },
+  { seletor: '.pasta-tile', descricao: 'cada "pasta" (categoria personalizada criada pelo vendedor), mostrada como um quadradinho clicável na loja' },
+  { seletor: '.pasta-tile-img', descricao: 'a imagem de capa de cada pasta/categoria' },
+  { seletor: '.pasta-tile-nome', descricao: 'o texto com o nome escrito embaixo de cada pasta/categoria' },
+  { seletor: '.loja-container', descricao: 'o container/moldura geral que envolve toda a página da loja' },
+  { seletor: '.loja-produtos-grid', descricao: 'a grade que organiza os cartões de produto lado a lado' },
+  { seletor: '.empty-products', descricao: 'a mensagem exibida quando a loja ainda não tem nenhum produto publicado' }
 ]
+
+const SELETORES_PERMITIDOS = GLOSSARIO_SELETORES.map((g) => g.seletor)
+
+function montarGlossarioTexto() {
+  return GLOSSARIO_SELETORES.map((g) => g.seletor + ' → ' + g.descricao).join('; ')
+}
 
 function montarSystemPrompt() {
   return 'Você é um assistente que cria CSS personalizado para a página pública de uma loja de artesanato do marketplace Obeh. ' +
     'Converse em português, de forma breve, simpática e direta. ' +
     'Sempre que gerar código, coloque o CSS completo (todas as regras juntas, incluindo as de mensagens anteriores que ainda devem valer) dentro de um bloco de código markdown com \'css no início, assim: ```css ... ```. ' +
-    'Use apenas estes seletores, que já existem na página (não invente outros): ' + SELETORES_PERMITIDOS.join(', ') + '. ' +
+    'Guia dos elementos que existem na página (use SOMENTE estes seletores, escritos exatamente assim, e escolha o certo com base na descrição em português — não invente outros seletores): ' + montarGlossarioTexto() + '. ' +
+    'Se o vendedor usar palavras como "cabeçalho", "topo" ou "logo", relacione com os seletores do cabeçalho/logo acima. Se usar "pasta", "categoria" ou "pastinha", relacione com os seletores de pasta acima. Se usar "cartão", "produto" ou "vitrine", relacione com os seletores de card/grid acima. ' +
     'Nunca use JavaScript, apenas CSS puro. Não inclua as tags <style> ou <script>, apenas as regras CSS. ' +
     'Se o pedido do vendedor for vago (tipo só uma cor ou um clima), use sua criatividade dentro de um estilo artesanal/rústico/acolhedor. ' +
     'Se o vendedor pedir um ajuste depois de já ter gerado um CSS, gere a versão COMPLETA e atualizada (não só o trecho novo).'
