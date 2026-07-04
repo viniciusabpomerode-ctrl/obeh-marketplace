@@ -100,15 +100,6 @@
   </div>
 
   <div class="admin-wrap" id="adminArea" style="display:none;">
-    <h1>🛡️ Aprovação de lojas</h1>
-    <p class="admin-sub">Lojas novas ficam pendentes até serem aprovadas. Revise antes de liberar a loja no marketplace.</p>
-
-    <div id="lojasPendentes">
-      <p style="color:var(--ink-soft); font-size:14px;">Carregando...</p>
-    </div>
-
-    <hr style="margin:40px 0; border:none; border-top:1px solid var(--line);" />
-
     <h1>🏬 Todas as lojas</h1>
     <p class="admin-sub">Veja e edite qualquer loja da plataforma, independente do dono.</p>
     <input id="buscaLojas" type="text" placeholder="Buscar por nome da loja, dono ou e-mail..." style="width:100%; padding:10px 14px; border:1px solid var(--line); border-radius:8px; font-size:14px; margin-bottom:16px;" oninput="filtrarTodasLojas()" />
@@ -141,80 +132,10 @@
 
       document.getElementById('userEmail').textContent = user.email
       document.getElementById('adminArea').style.display = 'block'
-      await carregarLojasPendentes()
       await carregarTodasLojas()
       await carregarSuporte()
     })
 
-    async function carregarLojasPendentes() {
-      const container = document.getElementById('lojasPendentes')
-      const { data, error } = await supabaseClient
-        .from('lojas')
-        .select('*, users(nome, email, telefone)')
-        .eq('ativa', false)
-        .order('created_at', { ascending: true })
-
-      if (error) {
-        container.innerHTML = `<p style="color:#c94a4a;">Erro ao carregar lojas: ${error.message}</p>`
-        return
-      }
-
-      if (!data || data.length === 0) {
-        container.innerHTML = `<div class="empty-state"><p style="font-size:32px;">✅</p><p>Nenhuma loja pendente no momento.</p></div>`
-        return
-      }
-
-      container.innerHTML = data.map(loja => `
-        <div class="loja-card" id="loja-${loja.id}">
-          <div class="info">
-            <h3>${loja.nome_loja || 'Sem nome'}</h3>
-            <p>👤 ${loja.users?.nome || '—'} · ${loja.users?.email || '—'}</p>
-            <p>📞 ${loja.users?.telefone || 'Sem telefone'}</p>
-            <p>🗓️ Cadastrada em ${new Date(loja.created_at).toLocaleDateString('pt-BR')}</p>
-            ${loja.descricao ? `<p>📝 ${loja.descricao}</p>` : ''}
-          </div>
-          <div class="loja-actions">
-            <button class="btn-aprovar" onclick="aprovarLoja('${loja.id}')">Aprovar</button>
-            <button class="btn-recusar" onclick="recusarLoja('${loja.id}')">Recusar</button>
-          </div>
-        </div>
-      `).join('')
-    }
-
-    async function aprovarLoja(id) {
-      const { error } = await supabaseClient
-        .from('lojas')
-        .update({ ativa: true })
-        .eq('id', id)
-
-      if (error) {
-        alert('❌ Erro ao aprovar loja: ' + error.message)
-        return
-      }
-
-      const card = document.getElementById(`loja-${id}`)
-      if (card) card.remove()
-      alert('✅ Loja aprovada! Já está visível no marketplace.')
-      await carregarLojasPendentes()
-    }
-
-    async function recusarLoja(id) {
-      if (!confirm('Tem certeza que deseja recusar e remover esta loja? Essa ação não pode ser desfeita.')) return
-
-      const { error } = await supabaseClient
-        .from('lojas')
-        .delete()
-        .eq('id', id)
-
-      if (error) {
-        alert('❌ Erro ao recusar loja: ' + error.message)
-        return
-      }
-
-      const card = document.getElementById(`loja-${id}`)
-      if (card) card.remove()
-      await carregarLojasPendentes()
-    }
 
     async function carregarTodasLojas() {
       const container = document.getElementById('listaTodasLojas')
@@ -250,8 +171,12 @@
             <div class="loja-actions">
               <a href="loja.html?id=${loja.id}" target="_blank" class="btn btn-ghost" style="padding:8px 16px; font-size:13px;">Ver loja</a>
               <button class="btn-aprovar" onclick="toggleEditLoja('${loja.id}')">Editar</button>
+        <button class="btn-aprovar" onclick="toggleProdutosLojaAdmin('${loja.id}')">📦 Produtos</button>
+        <button class="btn-recusar" onclick="enviarAdvertenciaAdmin('${loja.id}','${loja.user_id}')">⚠️ Advertência</button>
+        <button class="btn-recusar" style="background:#c94a4a; color:#fff; border:none;" onclick="excluirLojaAdmin('${loja.id}')">🗑️ Excluir loja</button>
             </div>
           </div>
+        <div id="produtosArea-${loja.id}" style="display:none; margin-top:14px; border-top:1px solid var(--line); padding-top:14px;"></div>
           <div id="editForm-${loja.id}" style="display:none; margin-top:16px; border-top:1px solid var(--line); padding-top:16px;">
             <label style="font-size:13px; font-weight:600;">Nome da loja</label>
             <input id="edNome-${loja.id}" type="text" value="${(loja.nome_loja || '').replace(/"/g, '&quot;')}" style="width:100%; padding:8px 12px; border:1px solid var(--line); border-radius:8px; margin:6px 0 14px;" />
@@ -308,6 +233,77 @@
 
       alert('✅ Loja atualizada com sucesso!')
       await carregarTodasLojas()
+    }
+
+        async function excluirLojaAdmin(id) {
+      if (!confirm('Tem certeza que deseja EXCLUIR esta loja e todos os seus produtos? Essa ação não pode ser desfeita.')) return
+      await supabaseClient.from('produtos').delete().eq('loja_id', id)
+      const { error } = await supabaseClient.from('lojas').delete().eq('id', id)
+      if (error) {
+        alert('❌ Erro ao excluir loja: ' + error.message)
+        return
+      }
+      alert('✅ Loja excluída com sucesso.')
+      await carregarTodasLojas()
+    }
+
+    async function enviarAdvertenciaAdmin(lojaId, userId) {
+      const mensagem = prompt('Digite a mensagem de advertência para o vendedor:')
+      if (!mensagem || !mensagem.trim()) return
+      const { error } = await supabaseClient
+        .from('advertencias')
+        .insert({ loja_id: lojaId, user_id: userId, mensagem: mensagem.trim() })
+      if (error) {
+        alert('❌ Erro ao enviar advertência: ' + error.message)
+        return
+      }
+      alert('✅ Advertência enviada ao vendedor.')
+    }
+
+    async function toggleProdutosLojaAdmin(lojaId) {
+      const area = document.getElementById(`produtosArea-${lojaId}`)
+      if (!area) return
+      if (area.style.display === 'block') {
+        area.style.display = 'none'
+        return
+      }
+      area.style.display = 'block'
+      await carregarProdutosLojaAdmin(lojaId)
+    }
+
+    async function carregarProdutosLojaAdmin(lojaId) {
+      const area = document.getElementById(`produtosArea-${lojaId}`)
+      if (!area) return
+      area.innerHTML = '<p style="color:var(--ink-soft); font-size:13px;">Carregando produtos...</p>'
+      const { data, error } = await supabaseClient
+        .from('produtos')
+        .select('id, nome, preco, estoque, status')
+        .eq('loja_id', lojaId)
+        .order('created_at', { ascending: false })
+      if (error) {
+        area.innerHTML = `<p style="color:#c94a4a; font-size:13px;">Erro: ${error.message}</p>`
+        return
+      }
+      if (!data || data.length === 0) {
+        area.innerHTML = '<p style="color:var(--ink-soft); font-size:13px;">Nenhum produto cadastrado.</p>'
+        return
+      }
+      area.innerHTML = data.map(p => `
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--line); font-size:13px;">
+          <span>${p.nome} — R$ ${Number(p.preco).toFixed(2)} · Estoque: ${p.estoque} ${p.status === 'pausado' ? '(pausado)' : ''}</span>
+          <button class="btn-recusar" style="padding:4px 10px; font-size:12px;" onclick="excluirProdutoAdmin('${p.id}','${lojaId}')">Excluir</button>
+        </div>
+      `).join('')
+    }
+
+    async function excluirProdutoAdmin(produtoId, lojaId) {
+      if (!confirm('Excluir este produto?')) return
+      const { error } = await supabaseClient.from('produtos').delete().eq('id', produtoId)
+      if (error) {
+        alert('❌ Erro ao excluir produto: ' + error.message)
+        return
+      }
+      await carregarProdutosLojaAdmin(lojaId)
     }
 
     function filtrarTodasLojas() {
