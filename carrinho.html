@@ -299,9 +299,17 @@
       document.getElementById('cartCount').textContent = 0
     }
 
-    function finalizarCompra() {
+    async function finalizarCompra() {
       if (carrinho.length === 0) {
         alert('🛒 Seu carrinho está vazio!')
+        return
+      }
+
+      const usuario = await getCurrentUser()
+      if (!usuario) {
+        if (confirm('Você precisa estar logado pra finalizar a compra. Ir para o login agora?')) {
+          window.location.href = 'login.html'
+        }
         return
       }
 
@@ -309,13 +317,73 @@
       const total = getTotalCarrinho()
       const quantidade = getQuantidadeCarrinho()
 
-      if (confirm(`🛍️ Confirmar compra de ${quantidade} item(s) no valor total de R$ ${total.toFixed(2)}?`)) {
-        alert('✅ Pedido finalizado com sucesso! Em breve você receberá as instruções de pagamento via Mercado Pago.')
-        carrinho = []
-        renderizarCarrinhoCompleto()
-        atualizarCarrinhoUI()
-        document.getElementById('cartCount').textContent = 0
+      if (!confirm(`🛍️ Confirmar compra de ${quantidade} item(s) no valor total de R$ ${total.toFixed(2)}?`)) {
+        return
       }
+
+      const btnFinalizar = document.querySelector('.carrinho-total .btn-primary')
+      if (btnFinalizar) {
+        btnFinalizar.disabled = true
+        btnFinalizar.textContent = 'Processando...'
+      }
+
+      const resultados = []
+      const erros = []
+
+      for (const item of carrinho) {
+        try {
+          const res = await fetch('/.netlify/functions/mp-criar-pagamento', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ produtoId: item.id, quantidade: item.quantidade, compradorId: usuario.id })
+          })
+          const data = await res.json()
+          if (!res.ok || !data.initPoint) {
+            erros.push(item.nome)
+            continue
+          }
+          resultados.push({ nome: item.nome, initPoint: data.initPoint })
+        } catch (err) {
+          erros.push(item.nome)
+        }
+      }
+
+      if (btnFinalizar) {
+        btnFinalizar.disabled = false
+        btnFinalizar.textContent = 'Finalizar compra'
+      }
+
+      if (resultados.length === 0) {
+        alert('❌ Não foi possível iniciar o pagamento agora. Tente novamente em instantes.')
+        return
+      }
+
+      carrinho = []
+      renderizarCarrinhoCompleto()
+      atualizarCarrinhoUI()
+      document.getElementById('cartCount').textContent = 0
+
+      if (erros.length > 0) {
+        alert(`⚠️ Não foi possível iniciar o pagamento de: ${erros.join(', ')}. Os outros itens seguem normalmente pro pagamento.`)
+      }
+
+      if (resultados.length === 1) {
+        window.location.href = resultados[0].initPoint
+        return
+      }
+
+      // Carrinho com produtos de vendedores diferentes: o Mercado Pago processa
+      // um pagamento por vez pra cada vendedor, então mostra um link pra cada um.
+      const container = document.getElementById('carrinhoContent')
+      container.innerHTML = `
+        <div class="carrinho-vazio">
+          <p style="font-size:18px; font-weight:500;">✅ Pedido registrado!</p>
+          <p style="font-size:14px; margin-top:8px;">Como seu carrinho tinha produtos de vendedores diferentes, finalize o pagamento de cada um separadamente:</p>
+          <div style="display:flex; flex-direction:column; gap:10px; margin-top:16px; align-items:center;">
+            ${resultados.map(r => `<a class="btn btn-primary" href="${r.initPoint}" target="_blank" rel="noopener">Pagar: ${r.nome}</a>`).join('')}
+          </div>
+        </div>
+      `
     }
 
     // ===== EXPORTA FUNÇÕES =====
