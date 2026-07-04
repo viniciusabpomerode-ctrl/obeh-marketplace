@@ -1,17 +1,18 @@
 // ============================================
-// FUNÇÃO NETLIFY - CALCULAR FRETE (Correios)
+// FUNÇÃO NETLIFY - CALCULAR FRETE
 // Recebe um CEP de destino e a lista de produtos do carrinho e devolve
 // uma estimativa de frete pra cada loja envolvida (agrupando os produtos
 // por vendedor, já que cada loja despacha separadamente).
 //
-// Se a loja não tiver CEP de origem cadastrado, ou se as credenciais da
-// API dos Correios não estiverem configuradas no servidor, a função cai
-// num cálculo aproximado (baseado só no peso) pra não travar o checkout
-// — assim que as credenciais forem cadastradas, o cálculo passa a usar
-// os preços reais dos Correios automaticamente.
+// Ordem de prioridade pra cada loja:
+//   1) SuperFrete, se a loja tiver um token pessoal cadastrado (lojas.superfrete_token)
+//   2) Correios (API oficial), se o servidor tiver credenciais configuradas
+//   3) Frete manual por região (tabela fretes_regiao), se a loja tiver faixas cadastradas
+//   4) Estimativa aproximada baseada só no peso, como último recurso
 //
-// Precisa das variáveis de ambiente (todas opcionais — sem elas, usa a
-// estimativa aproximada):
+// Precisa das variáveis de ambiente (todas opcionais — sem elas, usa os
+// fallbacks abaixo):
+//   SUPERFRETE_BASE_URL        - https://api.superfrete.com (padrão) ou https://sandbox.superfrete.com
 //   CORREIOS_USUARIO           - usuário de acesso à API dos Correios
 //   CORREIOS_CODIGO_ACESSO     - código de acesso (senha) da API
 //   CORREIOS_NUMERO_CARTAO     - número do cartão de postagem
@@ -29,6 +30,21 @@ const CORREIOS_CODIGO_ACESSO = process.env.CORREIOS_CODIGO_ACESSO
 const CORREIOS_NUMERO_CARTAO = process.env.CORREIOS_NUMERO_CARTAO
 const CORREIOS_CONTRATO = process.env.CORREIOS_CONTRATO
 const CORREIOS_DR = process.env.CORREIOS_DR
+
+const SUPERFRETE_BASE_URL = process.env.SUPERFRETE_BASE_URL || 'https://api.superfrete.com'
+const SUPERFRETE_CONTATO = process.env.SUPERFRETE_CONTATO || 'contato@obeh.com.br'
+
+// Faixas de CEP (2 primeiros dígitos) por região, pra usar o frete manual por região
+// quando não há SuperFrete nem Correios configurados.
+function regiaoPorCep(cepDestino) {
+  const prefixo = Number(String(cepDestino).slice(0, 2))
+  if (prefixo <= 39) return 'Sudeste' // SP, RJ, ES, MG
+  if (prefixo <= 65) return 'Nordeste' // BA, SE, PE, AL, PB, RN, CE, PI, MA
+  if (prefixo <= 69) return 'Norte' // PA, AP, AM, RR, AC
+  if (prefixo === 77) return 'Norte' // TO
+  if (prefixo <= 76 || prefixo === 78 || prefixo === 79) return 'Centro-Oeste' // DF, GO, MT, MS
+  return 'Sul' // PR, SC, RS
+}
 
 // Códigos de serviço dos Correios (tabela pública, não muda por contrato)
 const SERVICOS = [
@@ -141,6 +157,69 @@ async function calcularFreteReal(cepOrigem, cepDestino, pesoTotalKg, dimensoes) 
   return { estimativaAproximada: false, opcoes }
 }
 
+async function calcularFreteSuperFrete(token, cepOrigem, cepDestino, produtosGrupo) {
+  const res = await fetch(`${SUPERFRETE_BASE_URL}/api/v0/calculator`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'User-Agent': `Obeh Marketplace (${SUPERFRETE_CONTATO})`,
+      Accept: 'application/json',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      from: { postal_code: cepOrigem.replace(/\D/g, '') },
+      to: { postal_code: cepDestino.replace(/\D/g, '') },
+      products: produtosGrupo.map(p => ({
+        quantity: p.quantidade,
+        height: p.altura,
+        length: p.comprimento,
+        width: p.largura,
+        weight: p.peso
+      }))
+    })
+  })
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => '')
+    throw new Error(`SuperFrete respondeu ${res.status}: ${text}`)
+  }
+
+  const data = await res.json()
+  const lista = Array.isArray(data) ? data : (data.opcoes || data.options || [])
+  const opcoes = lista
+    .filter(o => !o.error && (o.price || o.custom_price))
+    .map(o => ({
+      servico: String(o.id ?? o.name ?? 'superfrete'),
+      nome: o.name || 'Frete',
+      preco: Number(o.custom_price ?? o.price),
+      prazoDias: o.delivery_time ? Number(o.delivery_time) : (o.delivery_range?.max ? Number(o.delivery_range.max) : null)
+    }))
+
+  if (opcoes.length === 0) {
+    throw new Error('SuperFrete não retornou nenhuma opção válida.')
+  }
+
+  return { estimativaAproximada: false, opcoes }
+}
+
+function calcularFreteManualPorRegiao(faixas, cepDestino, quantidadeTotal) {
+  const regiao = regiaoPorCep(cepDestino)
+  const faixa = faixas.find(f =>
+    f.regiao === regiao &&
+    quantidadeTotal >= f.quantidade_min &&
+    quantidadeTotal <= f.quantidade_max
+  )
+  if (!faixa) return null
+
+  const preco = faixa.frete_gratis ? 0 : Number(faixa.preco)
+  return {
+    estimativaAproximada: false,
+    opcoes: [
+      { servico: 'manual', nome: faixa.frete_gratis ? 'Frete grátis' : 'Frete', preco, prazoDias: null }
+    ]
+  }
+}
+
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Método não permitido.' }
@@ -167,7 +246,7 @@ exports.handler = async (event) => {
   try {
     const ids = itens.map(i => i.produtoId).filter(Boolean)
     const produtos = await supabaseRequest(
-      `produtos?id=in.(${ids.join(',')})&select=id,loja_id,peso_kg,altura_cm,largura_cm,comprimento_cm,lojas(id,nome_loja,cep_origem)`
+      `produtos?id=in.(${ids.join(',')})&select=id,loja_id,peso_kg,altura_cm,largura_cm,comprimento_cm,lojas(id,nome_loja,cep_origem,superfrete_token)`
     )
 
     // Agrupa os itens por loja, já que cada vendedor despacha separadamente
@@ -181,27 +260,51 @@ exports.handler = async (event) => {
           lojaId,
           nomeLoja: produto.lojas?.nome_loja || 'Loja',
           cepOrigem: produto.lojas?.cep_origem || null,
+          superfreteToken: produto.lojas?.superfrete_token || null,
+          quantidadeTotal: 0,
           pesoTotalKg: 0,
           altura: 10,
           largura: 15,
-          comprimento: 20
+          comprimento: 20,
+          itensDetalhados: []
         }
       }
       const grupo = porLoja[lojaId]
-      grupo.pesoTotalKg += Number(produto.peso_kg || 0.3) * Number(item.quantidade || 1)
+      const quantidade = Number(item.quantidade || 1)
+      grupo.quantidadeTotal += quantidade
+      grupo.pesoTotalKg += Number(produto.peso_kg || 0.3) * quantidade
       grupo.altura = Math.max(grupo.altura, Number(produto.altura_cm || 10))
       grupo.largura = Math.max(grupo.largura, Number(produto.largura_cm || 15))
       grupo.comprimento = Math.max(grupo.comprimento, Number(produto.comprimento_cm || 20))
+      grupo.itensDetalhados.push({
+        quantidade,
+        peso: Number(produto.peso_kg || 0.3),
+        altura: Number(produto.altura_cm || 10),
+        largura: Number(produto.largura_cm || 15),
+        comprimento: Number(produto.comprimento_cm || 20)
+      })
     }
 
-    const credenciaisOk = CORREIOS_USUARIO && CORREIOS_CODIGO_ACESSO && CORREIOS_NUMERO_CARTAO && CORREIOS_CONTRATO && CORREIOS_DR
+    const credenciaisCorreiosOk = CORREIOS_USUARIO && CORREIOS_CODIGO_ACESSO && CORREIOS_NUMERO_CARTAO && CORREIOS_CONTRATO && CORREIOS_DR
+
+    const lojaIdsComGrupo = Object.keys(porLoja)
+    const todasFaixas = lojaIdsComGrupo.length > 0
+      ? await supabaseRequest(`fretes_regiao?loja_id=in.(${lojaIdsComGrupo.join(',')})&select=*`)
+      : []
 
     const fretes = []
     for (const grupo of Object.values(porLoja)) {
-      let resultado
-      if (!credenciaisOk || !grupo.cepOrigem) {
-        resultado = calcularEstimativaAproximada(grupo.pesoTotalKg)
-      } else {
+      let resultado = null
+
+      if (grupo.superfreteToken && grupo.cepOrigem) {
+        try {
+          resultado = await calcularFreteSuperFrete(grupo.superfreteToken, grupo.cepOrigem, cepLimpo, grupo.itensDetalhados)
+        } catch (err) {
+          console.error('Falha ao calcular frete via SuperFrete, tentando próxima opção:', err.message)
+        }
+      }
+
+      if (!resultado && credenciaisCorreiosOk && grupo.cepOrigem) {
         try {
           resultado = await calcularFreteReal(grupo.cepOrigem, cepLimpo, grupo.pesoTotalKg, {
             altura: grupo.altura,
@@ -209,9 +312,17 @@ exports.handler = async (event) => {
             comprimento: grupo.comprimento
           })
         } catch (err) {
-          console.error('Falha ao calcular frete real, usando estimativa aproximada:', err.message)
-          resultado = calcularEstimativaAproximada(grupo.pesoTotalKg)
+          console.error('Falha ao calcular frete real, tentando próxima opção:', err.message)
         }
+      }
+
+      if (!resultado) {
+        const faixasDaLoja = todasFaixas.filter(f => f.loja_id === grupo.lojaId)
+        resultado = calcularFreteManualPorRegiao(faixasDaLoja, cepLimpo, grupo.quantidadeTotal)
+      }
+
+      if (!resultado) {
+        resultado = calcularEstimativaAproximada(grupo.pesoTotalKg)
       }
 
       fretes.push({

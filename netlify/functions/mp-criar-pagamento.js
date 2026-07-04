@@ -55,7 +55,7 @@ exports.handler = async (event) => {
     return { statusCode: 400, body: JSON.stringify({ error: 'Corpo da requisição inválido.' }) }
   }
 
-  const { produtoId, quantidade, compradorId } = payload
+  const { produtoId, quantidade, compradorId, cupomCodigo } = payload
 
   if (!produtoId || !quantidade || !compradorId) {
     return { statusCode: 400, body: JSON.stringify({ error: 'produtoId, quantidade e compradorId são obrigatórios.' }) }
@@ -74,7 +74,22 @@ exports.handler = async (event) => {
     }
 
     const vendedorId = produto.user_id || produto.lojas?.user_id
-    const valorUnitario = Number(produto.preco)
+    let valorUnitario = Number(produto.preco)
+
+    // 1b. Aplica cupom de desconto da loja, se um código válido foi informado
+    // (a validação é sempre refeita aqui no servidor, nunca confiando no desconto calculado no navegador)
+    if (cupomCodigo) {
+      const hoje = new Date().toISOString().slice(0, 10)
+      const cupomRes = await supabaseRequest(
+        `cupons?loja_id=eq.${produto.loja_id}&codigo=eq.${encodeURIComponent(cupomCodigo)}&ativo=eq.true&select=*`
+      )
+      const cupons = await cupomRes.json()
+      const cupom = cupons.find(c => !c.validade || c.validade >= hoje)
+      if (cupom) {
+        valorUnitario = Math.round(valorUnitario * (1 - Number(cupom.desconto_percentual) / 100) * 100) / 100
+      }
+    }
+
     const valorTotal = Math.round(valorUnitario * Number(quantidade) * 100) / 100
 
     // 2. Busca o plano do vendedor pra saber a taxa da Obeh

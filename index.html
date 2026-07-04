@@ -70,7 +70,9 @@
         </div>
 
         <a href="#categorias">Categorias</a>
+        <a href="lojas.html">🏪 Lojas</a>
         <a href="cursos.html">🎓 Cursos</a>
+        <a href="embaixadores.html">💛 Embaixadores</a>
         <a href="#como-funciona">Como funciona</a>
         <a href="#vender">Vender</a>
 
@@ -187,6 +189,9 @@
     <div class="cat-row" id="catRow">
       <!-- Injetado via JS -->
     </div>
+    <div class="cat-row" id="catRowOutras" style="display:none; margin-top:8px;">
+      <!-- Categorias sem destaque, injetado via JS -->
+    </div>
   </div>
 
   <!-- ===== VITRINE ===== -->
@@ -216,7 +221,7 @@
         <div class="step">
           <div class="step-num">01 — Cadastro</div>
           <h3>O artesão publica</h3>
-          <p>Cria a loja, sobe fotos e descreve a peça. Os 2 primeiros produtos do mês são grátis.</p>
+          <p>Cria a loja, sobe fotos e descreve a peça. O plano grátis já vem com até 30 produtos, sem custo nenhum.</p>
         </div>
         <div class="step">
           <div class="step-num">02 — Venda</div>
@@ -238,15 +243,16 @@
       <!-- DIFERENCIAL PRINCIPAL -->
       <div style="text-align:center; background:var(--clay); color:var(--white); padding:28px 20px; border-radius:8px; margin-bottom:40px;">
         <div style="font-size:44px; margin-bottom:8px;">🎯</div>
-        <h2 style="color:var(--white); font-size:clamp(28px,3vw,38px);">Sem comissão. Sem taxa por venda.</h2>
+        <h2 style="color:var(--white); font-size:clamp(28px,3vw,38px);">Taxas justas, que caem conforme você cresce.</h2>
         <p style="font-size:16px; margin-top:10px; max-width:600px; margin-left:auto; margin-right:auto;">
-          O Obeh <strong>não cobra comissão sobre nenhuma venda</strong> e não tem taxa por produto listado.
-          O valor cai 100% direto na sua conta Mercado Pago. Se um dia você quiser vender além do limite
-          gratuito, é só <strong>R$ 7,99/mês</strong> — não é comissão, é uma assinatura fixa pra vender o quanto você quiser.
+          Manter a plataforma no ar, segura e funcionando tem custo — por isso cobramos uma pequena taxa por venda.
+          Mas ela é <strong>a menor possível</strong> pra viabilizar o Obeh, nunca uma taxa abusiva: começa em <strong>5%</strong> no
+          plano grátis e cai pra <strong>4%, 2%</strong> e até <strong>0%</strong> conforme você assina um plano melhor.
+          O pagamento cai direto na sua conta do Mercado Pago, já com a taxa descontada automaticamente.
         </p>
         <div style="display:flex; gap:20px; justify-content:center; margin-top:16px; flex-wrap:wrap; font-size:14px;">
-          <span>✅ 0% de comissão</span>
-          <span>✅ Sem taxa por produto</span>
+          <span>✅ Taxas transparentes, sem letras miúdas</span>
+          <span>✅ Taxa cai conforme o plano cresce</span>
           <span>✅ Recebimento direto via Mercado Pago</span>
         </div>
       </div>
@@ -266,9 +272,9 @@
           <div class="plan-desc">Para começar ou vender poucas peças.</div>
           <div class="plan-price"><span class="num">R$0</span><span class="per">/mês</span></div>
           <ul class="plan-list">
-            <li><span class="check">✅</span> Até 2 produtos/mês</li>
+            <li><span class="check">✅</span> Até 30 produtos</li>
             <li><span class="check">✅</span> Loja personalizada</li>
-            <li><span class="check">✅</span> 0% de comissão</li>
+            <li><span class="check">✅</span> Taxa de 5% por venda</li>
             <li><span class="check">✅</span> Pagamento direto MP</li>
           </ul>
           <a href="cadastro.html" class="btn btn-outline">Criar loja grátis</a>
@@ -278,15 +284,15 @@
         <div class="plan reco">
           <div class="plan-badge">🌟 Mais escolhido</div>
           <div class="plan-name">Loja Basic</div>
-          <div class="plan-desc">Vende quanto quiser, sem limite mensal.</div>
+          <div class="plan-desc">Mais produtos e taxa menor.</div>
           <div class="plan-price"><span class="num">R$9,99</span><span class="per">/mês</span></div>
           <ul class="plan-list">
-            <li><span class="check">✅</span> Produtos ilimitados</li>
+            <li><span class="check">✅</span> Até 100 produtos</li>
             <li><span class="check">✅</span> Selo verificado</li>
-            <li><span class="check">✅</span> 0% de comissão</li>
+            <li><span class="check">✅</span> Taxa de 4% por venda</li>
             <li><span class="check">✅</span> Estatísticas básicas</li>
           </ul>
-          <a href="#" class="btn btn-primary" onclick="event.preventDefault(); alert('🔗 Em breve você poderá assinar via Stripe!')">Assinar Basic</a>
+          <a href="assinar.html?plano=basic" class="btn btn-primary">Assinar Basic</a>
         </div>
 
         <!-- Plano Pro -->
@@ -295,12 +301,26 @@
           <div class="plan-desc">Para ateliês com movimento.</div>
           <div class="plan-price"><span class="num">R$14,99</span><span class="per">/mês</span></div>
           <ul class="plan-list">
-            <li><span class="check">✅</span> Tudo do Basic</li>
+            <li><span class="check">✅</span> Até 200 produtos</li>
             <li><span class="check">✅</span> Destaque nas buscas</li>
             <li><span class="check">✅</span> Cupons personalizados</li>
-            <li><span class="check">✅</span> 0% de comissão</li>
+            <li><span class="check">✅</span> Taxa de 2% por venda</li>
           </ul>
-          <a href="#" class="btn btn-outline" onclick="event.preventDefault(); alert('🔗 Em breve você poderá assinar via Stripe!')">Assinar Pro</a>
+          <a href="assinar.html?plano=pro" class="btn btn-outline">Assinar Pro</a>
+        </div>
+
+        <!-- Plano Ultra -->
+        <div class="plan">
+          <div class="plan-name">Loja Ultra</div>
+          <div class="plan-desc">Pra quem vive de artesanato.</div>
+          <div class="plan-price"><span class="num">R$29,99</span><span class="per">/mês</span></div>
+          <ul class="plan-list">
+            <li><span class="check">✅</span> Produtos ilimitados</li>
+            <li><span class="check">✅</span> Venda cursos na plataforma</li>
+            <li><span class="check">✅</span> Máximo destaque nas buscas</li>
+            <li><span class="check">✅</span> 0% de taxa por venda</li>
+          </ul>
+          <a href="assinar.html?plano=ultra" class="btn btn-outline">Assinar Ultra</a>
         </div>
       </div>
 
@@ -308,8 +328,9 @@
       <div class="mp-note">
         <span>💳</span>
         <div>
-          <strong>O pagamento é 100% direto:</strong> O cliente paga via Mercado Pago e o valor vai direto para a conta do artesão.
-          O Obeh <strong>não retém nem intermedeia</strong> o dinheiro das vendas. As assinaturas são cobradas à parte via Stripe.
+          <strong>O pagamento é direto:</strong> O cliente paga via Mercado Pago e o valor vai direto para a conta do artesão,
+          já com a taxa da Obeh descontada automaticamente. O Obeh <strong>não retém nem intermedeia</strong> o dinheiro das vendas.
+          As assinaturas de plano são cobradas à parte via Stripe.
         </div>
       </div>
     </div>
@@ -411,17 +432,61 @@
       const data = await getCategorias()
       categoriasGlobal = data
 
+      const destaque = data.filter(cat => cat.destaque !== false)
+      const outras = data.filter(cat => cat.destaque === false)
+
       const container = document.getElementById('catRow')
       container.innerHTML = `
               <div class="chip active" onclick="filtrarPorCategoria(null)">
                 <span class="dot"></span>Todas
               </div>
-              ${data.map(cat => `
+              ${destaque.map(cat => `
                 <div class="chip" onclick="filtrarPorCategoria('${cat.id}')">
                   <span class="dot"></span>${cat.nome}
                 </div>
               `).join('')}
+              ${outras.length > 0 ? `
+                <div class="chip" onclick="toggleOutrasCategorias()" id="chipOutros">
+                  <span class="dot"></span>Outros ▾
+                </div>
+              ` : ''}
             `
+
+      const containerOutras = document.getElementById('catRowOutras')
+      if (outras.length > 0) {
+        containerOutras.innerHTML = outras.map(cat => `
+          <div class="chip" onclick="filtrarPorCategoria('${cat.id}')">
+            <span class="dot"></span>${cat.nome}
+          </div>
+        `).join('')
+      } else {
+        containerOutras.innerHTML = ''
+      }
+    }
+
+    window.toggleOutrasCategorias = function() {
+      const containerOutras = document.getElementById('catRowOutras')
+      const chip = document.getElementById('chipOutros')
+      const aberto = containerOutras.style.display === 'flex'
+      containerOutras.style.display = aberto ? 'none' : 'flex'
+      if (chip) chip.innerHTML = `<span class="dot"></span>Outros ${aberto ? '▾' : '▴'}`
+    }
+
+    // Preço (com riscado + badge de promoção quando em_promocao) usado nos cards de produto
+    function renderPrecoCard(p) {
+      if (p.em_promocao && p.preco_antigo) {
+        return `
+          <div class="price">
+            <span style="text-decoration:line-through; color:var(--ink-soft); font-size:12px; margin-right:6px;">R$ ${Number(p.preco_antigo).toFixed(2)}</span>
+            R$ ${Number(p.preco).toFixed(2)}
+          </div>
+        `
+      }
+      return `<div class="price">R$ ${Number(p.preco).toFixed(2)}</div>`
+    }
+
+    function ordenarPorDestaque(lista) {
+      return lista.slice().sort((a, b) => (b.destaque ? 1 : 0) - (a.destaque ? 1 : 0))
     }
 
     // ===== CARREGAR PRODUTOS =====
@@ -429,9 +494,9 @@
       const data = await getProducts()
       produtosGlobal = data
 
-      let produtosFiltrados = data
+      let produtosFiltrados = ordenarPorDestaque(data)
       if (filtroCategoria) {
-        produtosFiltrados = data.filter(p => p.categoria_id === filtroCategoria)
+        produtosFiltrados = produtosFiltrados.filter(p => p.categoria_id === filtroCategoria)
       }
 
       const grid = document.getElementById('productGrid')
@@ -450,6 +515,7 @@
       grid.innerHTML = produtosFiltrados.map(p => `
               <div class="card" onclick="window.location.href='produto.html?id=${p.id}'">
                 <div class="card-media" style="background:${p.fotos && p.fotos.length > 0 ? '#E9DFC7' : '#E9DFC7'}">
+                  ${p.em_promocao ? '<span class="card-badge" style="position:absolute; top:10px; left:10px; background:var(--clay); color:#fff; font-size:11px; font-weight:700; padding:3px 10px; border-radius:999px;">🔥 Promoção</span>' : ''}
                   ${p.fotos && p.fotos.length > 0
                     ? `<img src="${p.fotos[0]}" alt="${p.nome}" loading="lazy" />`
                     : `<span class="placeholder">🧵</span>`
@@ -460,7 +526,7 @@
                   <div class="card-title">${p.nome}</div>
                   <div class="card-maker">${p.lojas?.nome_loja || 'Artesão'}</div>
                   <div class="card-foot">
-                    <div class="price">R$ ${Number(p.preco).toFixed(2)}</div>
+                    ${renderPrecoCard(p)}
                     <button class="card-add" onclick="event.stopPropagation(); adicionarAoCarrinhoClique('${p.id}')">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
                     </button>
@@ -725,9 +791,10 @@
         return
       }
 
-      grid.innerHTML = produtosFiltrados.map(p => `
+      grid.innerHTML = ordenarPorDestaque(produtosFiltrados).map(p => `
               <div class="card" onclick="window.location.href='produto.html?id=${p.id}'">
                 <div class="card-media" style="background:${p.fotos && p.fotos.length > 0 ? '#E9DFC7' : '#E9DFC7'}">
+                  ${p.em_promocao ? '<span class="card-badge" style="position:absolute; top:10px; left:10px; background:var(--clay); color:#fff; font-size:11px; font-weight:700; padding:3px 10px; border-radius:999px;">🔥 Promoção</span>' : ''}
                   ${p.fotos && p.fotos.length > 0
                     ? `<img src="${p.fotos[0]}" alt="${p.nome}" loading="lazy" />`
                     : `<span class="placeholder">🧵</span>`
@@ -738,7 +805,7 @@
                   <div class="card-title">${p.nome}</div>
                   <div class="card-maker">${p.lojas?.nome_loja || 'Artesão'}</div>
                   <div class="card-foot">
-                    <div class="price">R$ ${Number(p.preco).toFixed(2)}</div>
+                    ${renderPrecoCard(p)}
                     <button class="card-add" onclick="event.stopPropagation(); adicionarAoCarrinhoClique('${p.id}')">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
                     </button>
@@ -775,7 +842,7 @@
                 `
         } else {
           heroTitle.innerHTML = 'Transforme seu <span class="stitch">talento</span> em renda.'
-          heroSub.textContent = 'Sem comissão sobre vendas e sem taxa por produto. Cadastre sua loja grátis, publique até 2 produtos por mês sem custo. Quando crescer, é só R$ 7,99/mês pra vender sem limites — o pagamento vai direto pra sua conta.'
+          heroSub.textContent = 'Crie sua loja grátis com até 30 produtos e a menor taxa possível: só 5% por venda, o mínimo pra manter a plataforma no ar. Quer vender mais e pagar menos? A taxa cai conforme você cresce, até chegar a 0% no plano Ultra — e o pagamento sempre vai direto pra sua conta.'
           heroCtas.innerHTML = `
                   <a href="cadastro.html" class="btn btn-primary">Criar minha loja</a>
                   <a href="#vender" class="btn btn-ghost">Ver planos</a>

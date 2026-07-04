@@ -197,6 +197,21 @@
     <div class="produto-grid" id="produtoContent">
       <!-- Injetado via JS -->
     </div>
+
+    <div id="avaliacoesSection" style="margin-top:16px; border-top:1px solid var(--line); padding-top:24px;">
+      <h2 style="font-size:20px; margin-bottom:12px;">⭐ Avaliações</h2>
+      <div id="avaliacoesResumo" style="margin-bottom:16px; font-size:15px;"></div>
+
+      <div id="avaliarFormBox" style="display:none; margin-bottom:24px; border:1px solid var(--line); border-radius:8px; padding:16px;">
+        <h3 style="font-size:15px; margin-bottom:10px;">Deixe sua avaliação</h3>
+        <div id="avaliarEstrelas" style="font-size:24px; cursor:pointer; margin-bottom:10px;"></div>
+        <textarea id="avaliarComentario" placeholder="Conte como foi sua experiência com esta peça (opcional)..."></textarea>
+        <button type="button" class="btn btn-primary" style="margin-top:10px;" onclick="enviarAvaliacao()">Enviar avaliação</button>
+        <small id="avaliarStatus" style="display:block; margin-top:8px;"></small>
+      </div>
+
+      <div id="avaliacoesLista"></div>
+    </div>
   </div>
 
   <!-- ===== CARRINHO MODAL ===== -->
@@ -245,7 +260,128 @@
       await carregarProduto(produtoId)
       carregarCarrinho()
       atualizarCarrinhoUI()
+      await carregarAvaliacoes(produtoId)
+      await verificarPodeAvaliar(produtoId)
     })
+
+    // ===== AVALIAÇÕES =====
+    let notaSelecionada = 0
+
+    async function carregarAvaliacoes(produtoId) {
+      const { data, error } = await supabaseClient
+        .from('avaliacoes')
+        .select('*, users:comprador_id(nome)')
+        .eq('produto_id', produtoId)
+        .order('created_at', { ascending: false })
+
+      const resumoEl = document.getElementById('avaliacoesResumo')
+      const listaEl = document.getElementById('avaliacoesLista')
+
+      if (error || !data || data.length === 0) {
+        resumoEl.textContent = 'Este produto ainda não tem avaliações.'
+        listaEl.innerHTML = ''
+        return
+      }
+
+      const media = data.reduce((acc, a) => acc + Number(a.nota), 0) / data.length
+      resumoEl.innerHTML = `<strong>⭐ ${media.toFixed(1)}</strong> de 5 · ${data.length} avaliação(ões)`
+
+      listaEl.innerHTML = data.map(a => `
+        <div style="border-top:1px solid var(--line); padding:12px 0;">
+          <div>${'⭐'.repeat(a.nota)}${'☆'.repeat(5 - a.nota)} <strong style="font-size:13px;">${a.users?.nome || 'Comprador'}</strong></div>
+          ${a.comentario ? `<p style="font-size:14px; color:var(--ink-soft); margin-top:4px;">${a.comentario}</p>` : ''}
+        </div>
+      `).join('')
+    }
+
+    // Só pode avaliar quem teve uma compra concluída deste produto e ainda não avaliou
+    async function verificarPodeAvaliar(produtoId) {
+      const usuario = await getCurrentUser()
+      if (!usuario) return
+
+      const { data: vendasConcluidas } = await supabaseClient
+        .from('vendas')
+        .select('id')
+        .eq('produto_id', produtoId)
+        .eq('comprador_id', usuario.id)
+        .in('status', ['pago', 'concluida', 'aprovado', 'approved'])
+
+      if (!vendasConcluidas || vendasConcluidas.length === 0) return
+
+      const { data: avaliacaoExistente } = await supabaseClient
+        .from('avaliacoes')
+        .select('id')
+        .eq('produto_id', produtoId)
+        .eq('comprador_id', usuario.id)
+        .maybeSingle()
+
+      if (avaliacaoExistente) return
+
+      document.getElementById('avaliarFormBox').style.display = 'block'
+      renderEstrelasSelecionaveis()
+    }
+
+    function renderEstrelasSelecionaveis() {
+      const container = document.getElementById('avaliarEstrelas')
+      container.innerHTML = [1, 2, 3, 4, 5].map(n => `<span onclick="selecionarNota(${n})" id="estrela-${n}">☆</span>`).join('')
+    }
+
+    function selecionarNota(n) {
+      notaSelecionada = n
+      for (let i = 1; i <= 5; i++) {
+        document.getElementById(`estrela-${i}`).textContent = i <= n ? '⭐' : '☆'
+      }
+    }
+
+    async function enviarAvaliacao() {
+      const statusEl = document.getElementById('avaliarStatus')
+      if (notaSelecionada === 0) {
+        statusEl.textContent = '❌ Escolha de 1 a 5 estrelas.'
+        return
+      }
+
+      const usuario = await getCurrentUser()
+      if (!usuario || !produtoData) return
+
+      const comentario = document.getElementById('avaliarComentario').value.trim()
+
+      const { error } = await supabaseClient.from('avaliacoes').insert({
+        produto_id: produtoData.id,
+        loja_id: produtoData.loja_id,
+        comprador_id: usuario.id,
+        nota: notaSelecionada,
+        comentario
+      })
+
+      if (error) {
+        statusEl.textContent = '❌ Não foi possível enviar sua avaliação: ' + error.message
+        return
+      }
+
+      await recalcularNotaLoja(produtoData.loja_id)
+
+      document.getElementById('avaliarFormBox').style.display = 'none'
+      await carregarAvaliacoes(produtoData.id)
+    }
+
+    async function recalcularNotaLoja(lojaId) {
+      const { data } = await supabaseClient
+        .from('avaliacoes')
+        .select('nota')
+        .eq('loja_id', lojaId)
+
+      if (!data || data.length === 0) return
+
+      const media = data.reduce((acc, a) => acc + Number(a.nota), 0) / data.length
+
+      await supabaseClient
+        .from('lojas')
+        .update({ nota_media: Math.round(media * 100) / 100, total_avaliacoes: data.length })
+        .eq('id', lojaId)
+    }
+
+    window.selecionarNota = selecionarNota
+    window.enviarAvaliacao = enviarAvaliacao
 
     // ===== CARREGAR PRODUTO =====
     async function carregarProduto(id) {
@@ -316,7 +452,11 @@
               <div class="loja-link" onclick="window.location.href='loja.html?id=${lojaData?.id}'">
                 🏪 ${lojaData?.nome_loja || 'Artesão'}
               </div>
-              <div class="price-large">R$ ${Number(p.preco).toFixed(2)}</div>
+              ${p.em_promocao ? '<span style="display:inline-block; background:var(--clay); color:#fff; font-size:12px; font-weight:700; padding:3px 12px; border-radius:999px; margin-bottom:6px;">🔥 Promoção</span>' : ''}
+              <div class="price-large">
+                ${p.em_promocao && p.preco_antigo ? `<span style="text-decoration:line-through; color:var(--ink-soft); font-size:16px; margin-right:10px;">R$ ${Number(p.preco_antigo).toFixed(2)}</span>` : ''}
+                R$ ${Number(p.preco).toFixed(2)}
+              </div>
               <div class="descricao">${p.descricao || 'Sem descrição detalhada.'}</div>
 
               <div class="produto-actions">

@@ -216,6 +216,65 @@
     // CARRINHO.JS - PÁGINA DO CARRINHO
     // ============================================
 
+    // ===== CUPOM DE DESCONTO =====
+    let cupomAplicado = null
+    let descontosPorLoja = {} // { lojaId: desconto_percentual }
+
+    function getTotalComDesconto() {
+      return carrinho.reduce((total, item) => {
+        const desconto = descontosPorLoja[item.loja_id] || 0
+        const precoComDesconto = Number(item.preco) * (1 - desconto / 100)
+        return total + precoComDesconto * item.quantidade
+      }, 0)
+    }
+
+    async function aplicarCupom() {
+      const resultadoEl = document.getElementById('cupomResultado')
+      const codigo = document.getElementById('cupomInput').value.trim().toUpperCase()
+      if (!codigo) {
+        cupomAplicado = null
+        descontosPorLoja = {}
+        resultadoEl.textContent = ''
+        renderizarCarrinhoCompleto()
+        return
+      }
+
+      const lojaIds = [...new Set(carrinho.map(item => item.loja_id).filter(Boolean))]
+      if (lojaIds.length === 0) return
+
+      const { data, error } = await supabaseClient
+        .from('cupons')
+        .select('*')
+        .in('loja_id', lojaIds)
+        .eq('codigo', codigo)
+        .eq('ativo', true)
+
+      if (error || !data || data.length === 0) {
+        cupomAplicado = null
+        descontosPorLoja = {}
+        resultadoEl.textContent = '❌ Cupom inválido ou expirado.'
+        renderizarCarrinhoCompleto()
+        return
+      }
+
+      const hoje = new Date().toISOString().slice(0, 10)
+      const validos = data.filter(c => !c.validade || c.validade >= hoje)
+      if (validos.length === 0) {
+        cupomAplicado = null
+        descontosPorLoja = {}
+        resultadoEl.textContent = '❌ Cupom expirado.'
+        renderizarCarrinhoCompleto()
+        return
+      }
+
+      cupomAplicado = codigo
+      descontosPorLoja = {}
+      validos.forEach(c => { descontosPorLoja[c.loja_id] = Number(c.desconto_percentual) })
+
+      resultadoEl.textContent = `✅ Cupom aplicado! ${validos.map(c => `${c.desconto_percentual}% de desconto`).join(', ')}.`
+      renderizarCarrinhoCompleto()
+    }
+
     // ===== INICIALIZAÇÃO =====
     document.addEventListener('DOMContentLoaded', () => {
       renderizarCarrinhoCompleto()
@@ -272,10 +331,19 @@
         <div id="freteResultado" style="margin-top:10px; font-size:14px;"></div>
       </div>
 
+      <div style="border:1px solid var(--line); border-radius:8px; padding:16px; margin-bottom:16px;">
+        <div style="font-weight:500; margin-bottom:8px;">🏷️ Cupom de desconto</div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <input type="text" id="cupomInput" placeholder="Código do cupom" style="flex:1; min-width:160px; text-transform:uppercase;" value="${cupomAplicado || ''}" />
+          <button class="btn btn-ghost" onclick="aplicarCupom()">Aplicar</button>
+        </div>
+        <div id="cupomResultado" style="margin-top:10px; font-size:14px;"></div>
+      </div>
+
       <div class="carrinho-total">
               <div>
                 <div class="total-label">Total</div>
-                <div class="total-value">R$ ${getTotalCarrinho().toFixed(2)}</div>
+                <div class="total-value">R$ ${getTotalComDesconto().toFixed(2)}</div>
               </div>
               <div style="display:flex; gap:12px; flex-wrap:wrap;">
                 <button class="btn btn-ghost" onclick="limparCarrinho()">Limpar carrinho</button>
@@ -323,7 +391,7 @@
       }
 
       // Calcula total
-      const total = getTotalCarrinho()
+      const total = getTotalComDesconto()
       const quantidade = getQuantidadeCarrinho()
 
       if (!confirm(`🛍️ Confirmar compra de ${quantidade} item(s) no valor total de R$ ${total.toFixed(2)}?`)) {
@@ -344,7 +412,7 @@
           const res = await fetch('/.netlify/functions/mp-criar-pagamento', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ produtoId: item.id, quantidade: item.quantidade, compradorId: usuario.id })
+            body: JSON.stringify({ produtoId: item.id, quantidade: item.quantidade, compradorId: usuario.id, cupomCodigo: cupomAplicado || undefined })
           })
           const data = await res.json()
           if (!res.ok || !data.initPoint) {
@@ -443,6 +511,7 @@
     window.limparCarrinho = limparCarrinho
     window.finalizarCompra = finalizarCompra
     window.calcularFrete = calcularFrete
+    window.aplicarCupom = aplicarCupom
 
     console.log('✅ Página do carrinho carregada com sucesso!')
   </script>

@@ -23,12 +23,68 @@
       margin-top: 24px;
     }
 
-    .loja-header-public {
+    .loja-top-row {
       display: flex;
       align-items: flex-start;
       gap: 24px;
       margin: 24px 0 32px;
       flex-wrap: wrap;
+    }
+
+    .loja-header-public {
+      display: flex;
+      align-items: flex-start;
+      gap: 24px;
+      flex: 1;
+      min-width: 280px;
+      flex-wrap: wrap;
+    }
+
+    .loja-apoio-lateral {
+      width: 300px;
+      flex-shrink: 0;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+    }
+
+    @media (max-width: 900px) {
+      .loja-apoio-lateral {
+        width: 100%;
+      }
+    }
+
+    .beneficio-item {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      cursor: pointer;
+    }
+
+    .beneficio-item .beneficio-titulo {
+      font-weight: 600;
+      font-size: 13px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .beneficio-item .beneficio-corpo {
+      display: none;
+      margin-top: 8px;
+      font-size: 13px;
+      color: var(--ink-soft);
+    }
+
+    .beneficio-item.aberto .beneficio-corpo {
+      display: block;
+    }
+
+    .beneficio-item .beneficio-corpo img {
+      width: 100%;
+      border-radius: 6px;
+      margin-top: 8px;
     }
 
     .loja-avatar-public {
@@ -181,31 +237,34 @@
       <div class="placeholder">🖼️ Banner da loja</div>
     </div>
 
-    <!-- ===== HEADER DA LOJA ===== -->
-    <div class="loja-header-public" id="lojaHeader">
-      <div class="loja-avatar-public" id="lojaAvatar">
-        <div style="display:flex; align-items:center; justify-content:center; height:100%; font-size:32px;">🧵</div>
-      </div>
-      <div class="loja-info-public">
-        <h1 id="lojaNome">Nome da Loja</h1>
-        <p class="desc" id="lojaDescricao">Descrição da loja...</p>
-      <div id="lojaCategoriasPills" style="display:flex; gap:8px; flex-wrap:wrap; margin:10px 0;"></div>
-        <div class="loja-social-public" id="lojaSocial">
-          <!-- Injetado via JS -->
+    <!-- ===== HEADER DA LOJA + APOIE ESTA LOJA ===== -->
+    <div class="loja-top-row">
+      <div class="loja-header-public" id="lojaHeader">
+        <div class="loja-avatar-public" id="lojaAvatar">
+          <div style="display:flex; align-items:center; justify-content:center; height:100%; font-size:32px;">🧵</div>
         </div>
-        <button class="btn btn-primary btn-chat" id="btnChat" onclick="abrirChat()">💬 Conversar com artesão</button>
+        <div class="loja-info-public">
+          <h1 id="lojaNome">Nome da Loja</h1>
+          <p class="desc" id="lojaDescricao">Descrição da loja...</p>
+        <div id="lojaCategoriasPills" style="display:flex; gap:8px; flex-wrap:wrap; margin:10px 0;"></div>
+          <div class="loja-social-public" id="lojaSocial">
+            <!-- Injetado via JS -->
+          </div>
+          <button class="btn btn-primary btn-chat" id="btnChat" onclick="abrirChat()">💬 Conversar com artesão</button>
+        </div>
+      </div>
+
+      <div id="lojaApoioSection" class="loja-apoio-lateral" style="display:none;">
+        <h3 style="font-size:16px; margin-bottom:6px;">🤝 Apoie esta loja</h3>
+        <p id="lojaApoioDescricao" style="font-size:13px; color:var(--ink-soft); margin-bottom:10px;"></p>
+        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:12px;">
+          <strong id="lojaApoioValor" style="font-size:15px;"></strong>
+          <button class="btn btn-primary" onclick="apoiarLoja()">Apoiar mensalmente</button>
+        </div>
+        <div id="lojaBeneficiosLista"></div>
+        <small id="lojaApoioStatus" style="display:block; margin-top:8px;"></small>
       </div>
     </div>
-
-    <div id="lojaApoioSection" style="display:none; margin:24px 0; border:1px solid var(--line); border-radius:8px; padding:16px;">
-  <h3 style="font-size:18px; margin-bottom:6px;">🤝 Apoie esta loja</h3>
-  <p id="lojaApoioDescricao" style="font-size:14px; color:var(--ink-soft); margin-bottom:10px;"></p>
-  <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-    <strong id="lojaApoioValor" style="font-size:16px;"></strong>
-    <button class="btn btn-primary" onclick="apoiarLoja()">Apoiar mensalmente</button>
-  </div>
-  <small id="lojaApoioStatus" style="display:block; margin-top:8px;"></small>
-</div>
 
 <div id="lojaConteudoExclusivoSection" style="display:none; margin:24px 0;">
   <h3 style="font-size:18px; margin-bottom:10px;">🔒 Conteúdo exclusivo pros apoiadores</h3>
@@ -312,6 +371,37 @@ async function carregarApoioPublico(id) {
   document.getElementById('lojaApoioValor').textContent = `R$ ${Number(data.apoio_valor_mensal).toFixed(2)}/mês`
   section.style.display = 'block'
   await carregarConteudoExclusivo(id)
+  await carregarBeneficiosApoio(id)
+}
+
+async function carregarBeneficiosApoio(id) {
+  const lista = document.getElementById('lojaBeneficiosLista')
+  if (!lista) return
+
+  const { data, error } = await supabaseClient
+    .from('apoio_beneficios')
+    .select('*')
+    .eq('loja_id', id)
+    .order('ordem', { ascending: true })
+
+  if (error || !data || data.length === 0) {
+    lista.innerHTML = ''
+    return
+  }
+
+  lista.innerHTML = data.map((b, i) => `
+    <div class="beneficio-item" id="beneficio-${i}" onclick="toggleBeneficio(${i})">
+      <div class="beneficio-titulo"><span>🎁 ${b.titulo}</span><span>▾</span></div>
+      <div class="beneficio-corpo">
+        ${b.descricao ? `<p>${b.descricao}</p>` : ''}
+        ${b.foto_url ? `<img src="${b.foto_url}" alt="${b.titulo}" />` : ''}
+      </div>
+    </div>
+  `).join('')
+}
+
+function toggleBeneficio(indice) {
+  document.getElementById(`beneficio-${indice}`)?.classList.toggle('aberto')
 }
 
 async function apoiarLoja() {
@@ -479,6 +569,18 @@ async function carregarLoja(id) {
   renderProdutosLoja(produtosLoja)
 }
 
+function renderPrecoCard(p) {
+  if (p.em_promocao && p.preco_antigo) {
+    return `
+      <div class="price">
+        <span style="text-decoration:line-through; color:var(--ink-soft); font-size:12px; margin-right:6px;">R$ ${Number(p.preco_antigo).toFixed(2)}</span>
+        R$ ${Number(p.preco).toFixed(2)}
+      </div>
+    `
+  }
+  return `<div class="price">R$ ${Number(p.preco).toFixed(2)}</div>`
+}
+
 function renderProdutosLoja(lista) {
   const container = document.getElementById('lojaProdutos')
 
@@ -492,9 +594,12 @@ function renderProdutosLoja(lista) {
         return
       }
 
-      container.innerHTML = lista.map(p => `
+      const ordenada = lista.slice().sort((a, b) => (b.destaque ? 1 : 0) - (a.destaque ? 1 : 0))
+
+      container.innerHTML = ordenada.map(p => `
             <div class="card" onclick="window.location.href='produto.html?id=${p.id}'">
               <div class="card-media" style="background:#E9DFC7;">
+                ${p.em_promocao ? '<span class="card-badge" style="position:absolute; top:10px; left:10px; background:var(--clay); color:#fff; font-size:11px; font-weight:700; padding:3px 10px; border-radius:999px;">🔥 Promoção</span>' : ''}
                 ${p.fotos && p.fotos.length > 0
                   ? `<img src="${p.fotos[0]}" alt="${p.nome}" loading="lazy" />`
                   : `<span class="placeholder">🧵</span>`
@@ -505,7 +610,7 @@ function renderProdutosLoja(lista) {
                 <div class="card-title">${p.nome}</div>
                 <div class="card-maker">${lojaData?.nome_loja || 'Artesão'}</div>
                 <div class="card-foot">
-                  <div class="price">R$ ${Number(p.preco).toFixed(2)}</div>
+                  ${renderPrecoCard(p)}
                   <button class="card-add" onclick="event.stopPropagation(); adicionarAoCarrinhoClique('${p.id}')">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
                   </button>

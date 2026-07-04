@@ -51,7 +51,7 @@ async function login(email, password) {
   if (data?.user?.id) {
     await registrarPrimeiroLogin(data.user.id)
   }
-  window.location.href = 'dashboard.html'
+  window.location.href = 'index.html'
   return true
 }
 
@@ -60,7 +60,7 @@ async function loginComGoogle() {
   const { data, error } = await supabaseClient.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: window.location.origin + '/dashboard.html'
+      redirectTo: window.location.origin + '/index.html'
     }
   })
   if (error) {
@@ -75,7 +75,7 @@ async function loginComFacebook() {
   const { data, error } = await supabaseClient.auth.signInWithOAuth({
     provider: 'facebook',
     options: {
-      redirectTo: window.location.origin + '/dashboard.html'
+      redirectTo: window.location.origin + '/index.html'
     }
   })
   if (error) {
@@ -86,8 +86,8 @@ async function loginComFacebook() {
 }
 
 // Cadastro com email/senha
-async function cadastrarUsuario(email, password, nome, telefone) {
-  // 1. Cria o usuário
+async function cadastrarUsuario(email, password, nome, telefone, dadosEndereco = {}) {
+  // 1. Cria o usuário (o perfil e a loja são criados automaticamente por trigger no banco)
   const { data, error } = await supabaseClient.auth.signUp({
     email,
     password,
@@ -105,17 +105,17 @@ async function cadastrarUsuario(email, password, nome, telefone) {
   }
 
   if (data.user) {
-    // 2. Cria a loja automaticamente
-    const { error: lojaError } = await supabaseClient
-      .from('lojas')
-      .insert({
-        user_id: data.user.id,
-        nome_loja: `Loja de ${nome}`,
-        ativa: false
-      })
+    // 2. Salva endereço/CPF no perfil (colunas extras que o trigger não preenche)
+    const { cpf, cep, rua, numero, bairro, cidade, estado } = dadosEndereco
+    if (cpf || cep || rua || numero || bairro || cidade || estado) {
+      const { error: perfilError } = await supabaseClient
+        .from('users')
+        .update({ cpf, cep, rua, numero, bairro, cidade, estado })
+        .eq('id', data.user.id)
 
-    if (lojaError) {
-      console.error('Erro ao criar loja:', lojaError)
+      if (perfilError) {
+        console.error('Erro ao salvar endereço do usuário:', perfilError)
+      }
     }
 
     alert('✅ Cadastro realizado com sucesso! Faça login para continuar.')
@@ -212,16 +212,27 @@ async function atualizarProduto(id, updates) {
   return data[0]
 }
 
-async function deletarProduto(id) {
-  if (!confirm('Tem certeza que deseja deletar este produto?')) return false
-
+// Deleta sem pedir confirmação nem mostrar alert — usado internamente e pra exclusão em massa
+// (onde a confirmação e o feedback já acontecem uma única vez pro lote inteiro).
+async function deletarProdutoDireto(id) {
   const { error } = await supabaseClient
     .from('produtos')
     .delete()
     .eq('id', id)
 
   if (error) {
-    alert('❌ Erro ao deletar: ' + error.message)
+    console.error('Erro ao deletar produto:', error)
+    return false
+  }
+  return true
+}
+
+async function deletarProduto(id) {
+  if (!confirm('Tem certeza que deseja deletar este produto?')) return false
+
+  const sucesso = await deletarProdutoDireto(id)
+  if (!sucesso) {
+    alert('❌ Erro ao deletar o produto.')
     return false
   }
 
@@ -352,6 +363,42 @@ async function getCursosDaLoja(lojaId) {
 
   if (error) {
     console.error('Erro ao buscar cursos da loja:', error)
+    return []
+  }
+  return data
+}
+
+// ============================================
+// FUNÇÕES DE LOJAS (aba "Lojas")
+// ============================================
+
+async function getLojasAtivas() {
+  const { data, error } = await supabaseClient
+    .from('lojas')
+    .select('id, nome_loja, descricao, logo, banner, categoria, cor_destaque, nota_media, total_avaliacoes')
+    .eq('ativa', true)
+    .order('nome_loja', { ascending: true })
+
+  if (error) {
+    console.error('Erro ao buscar lojas:', error)
+    return []
+  }
+  return data
+}
+
+// ============================================
+// FUNÇÕES DE EMBAIXADORES DA MARCA
+// ============================================
+
+async function getEmbaixadores() {
+  const { data, error } = await supabaseClient
+    .from('embaixadores')
+    .select('*')
+    .eq('ativo', true)
+    .order('ordem', { ascending: true })
+
+  if (error) {
+    console.error('Erro ao buscar embaixadores:', error)
     return []
   }
   return data
