@@ -203,6 +203,16 @@
         <textarea id="lojaCssPersonalizado" rows="5" placeholder=".loja-header-public { } .card { }" style="font-family:monospace; font-size:13px;"></textarea>
         <small style="color:var(--ink-soft); display:block; margin-top:4px;">Só afeta a sua página de loja pública. Se não souber o que é CSS, deixe em branco.</small>
       </div>
+      <div class="form-group" style="background:rgba(0,0,0,0.03); border:1px solid var(--line); border-radius:12px; padding:14px;">
+        <label>✨ Assistente de CSS (IA, grátis) <span style="font-weight:400; font-size:12px; color:var(--ink-soft);">— descreva o estilo que você quer e a IA gera o CSS</span></label>
+        <div id="cssIaChatLog" style="max-height:220px; overflow-y:auto; display:flex; flex-direction:column; gap:8px; margin:10px 0;"></div>
+        <div style="display:flex; gap:8px;">
+          <input id="cssIaInput" type="text" placeholder="Ex: cor azul com flocos caindo do lado" style="flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault(); enviarMensagemCssIa()}" />
+          <button type="button" class="btn btn-secondary" onclick="enviarMensagemCssIa()">Enviar</button>
+        </div>
+        <div id="cssIaStatus" style="font-size:12px; color:var(--ink-soft); margin-top:6px;"></div>
+        <button type="button" id="cssIaAplicarBtn" class="btn btn-primary" style="margin-top:10px; display:none;" onclick="aplicarCssGerado()">Usar este CSS na loja</button>
+      </div>
 <button type="submit" class="btn btn-primary">Salvar loja</button>
         </form>
       </div>
@@ -1402,6 +1412,67 @@ pasta_id,
     window.toggleSelecionarTodos = toggleSelecionarTodos
     window.atualizarBulkToolbar = atualizarBulkToolbar
     window.carregarVendas = carregarVendas
+    // ===== ASSISTENTE DE CSS (IA) =====
+    let cssIaHistorico = []
+    let cssIaUltimoCss = ''
+
+    function renderCssIaChat() {
+      const log = document.getElementById('cssIaChatLog')
+      if (!log) return
+      log.innerHTML = cssIaHistorico.map((m) => {
+        const isUser = m.role === 'user'
+        let texto = String(m.content || '')
+        texto = texto.replace(/```css[\s\S]*?```/i, '(código CSS gerado — veja o botão abaixo)')
+        texto = texto.replace(/</g, '&lt;')
+        const alinhamento = isUser ? 'flex-end' : 'flex-start'
+        const fundo = isUser ? 'var(--clay)' : 'rgba(0,0,0,0.06)'
+        const cor = isUser ? '#fff' : 'inherit'
+        return '<div style="align-self:' + alinhamento + '; background:' + fundo + '; color:' + cor + '; padding:8px 12px; border-radius:10px; max-width:85%; font-size:13px; white-space:pre-wrap;">' + texto + '</div>'
+      }).join('')
+      log.scrollTop = log.scrollHeight
+    }
+
+    async function enviarMensagemCssIa() {
+      const input = document.getElementById('cssIaInput')
+      const texto = input.value.trim()
+      if (!texto) return
+      cssIaHistorico.push({ role: 'user', content: texto })
+      renderCssIaChat()
+      input.value = ''
+      const status = document.getElementById('cssIaStatus')
+      status.textContent = 'Gerando...'
+
+      try {
+        const resp = await fetch('/.netlify/functions/gerar-css-ia', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mensagens: cssIaHistorico })
+        })
+        const data = await resp.json()
+        if (!resp.ok) {
+          status.textContent = data.error || 'Erro ao gerar CSS.'
+          return
+        }
+        cssIaHistorico.push({ role: 'assistant', content: data.resposta })
+        renderCssIaChat()
+        status.textContent = ''
+        if (data.css) {
+          cssIaUltimoCss = data.css
+          document.getElementById('cssIaAplicarBtn').style.display = 'inline-block'
+        }
+      } catch (err) {
+        status.textContent = 'Erro de conexão: ' + err.message
+      }
+    }
+
+    function aplicarCssGerado() {
+      if (!cssIaUltimoCss) return
+      document.getElementById('lojaCssPersonalizado').value = cssIaUltimoCss
+      document.getElementById('cssIaStatus').textContent = 'CSS aplicado no campo abaixo! Clique em "Salvar loja" para publicar.'
+    }
+
+    window.enviarMensagemCssIa = enviarMensagemCssIa
+    window.aplicarCssGerado = aplicarCssGerado
     window.handleProductSubmit = handleProductSubmit
     window.handleProdFotosChange = handleProdFotosChange
     window.removeProdFoto = removeProdFoto
