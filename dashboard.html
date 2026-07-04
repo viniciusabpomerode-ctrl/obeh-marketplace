@@ -174,6 +174,13 @@
       </div>
 
       <div style="margin-top:32px; padding-top:24px; border-top:1px solid var(--line);">
+      <h3 style="font-size:16px; margin-bottom:6px;">💳 Recebimento via Mercado Pago</h3>
+      <p style="font-size:13px; color:var(--muted); margin-bottom:12px;">Conecte sua conta do Mercado Pago pra receber os pagamentos das suas vendas direto, com a taxa da Obeh descontada automaticamente.</p>
+      <div id="mpConexaoStatus" style="margin-bottom:12px; font-size:14px;">Carregando...</div>
+      <button type="button" class="btn btn-primary" id="mpConectarBtn" onclick="conectarMercadoPago()">Conectar Mercado Pago</button>
+    </div>
+
+    <div style="margin-top:32px; padding-top:24px; border-top:1px solid var(--line);">
         <h3 style="font-size:16px; margin-bottom:6px;">🏷️ Categorias da loja</h3>
         <p style="font-size:13px; color:var(--ink-soft); margin-bottom:12px;">Escolha até 3 categorias em que sua loja deve aparecer no marketplace, além da categoria principal dos produtos.</p>
         <div id="categoriasLojaCheckboxes" style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:12px;"></div>
@@ -290,6 +297,16 @@
       currentUser = user
       currentUserId = user.id
       document.getElementById('userEmail').textContent = user.email
+
+      // Mostra o resultado da conexão com o Mercado Pago (se voltou do OAuth)
+      const paramsMp = new URLSearchParams(window.location.search)
+      if (paramsMp.get('mp_conexao') === 'sucesso') {
+        alert('✅ Conta do Mercado Pago conectada com sucesso!')
+        window.history.replaceState({}, '', 'dashboard.html')
+      } else if (paramsMp.get('mp_conexao') === 'erro') {
+        alert('❌ ' + (paramsMp.get('mp_msg') || 'Não foi possível conectar sua conta do Mercado Pago.'))
+        window.history.replaceState({}, '', 'dashboard.html')
+      }
 
       // Garante que perfil e loja existem (fallback do trigger)
       await ensureUserAndLoja(user)
@@ -442,6 +459,33 @@
       }
 
       await carregarCategoriasCheckboxes()
+      await carregarStatusMercadoPago()
+    }
+
+    async function carregarStatusMercadoPago() {
+      const statusEl = document.getElementById('mpConexaoStatus')
+      const btn = document.getElementById('mpConectarBtn')
+      if (!statusEl) return
+
+      const { data } = await supabaseClient
+        .from('mercado_pago_contas')
+        .select('status')
+        .eq('user_id', currentUserId)
+        .maybeSingle()
+
+      if (data && data.status === 'conectado') {
+        statusEl.innerHTML = '✅ Conta conectada — você recebe os pagamentos direto na sua conta do Mercado Pago.'
+        statusEl.style.color = '#2f8f4e'
+        if (btn) btn.textContent = 'Reconectar Mercado Pago'
+      } else {
+        statusEl.innerHTML = '⚠️ Você ainda não conectou sua conta do Mercado Pago. Sem isso, suas vendas usam o link de pagamento manual cadastrado acima.'
+        statusEl.style.color = 'var(--muted)'
+        if (btn) btn.textContent = 'Conectar Mercado Pago'
+      }
+    }
+
+    function conectarMercadoPago() {
+      window.location.href = `/.netlify/functions/mp-oauth-start?userId=${currentUserId}`
     }
 
     // ===== CRUD PRODUTOS =====
@@ -1032,6 +1076,7 @@
 // Expor funções globalmente
     window.switchTab = switchTab
     window.salvarCategoriasLoja = salvarCategoriasLoja
+    window.conectarMercadoPago = conectarMercadoPago
     window.enviarSuporte = enviarSuporte
     window.bulkAtivar = bulkAtivar
     window.bulkDesativar = bulkDesativar
