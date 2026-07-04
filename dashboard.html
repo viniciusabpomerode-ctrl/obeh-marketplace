@@ -72,7 +72,16 @@
 
     <!-- ===== TAB: PRODUTOS ===== -->
     <div id="tab-produtos" class="tab-content active">
-      <div class="product-list" id="productList">
+      <div id="bulkToolbar" style="display:none; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:14px; padding:12px; border:1px solid var(--line); border-radius:10px;">
+      <span id="bulkCount" style="font-size:13px; font-weight:600;">0 selecionado(s)</span>
+      <button class="btn btn-ghost" style="padding:6px 12px; font-size:12px;" onclick="bulkAtivar()">Ativar</button>
+      <button class="btn btn-ghost" style="padding:6px 12px; font-size:12px;" onclick="bulkDesativar()">Desativar</button>
+      <button class="btn btn-ghost" style="padding:6px 12px; font-size:12px; color:#c94a4a;" onclick="bulkExcluir()">Excluir</button>
+      <label style="font-size:12px; margin-left:auto; display:flex; align-items:center; gap:6px;">
+        <input type="checkbox" id="selecionarTodos" onchange="toggleSelecionarTodos(this.checked)" /> Selecionar todos
+      </label>
+    </div>
+    <div class="product-list" id="productList">
         <!-- Injetado via JS -->
       </div>
     </div>
@@ -360,7 +369,8 @@
       }
 
       container.innerHTML = data.map(p => `
-            <div class="product-item">
+            <div class="product-item" data-produto-id="${p.id}">
+      <input type="checkbox" class="produto-check" value="${p.id}" onchange="atualizarBulkToolbar()" style="margin-right:10px;" />
               <div class="info">
                 <div class="thumb">
                   ${p.fotos && p.fotos.length > 0 ? `<img src="${p.fotos[0]}" alt="${p.nome}" />` : '🧶'}
@@ -874,8 +884,62 @@
       `).join('')
     }
 
+    function atualizarBulkToolbar() {
+      const checks = document.querySelectorAll('.produto-check:checked')
+      const toolbar = document.getElementById('bulkToolbar')
+      const count = document.getElementById('bulkCount')
+      if (checks.length > 0) {
+        toolbar.style.display = 'flex'
+        count.textContent = checks.length + ' selecionado(s)'
+      } else {
+        toolbar.style.display = 'none'
+      }
+    }
+
+    function toggleSelecionarTodos(checked) {
+      document.querySelectorAll('.produto-check').forEach(cb => { cb.checked = checked })
+      atualizarBulkToolbar()
+    }
+
+    function getSelecionadosIds() {
+      return Array.from(document.querySelectorAll('.produto-check:checked')).map(cb => cb.value)
+    }
+
+    async function bulkAtivar() {
+      const ids = getSelecionadosIds()
+      if (ids.length === 0) return
+      for (const id of ids) {
+        await atualizarProduto(id, { status: 'ativo' })
+      }
+      await carregarProdutos()
+    }
+
+    async function bulkDesativar() {
+      const ids = getSelecionadosIds()
+      if (ids.length === 0) return
+      for (const id of ids) {
+        await atualizarProduto(id, { status: 'inativo' })
+      }
+      await carregarProdutos()
+    }
+
+    async function bulkExcluir() {
+      const ids = getSelecionadosIds()
+      if (ids.length === 0) return
+      if (!confirm(`Tem certeza que deseja excluir ${ids.length} produto(s)? Essa ação não pode ser desfeita.`)) return
+      for (const id of ids) {
+        await deletarProduto(id)
+      }
+      await carregarProdutos()
+    }
+
 // Expor funções globalmente
     window.switchTab = switchTab
+    window.bulkAtivar = bulkAtivar
+    window.bulkDesativar = bulkDesativar
+    window.bulkExcluir = bulkExcluir
+    window.toggleSelecionarTodos = toggleSelecionarTodos
+    window.atualizarBulkToolbar = atualizarBulkToolbar
     window.carregarVendas = carregarVendas
     window.handleProductSubmit = handleProductSubmit
     window.handleProdFotosChange = handleProdFotosChange
