@@ -121,6 +121,15 @@
             <label>Estoque</label>
             <input type="number" id="prodEstoque" value="1" min="0" />
           </div>
+          <div class="form-group">
+            <label>Peso e dimensões (pra calcular frete)</label>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <input type="number" id="prodPeso" placeholder="Peso (kg)" value="0.3" min="0.01" step="0.01" style="flex:1; min-width:90px;" />
+              <input type="number" id="prodAltura" placeholder="Altura (cm)" value="10" min="1" style="flex:1; min-width:90px;" />
+              <input type="number" id="prodLargura" placeholder="Largura (cm)" value="15" min="1" style="flex:1; min-width:90px;" />
+              <input type="number" id="prodComprimento" placeholder="Comprimento (cm)" value="20" min="1" style="flex:1; min-width:90px;" />
+            </div>
+          </div>
           <button type="submit" class="btn btn-primary">Salvar produto</button>
         </form>
       </div>
@@ -164,6 +173,10 @@
           <div class="form-group">
             <label>Link de pagamento Mercado Pago *</label>
             <input type="text" id="lojaMercadoPago" placeholder="https://link.mercadopago.com.br/sua-loja" />
+          </div>
+          <div class="form-group">
+            <label>CEP de origem (pra calcular frete)</label>
+            <input type="text" id="lojaCepOrigem" placeholder="00000-000" maxlength="9" />
             <small style="color:var(--ink-soft); display:block; margin-top:4px;">
               É pra esse link que o comprador vai ser levado ao clicar em "comprar". O pagamento cai direto na sua conta — o Obeh não retém nem intermedeia.
               Crie o seu em <a href="https://www.mercadopago.com.br/link-de-pagamento" target="_blank" rel="noopener">mercadopago.com.br/link-de-pagamento</a>.
@@ -453,6 +466,7 @@
         document.getElementById('lojaInstagram').value = data.instagram || ''
         document.getElementById('lojaWhatsapp').value = data.whatsapp || ''
         document.getElementById('lojaMercadoPago').value = data.mercado_pago_link || ''
+      document.getElementById('lojaCepOrigem').value = data.cep_origem || ''
 
         const banner = document.getElementById('lojaPendenteBanner')
         if (banner) banner.style.display = data.ativa ? 'none' : 'block'
@@ -551,6 +565,10 @@
       }
       const fotos = prodFotosArr.slice()
       const estoque = parseInt(document.getElementById('prodEstoque').value) || 1
+    const peso_kg = parseFloat(document.getElementById('prodPeso').value) || 0.3
+    const altura_cm = parseFloat(document.getElementById('prodAltura').value) || 10
+    const largura_cm = parseFloat(document.getElementById('prodLargura').value) || 15
+    const comprimento_cm = parseFloat(document.getElementById('prodComprimento').value) || 20
 
       // Busca ou cria loja do usuário
       let loja = await getLoja(currentUserId)
@@ -610,6 +628,10 @@
         descricao,
         fotos,
         estoque,
+      peso_kg,
+      altura_cm,
+      largura_cm,
+      comprimento_cm,
         categoria_id,
         status: 'ativo',
         mes_criacao: new Date().toISOString().split('T')[0]
@@ -643,7 +665,8 @@
           banner: bannerValue,
           instagram: document.getElementById('lojaInstagram').value.trim(),
           whatsapp: document.getElementById('lojaWhatsapp').value.trim(),
-          mercado_pago_link: document.getElementById('lojaMercadoPago').value.trim()
+          mercado_pago_link: document.getElementById('lojaMercadoPago').value.trim(),
+      cep_origem: document.getElementById('lojaCepOrigem').value.trim()
         }
 
         if (!updates.nome_loja) {
