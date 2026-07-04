@@ -263,7 +263,16 @@
               </div>
             `).join('')}
 
-            <div class="carrinho-total">
+            <div style="border:1px solid var(--line); border-radius:8px; padding:16px; margin-bottom:16px;">
+        <div style="font-weight:500; margin-bottom:8px;">📦 Calcular frete</div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <input type="text" id="freteCep" placeholder="Seu CEP (00000-000)" maxlength="9" style="flex:1; min-width:160px;" />
+          <button class="btn btn-ghost" onclick="calcularFrete()">Calcular</button>
+        </div>
+        <div id="freteResultado" style="margin-top:10px; font-size:14px;"></div>
+      </div>
+
+      <div class="carrinho-total">
               <div>
                 <div class="total-label">Total</div>
                 <div class="total-value">R$ ${getTotalCarrinho().toFixed(2)}</div>
@@ -386,11 +395,54 @@
       `
     }
 
+    async function calcularFrete() {
+      const cep = document.getElementById('freteCep').value.replace(/\D/g, '')
+      const resultadoEl = document.getElementById('freteResultado')
+
+      if (carrinho.length === 0) {
+        resultadoEl.textContent = '🛒 Seu carrinho está vazio.'
+        return
+      }
+
+      if (cep.length !== 8) {
+        resultadoEl.textContent = '⚠️ Informe um CEP válido (8 dígitos).'
+        return
+      }
+
+      resultadoEl.textContent = 'Calculando...'
+
+      try {
+        const res = await fetch('/.netlify/functions/calcular-frete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            cepDestino: cep,
+            itens: carrinho.map(item => ({ produtoId: item.id, quantidade: item.quantidade }))
+          })
+        })
+        const data = await res.json()
+
+        if (!res.ok || !data.fretes) {
+          resultadoEl.textContent = '❌ Não foi possível calcular o frete agora.'
+          return
+        }
+
+        resultadoEl.innerHTML = data.fretes.map(f => {
+          const opcoes = f.opcoes.map(o => `${o.nome}: R$ ${Number(o.preco).toFixed(2)}${o.prazoDias ? ` (${o.prazoDias} dias úteis)` : ''}`).join(' · ')
+          const aviso = f.estimativaAproximada ? ' <span style="color:var(--muted);">(estimativa aproximada)</span>' : ''
+          return `<div style="margin-top:6px;"><strong>${f.nomeLoja}:</strong> ${opcoes}${aviso}</div>`
+        }).join('')
+      } catch (err) {
+        resultadoEl.textContent = '❌ Erro ao calcular o frete. Tente novamente.'
+      }
+    }
+
     // ===== EXPORTA FUNÇÕES =====
     window.alterarQuantidade = alterarQuantidade
     window.removerItem = removerItem
     window.limparCarrinho = limparCarrinho
     window.finalizarCompra = finalizarCompra
+    window.calcularFrete = calcularFrete
 
     console.log('✅ Página do carrinho carregada com sucesso!')
   </script>
