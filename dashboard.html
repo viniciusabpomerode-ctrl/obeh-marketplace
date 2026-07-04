@@ -198,6 +198,11 @@
           <input type="color" id="lojaCorBorda" value="#B5502F" style="height:40px; padding:2px; width:100%;" />
         </div>
       </div>
+      <div class="form-group">
+        <label>CSS personalizado da loja (avançado, opcional)</label>
+        <textarea id="lojaCssPersonalizado" rows="5" placeholder=".loja-header-public { } .card { }" style="font-family:monospace; font-size:13px;"></textarea>
+        <small style="color:var(--ink-soft); display:block; margin-top:4px;">Só afeta a sua página de loja pública. Se não souber o que é CSS, deixe em branco.</small>
+      </div>
 <button type="submit" class="btn btn-primary">Salvar loja</button>
         </form>
       </div>
@@ -542,6 +547,7 @@
       document.getElementById('lojaCepOrigem').value = data.cep_origem || ''
         document.getElementById('lojaCorDestaque').value = data.cor_destaque || '#B5502F'
         document.getElementById('lojaCorBorda').value = data.cor_borda_logo || '#B5502F'
+        document.getElementById('lojaCssPersonalizado').value = data.css_personalizado || ''
 
         const banner = document.getElementById('lojaPendenteBanner')
         if (banner) banner.style.display = data.ativa ? 'none' : 'block'
@@ -949,7 +955,8 @@ pasta_id,
           mercado_pago_link: document.getElementById('lojaMercadoPago').value.trim(),
       cep_origem: document.getElementById('lojaCepOrigem').value.trim(),
       cor_destaque: document.getElementById('lojaCorDestaque').value,
-      cor_borda_logo: document.getElementById('lojaCorBorda').value
+      cor_borda_logo: document.getElementById('lojaCorBorda').value,
+      css_personalizado: document.getElementById('lojaCssPersonalizado').value
         }
 
         if (!updates.nome_loja) {
