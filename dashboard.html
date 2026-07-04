@@ -33,6 +33,7 @@
       <div class="user-info">
         <span id="planoBadge" class="badge free">Plano Grátis</span>
       </div>
+      <div id="advertenciasArea" style="display:none;"></div>
     </div>
 
 
@@ -537,6 +538,34 @@
           `
     }
 
+    async function carregarAdvertencias(lojaId) {
+      const area = document.getElementById('advertenciasArea')
+      if (!area || !lojaId) return
+      const { data, error } = await supabaseClient
+        .from('advertencias')
+        .select('*')
+        .eq('loja_id', lojaId)
+        .eq('lida', false)
+        .order('created_at', { ascending: false })
+      if (error || !data || data.length === 0) {
+        area.style.display = 'none'
+        return
+      }
+      area.style.display = 'block'
+      area.innerHTML = data.map(a => `
+        <div style="background:#fdeaea; border:1px solid #c94a4a; color:#7a1f1f; padding:14px 18px; border-radius:10px; margin-bottom:12px; font-size:14px;">
+          <strong>⚠️ Advertência da equipe Obeh:</strong> ${a.mensagem}
+          <div style="margin-top:8px;">
+            <button class="btn btn-ghost" style="padding:4px 12px; font-size:12px;" onclick="marcarAdvertenciaLida('${a.id}','${lojaId}')">Ok, entendi</button>
+          </div>
+        </div>
+      `).join('')
+    }
+
+    async function marcarAdvertenciaLida(id, lojaId) {
+      await supabaseClient.from('advertencias').update({ lida: true }).eq('id', id)
+      await carregarAdvertencias(lojaId)
+    }
     // ===== CARREGAR LOJA =====
     async function carregarLoja() {
       const data = await getLoja(currentUserId)
@@ -554,6 +583,7 @@
         document.getElementById('lojaCorDestaque').value = data.cor_destaque || '#B5502F'
         document.getElementById('lojaCorBorda').value = data.cor_borda_logo || '#B5502F'
         document.getElementById('lojaCssPersonalizado').value = data.css_personalizado || ''
+        await carregarAdvertencias(data.id)
 
       }
 
