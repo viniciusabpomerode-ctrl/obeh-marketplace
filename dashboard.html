@@ -130,7 +130,13 @@
               <input type="number" id="prodComprimento" placeholder="Comprimento (cm)" value="20" min="1" style="flex:1; min-width:90px;" />
             </div>
           </div>
-          <button type="submit" class="btn btn-primary">Salvar produto</button>
+                <div class="form-group">
+        <label>Pasta da loja (opcional)</label>
+        <select id="prodPasta">
+          <option value="">Sem pasta</option>
+        </select>
+      </div>
+<button type="submit" class="btn btn-primary">Salvar produto</button>
         </form>
       </div>
     </div>
@@ -182,7 +188,17 @@
               Crie o seu em <a href="https://www.mercadopago.com.br/link-de-pagamento" target="_blank" rel="noopener">mercadopago.com.br/link-de-pagamento</a>.
             </small>
           </div>
-          <button type="submit" class="btn btn-primary">Salvar loja</button>
+                <div class="form-row">
+        <div class="form-group">
+          <label>Cor de destaque da loja</label>
+          <input type="color" id="lojaCorDestaque" value="#B5502F" style="height:40px; padding:2px; width:100%;" />
+        </div>
+        <div class="form-group">
+          <label>Cor da borda da foto/logo</label>
+          <input type="color" id="lojaCorBorda" value="#B5502F" style="height:40px; padding:2px; width:100%;" />
+        </div>
+      </div>
+<button type="submit" class="btn btn-primary">Salvar loja</button>
         </form>
       </div>
 
@@ -201,7 +217,24 @@
         <div id="categoriasLojaStatus" style="font-size:13px; margin-top:8px;"></div>
       </div>
 
-      <div style="margin-top:32px; padding-top:24px; border-top:1px solid var(--line);">
+          <div style="margin-top:32px; padding-top:24px; border-top:1px solid var(--line);">
+      <h3 style="font-size:16px; margin-bottom:6px;">🗂️ Pastas da loja</h3>
+      <p style="font-size:13px; color:var(--ink-soft); margin-bottom:12px;">Crie coleções próprias pra organizar seus produtos (ex: "Canecas de Natal", "Kits Casamento"). Elas aparecem como blocos com imagem na sua vitrine.</p>
+      <div id="pastasLista" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(110px,1fr)); gap:12px; margin-bottom:16px;"></div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end;">
+        <div class="form-group" style="flex:1; min-width:160px; margin:0;">
+          <label>Nome da pasta</label>
+          <input type="text" id="pastaNome" placeholder="Ex: Canecas de Natal" />
+        </div>
+        <div class="form-group" style="margin:0;">
+          <label>Imagem de capa</label>
+          <input type="file" id="pastaImagemFile" accept="image/*" />
+        </div>
+        <button class="btn btn-primary" onclick="criarPasta()">Adicionar pasta</button>
+      </div>
+      <div id="pastaStatus" style="font-size:13px; margin-top:8px;"></div>
+    </div>
+<div style="margin-top:32px; padding-top:24px; border-top:1px solid var(--line);">
       <h3 style="font-size:16px; margin-bottom:6px;">🤝 Apoie e tenha benefícios</h3>
       <p style="font-size:13px; color:var(--muted); margin-bottom:12px;">Ative um apoio mensal pra sua loja: fãs podem te apoiar todo mês via Mercado Pago e ganham acesso a conteúdo exclusivo que só você publica aqui.</p>
       <label style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
@@ -507,6 +540,8 @@
         document.getElementById('lojaWhatsapp').value = data.whatsapp || ''
         document.getElementById('lojaMercadoPago').value = data.mercado_pago_link || ''
       document.getElementById('lojaCepOrigem').value = data.cep_origem || ''
+        document.getElementById('lojaCorDestaque').value = data.cor_destaque || '#B5502F'
+        document.getElementById('lojaCorBorda').value = data.cor_borda_logo || '#B5502F'
 
         const banner = document.getElementById('lojaPendenteBanner')
         if (banner) banner.style.display = data.ativa ? 'none' : 'block'
@@ -515,6 +550,8 @@
       await carregarCategoriasCheckboxes()
       await carregarStatusMercadoPago()
       await carregarApoio()
+      await carregarPastas()
+      await carregarPastasSelectProduto()
     }
 
     async function carregarStatusMercadoPago() {
@@ -671,7 +708,80 @@
       `).join('')
     }
 
-    // ===== CRUD PRODUTOS =====
+    // ===== PASTAS DA LOJA =====
+async function carregarPastas() {
+  const container = document.getElementById('pastasLista')
+  if (!container || !lojaData?.id) return
+  const { data, error } = await supabaseClient
+    .from('loja_pastas')
+    .select('*')
+    .eq('loja_id', lojaData.id)
+    .order('created_at', { ascending: true })
+  if (error || !data || data.length === 0) {
+    container.innerHTML = '<p style="font-size:13px; color:var(--muted);">Nenhuma pasta criada ainda.</p>'
+    return
+  }
+  container.innerHTML = data.map(p => `
+    <div style="border:1px solid var(--line); border-radius:8px; overflow:hidden; text-align:center;">
+      <div style="height:70px; background:var(--sand,#f0ece4); display:flex; align-items:center; justify-content:center; overflow:hidden; font-size:24px;">
+        ${p.imagem ? `<img src="${p.imagem}" alt="${p.nome}" style="width:100%; height:100%; object-fit:cover;" />` : '🗂️'}
+      </div>
+      <div style="padding:6px; font-size:12px; font-weight:500;">${p.nome}</div>
+      <button onclick="removerPasta('${p.id}')" style="width:100%; border:none; border-top:1px solid var(--line); background:none; color:var(--ink-soft); font-size:11px; padding:4px; cursor:pointer;">Remover</button>
+    </div>
+  `).join('')
+}
+
+async function criarPasta() {
+  const status = document.getElementById('pastaStatus')
+  const nomeEl = document.getElementById('pastaNome')
+  const fileEl = document.getElementById('pastaImagemFile')
+  const nome = nomeEl.value.trim()
+  if (!nome) { status.textContent = '❌ Digite um nome pra pasta.'; return }
+  if (!lojaData?.id) { status.textContent = '❌ Salve os dados da loja primeiro.'; return }
+  status.textContent = 'Salvando...'
+  try {
+    let imagemUrl = null
+    if (fileEl.files && fileEl.files[0]) {
+      imagemUrl = await uploadImagemR2(fileEl.files[0], 'pastas')
+    }
+    const { error } = await supabaseClient.from('loja_pastas').insert({
+      loja_id: lojaData.id,
+      nome,
+      imagem: imagemUrl
+    })
+    if (error) throw error
+    nomeEl.value = ''
+    fileEl.value = ''
+    status.textContent = '✅ Pasta criada!'
+    await carregarPastas()
+    await carregarPastasSelectProduto()
+    setTimeout(() => { status.textContent = '' }, 2000)
+  } catch (err) {
+    status.textContent = '❌ ' + (err.message || 'Erro ao criar pasta.')
+  }
+}
+
+async function removerPasta(id) {
+  if (!confirm('Remover esta pasta? Os produtos dela continuam na loja, só perdem a organização.')) return
+  await supabaseClient.from('loja_pastas').delete().eq('id', id)
+  await carregarPastas()
+  await carregarPastasSelectProduto()
+}
+
+async function carregarPastasSelectProduto() {
+  const select = document.getElementById('prodPasta')
+  if (!select || !lojaData?.id) return
+  const { data } = await supabaseClient
+    .from('loja_pastas')
+    .select('id, nome')
+    .eq('loja_id', lojaData.id)
+    .order('nome', { ascending: true })
+  const atual = select.value
+  select.innerHTML = '<option value="">Sem pasta</option>' + (data || []).map(p => `<option value="${p.id}">${p.nome}</option>`).join('')
+  select.value = atual
+}
+// ===== CRUD PRODUTOS =====
     // ===== UPLOAD DE FOTOS DO PRODUTO (R2) =====
     let prodFotosArr = []
     let prodFotosUploading = false
@@ -738,6 +848,7 @@
     const altura_cm = parseFloat(document.getElementById('prodAltura').value) || 10
     const largura_cm = parseFloat(document.getElementById('prodLargura').value) || 15
     const comprimento_cm = parseFloat(document.getElementById('prodComprimento').value) || 20
+      const pasta_id = document.getElementById('prodPasta')?.value || null
 
       // Busca ou cria loja do usuário
       let loja = await getLoja(currentUserId)
@@ -801,6 +912,7 @@
       altura_cm,
       largura_cm,
       comprimento_cm,
+pasta_id,
         categoria_id,
         status: 'ativo',
         mes_criacao: new Date().toISOString().split('T')[0]
@@ -835,7 +947,9 @@
           instagram: document.getElementById('lojaInstagram').value.trim(),
           whatsapp: document.getElementById('lojaWhatsapp').value.trim(),
           mercado_pago_link: document.getElementById('lojaMercadoPago').value.trim(),
-      cep_origem: document.getElementById('lojaCepOrigem').value.trim()
+      cep_origem: document.getElementById('lojaCepOrigem').value.trim(),
+      cor_destaque: document.getElementById('lojaCorDestaque').value,
+      cor_borda_logo: document.getElementById('lojaCorBorda').value
         }
 
         if (!updates.nome_loja) {
@@ -1272,6 +1386,8 @@
     window.salvarApoio = salvarApoio
     window.publicarConteudoApoiadores = publicarConteudoApoiadores
     window.deletarConteudoApoiadores = deletarConteudoApoiadores
+    window.criarPasta = criarPasta
+    window.removerPasta = removerPasta
     window.enviarSuporte = enviarSuporte
     window.bulkAtivar = bulkAtivar
     window.bulkDesativar = bulkDesativar
