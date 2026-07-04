@@ -1615,7 +1615,7 @@ pasta_id,
 
       let query = supabaseClient
         .from('vendas')
-        .select('*, produtos(nome), comprador:comprador_id(nome, cpf, rua, numero, bairro, cidade, estado, cep)')
+        .select('*, produtos(nome)')
         .eq('vendedor_id', currentUserId)
 
       const periodo = document.getElementById('vendasFiltroPeriodo')?.value
@@ -1633,6 +1633,20 @@ pasta_id,
       }
 
       const vendas = data || []
+
+      // vendas.comprador_id não é uma foreign key reconhecida pelo PostgREST pra embed
+      // automático, então busca os compradores à parte e junta manualmente aqui.
+      const compradorIds = [...new Set(vendas.map(v => v.comprador_id).filter(Boolean))]
+      if (compradorIds.length > 0) {
+        const { data: compradores } = await supabaseClient
+          .from('users')
+          .select('id, nome, cpf, rua, numero, bairro, cidade, estado, cep')
+          .in('id', compradorIds)
+
+        const compradoresPorId = {}
+        ;(compradores || []).forEach(c => { compradoresPorId[c.id] = c })
+        vendas.forEach(v => { v.comprador = compradoresPorId[v.comprador_id] || null })
+      }
 
       if (vendas.length === 0) {
         resumo.innerHTML = ''

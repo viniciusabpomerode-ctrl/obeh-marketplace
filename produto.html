@@ -270,7 +270,7 @@
     async function carregarAvaliacoes(produtoId) {
       const { data, error } = await supabaseClient
         .from('avaliacoes')
-        .select('*, users:comprador_id(nome)')
+        .select('*')
         .eq('produto_id', produtoId)
         .order('created_at', { ascending: false })
 
@@ -283,12 +283,24 @@
         return
       }
 
+      // avaliacoes.comprador_id não é uma foreign key reconhecida pelo PostgREST pra embed
+      // automático, então busca os nomes dos compradores à parte e junta manualmente aqui.
+      const compradorIds = [...new Set(data.map(a => a.comprador_id).filter(Boolean))]
+      let nomesPorId = {}
+      if (compradorIds.length > 0) {
+        const { data: compradores } = await supabaseClient
+          .from('users')
+          .select('id, nome')
+          .in('id', compradorIds)
+        ;(compradores || []).forEach(c => { nomesPorId[c.id] = c.nome })
+      }
+
       const media = data.reduce((acc, a) => acc + Number(a.nota), 0) / data.length
       resumoEl.innerHTML = `<strong>⭐ ${media.toFixed(1)}</strong> de 5 · ${data.length} avaliação(ões)`
 
       listaEl.innerHTML = data.map(a => `
         <div style="border-top:1px solid var(--line); padding:12px 0;">
-          <div>${'⭐'.repeat(a.nota)}${'☆'.repeat(5 - a.nota)} <strong style="font-size:13px;">${a.users?.nome || 'Comprador'}</strong></div>
+          <div>${'⭐'.repeat(a.nota)}${'☆'.repeat(5 - a.nota)} <strong style="font-size:13px;">${nomesPorId[a.comprador_id] || 'Comprador'}</strong></div>
           ${a.comentario ? `<p style="font-size:14px; color:var(--ink-soft); margin-top:4px;">${a.comentario}</p>` : ''}
         </div>
       `).join('')
