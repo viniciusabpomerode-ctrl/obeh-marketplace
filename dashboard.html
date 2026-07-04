@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+X<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
@@ -304,14 +304,9 @@
 
         const cursosUpsell = document.getElementById('cursosUpsell')
         const cursosArea = document.getElementById('cursosArea')
-        if (plano === 'ultra') {
-          cursosUpsell.style.display = 'none'
-          cursosArea.style.display = 'block'
-          await carregarCursos()
-        } else {
-          cursosUpsell.style.display = 'block'
-          cursosArea.style.display = 'none'
-        }
+        cursosUpsell.style.display = 'none'
+        cursosArea.style.display = 'block'
+        await carregarCursos()
       }
 
       // Estatísticas
