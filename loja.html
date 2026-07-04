@@ -413,6 +413,12 @@ async function carregarLoja(id) {
       if (data.cor_borda_logo) {
         document.documentElement.style.setProperty('--loja-cor-borda', data.cor_borda_logo)
       }
+      if (data.css_personalizado) {
+        const styleEl = document.createElement('style')
+        styleEl.id = 'lojaCustomCss'
+        styleEl.textContent = data.css_personalizado
+        document.head.appendChild(styleEl)
+      }
 
       // Nome
       document.getElementById('lojaNome').textContent = data.nome_loja || 'Loja sem nome'
