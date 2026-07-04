@@ -117,6 +117,14 @@
     </div>
   </div>
 
+  <hr style="margin:40px 0; border:none; border-top:1px solid var(--line);" />
+
+  <h1>🆘 Solicitações de suporte</h1>
+  <p class="admin-sub">Pedidos de ajuda enviados pelos vendedores.</p>
+  <div id="listaSuporte">
+    <p style="color:var(--ink-soft); font-size:14px;">Carregando...</p>
+  </div>
+
   <!-- ===== SCRIPTS ===== -->
   <script src="js/supabase.js"></script>
   <script>
@@ -135,6 +143,7 @@
       document.getElementById('adminArea').style.display = 'block'
       await carregarLojasPendentes()
       await carregarTodasLojas()
+      await carregarSuporte()
     })
 
     async function carregarLojasPendentes() {
@@ -311,6 +320,54 @@
       )
       renderTodasLojas(filtradas)
     }
+  async function carregarSuporte() {
+    const container = document.getElementById('listaSuporte')
+    const { data, error } = await supabaseClient
+      .from('suporte_solicitacoes')
+      .select('*, users(nome, email), lojas(nome_loja)')
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      container.innerHTML = `<p style="color:#c94a4a;">Erro ao carregar solicitações: ${error.message}</p>`
+      return
+    }
+
+    if (!data || data.length === 0) {
+      container.innerHTML = '<div class="empty-state"><p>Nenhuma solicitação no momento.</p></div>'
+      return
+    }
+
+    container.innerHTML = data.map(s => `
+      <div class="loja-card" id="suporte-${s.id}" style="flex-direction:column; align-items:stretch;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px;">
+          <div class="info">
+            <h3>${s.assunto || 'Sem assunto'} ${s.status === 'resolvido' ? '✅' : '🔴'}</h3>
+            <p>👤 ${s.users?.nome || '—'} · ${s.users?.email || '—'} ${s.lojas?.nome_loja ? '· Loja: ' + s.lojas.nome_loja : ''}</p>
+            <p>${s.mensagem || ''}</p>
+            <p style="font-size:11px;">${new Date(s.created_at).toLocaleString('pt-BR')}</p>
+          </div>
+          <div class="loja-actions">
+            ${s.status !== 'resolvido' ? `<button class="btn-aprovar" onclick="resolverSuporte('${s.id}')">Marcar como resolvido</button>` : ''}
+          </div>
+        </div>
+      </div>
+    `).join('')
+  }
+
+  async function resolverSuporte(id) {
+    const { error } = await supabaseClient
+      .from('suporte_solicitacoes')
+      .update({ status: 'resolvido', updated_at: new Date().toISOString() })
+      .eq('id', id)
+
+    if (error) {
+      alert('❌ Erro ao atualizar: ' + error.message)
+      return
+    }
+
+    await carregarSuporte()
+  }
+
   </script>
 </body>
 </html>
