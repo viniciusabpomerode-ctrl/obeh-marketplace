@@ -185,13 +185,15 @@
   </section>
 
   <!-- ===== CATEGORIAS ===== -->
-  <div class="cat-strip" id="categorias">
-    <div class="cat-row" id="catRow">
-      <!-- Injetado via JS -->
+  <div style="border-top:1px solid var(--line); border-bottom:1px solid var(--line);">
+    <div class="cat-strip" id="categorias" style="border-top:none; border-bottom:none;">
+      <div class="cat-row" id="catRow">
+        <!-- Injetado via JS -->
+      </div>
     </div>
-  </div>
-  <div id="catRowOutras" style="display:none; flex-wrap:wrap; gap:12px; max-width:1180px; margin:0 auto; padding:14px 28px; border-bottom:1px solid var(--line);">
-    <!-- Categorias sem destaque, injetado via JS -->
+    <div id="catRowOutras" style="display:none; flex-wrap:wrap; gap:12px; max-width:1180px; margin:0 auto; padding:0 28px 16px;">
+      <!-- Categorias sem destaque, injetado via JS -->
+    </div>
   </div>
 
   <!-- ===== VITRINE ===== -->
@@ -431,7 +433,9 @@
       const data = await getCategorias()
       categoriasGlobal = data
 
-      const destaque = data.filter(cat => cat.destaque !== false)
+      // A categoria "Outros" no destaque não é mais necessária: já existe o botão
+      // "Mais categorias" que cumpre esse papel de agrupar o que não tem destaque.
+      const destaque = data.filter(cat => cat.destaque !== false && cat.nome?.trim().toLowerCase() !== 'outros')
       const outras = data.filter(cat => cat.destaque === false)
 
       const container = document.getElementById('catRow')
@@ -453,9 +457,7 @@
 
       const containerOutras = document.getElementById('catRowOutras')
       if (outras.length > 0) {
-        containerOutras.innerHTML = `
-          <span style="font-size:12px; color:var(--ink-soft); align-self:center; flex-shrink:0; padding-right:4px;">Mais categorias:</span>
-        ` + outras.map(cat => `
+        containerOutras.innerHTML = outras.map(cat => `
           <div class="chip" onclick="filtrarPorCategoria('${cat.id}')">
             <span class="dot"></span>${cat.nome}
           </div>
