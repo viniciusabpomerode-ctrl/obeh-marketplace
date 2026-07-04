@@ -189,9 +189,9 @@
     <div class="cat-row" id="catRow">
       <!-- Injetado via JS -->
     </div>
-    <div id="catRowOutras" style="display:none; flex-wrap:wrap; gap:12px; width:100%; max-width:1180px; margin:10px auto 0; padding:10px 28px 0; border-top:1px dashed var(--line);">
-      <!-- Categorias sem destaque, injetado via JS -->
-    </div>
+  </div>
+  <div id="catRowOutras" style="display:none; flex-wrap:wrap; gap:12px; max-width:1180px; margin:0 auto; padding:14px 28px; border-bottom:1px solid var(--line);">
+    <!-- Categorias sem destaque, injetado via JS -->
   </div>
 
   <!-- ===== VITRINE ===== -->
@@ -418,7 +418,6 @@
       await carregarCategorias()
       await carregarProdutos()
       await carregarEstatisticas()
-      carregarPlanos()
       carregarCarrinho()
 
       // 3. Confirma assinatura pendente (retorno do Stripe)
@@ -558,58 +557,6 @@
       }
     }
 
-    // ===== CARREGAR PLANOS =====
-    function carregarPlanos() {
-      const container = document.getElementById('plansContainer')
-      container.innerHTML = `
-              <div class="plan">
-                <div class="plan-name">Grátis</div>
-                <div class="plan-desc">Para começar ou vender poucas peças.</div>
-                <div class="plan-price"><span class="num">R$0</span><span class="per">/mês</span></div>
-                <ul class="plan-list">
-                  <li><span class="check">✅</span> Até 2 produtos/mês</li>
-                  <li><span class="check">✅</span> Loja personalizada</li>
-                  <li><span class="check">✅</span> Pagamento direto MP</li>
-                </ul>
-                <a href="cadastro.html" class="btn btn-outline">Criar loja grátis</a>
-              </div>
-              <div class="plan reco">
-                <div class="plan-badge">Mais escolhido</div>
-                <div class="plan-name">Loja Basic</div>
-                <div class="plan-desc">Vende quanto quiser, sem limite mensal.</div>
-                <div class="plan-price"><span class="num">R$9,99</span><span class="per">/mês</span></div>
-                <ul class="plan-list">
-                  <li><span class="check">✅</span> Produtos ilimitados</li>
-                  <li><span class="check">✅</span> Selo verificado</li>
-                  <li><span class="check">✅</span> Estatísticas básicas</li>
-                </ul>
-                <button class="btn btn-primary" onclick="redirectToCheckout('basic')">Assinar Basic</button>
-              </div>
-              <div class="plan">
-                <div class="plan-name">Loja Pro</div>
-                <div class="plan-desc">Para ateliês com movimento.</div>
-                <div class="plan-price"><span class="num">R$14,99</span><span class="per">/mês</span></div>
-                <ul class="plan-list">
-                  <li><span class="check">✅</span> Tudo do Basic</li>
-                  <li><span class="check">✅</span> Destaque nas buscas</li>
-                  <li><span class="check">✅</span> Cupons personalizados</li>
-                </ul>
-                <button class="btn btn-outline" onclick="redirectToCheckout('pro')">Assinar Pro</button>
-              </div>
-              <div class="plan">
-                <div class="plan-badge">Promoção</div>
-                <div class="plan-name">Loja Ultra</div>
-                <div class="plan-desc">Venda cursos na plataforma.</div>
-                <div class="plan-price"><span class="num">R$29,99</span><span class="per">/mês</span></div>
-                <ul class="plan-list">
-                  <li><span class="check">✅</span> Tudo do Pro</li>
-                  <li><span class="check">✅</span> Venda cursos na plataforma</li>
-                  <li><span class="check">✅</span> Mais destaque nas buscas</li>
-                </ul>
-                <button class="btn btn-primary" onclick="redirectToCheckout('ultra')">Assinar Ultra</button>
-              </div>
-            `
-    }
 
     // ===== CARRINHO =====
     function carregarCarrinho() {
