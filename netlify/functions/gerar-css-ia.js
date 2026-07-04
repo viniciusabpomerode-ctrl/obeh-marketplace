@@ -1,4 +1,4 @@
-null// =====================================
+// =====================================
 // GERA CSS PERSONALIZADO DA LOJA VIA IA
 // Usa a API gratuita da Groq (modelo Llama) para gerar
 // CSS a partir de uma conversa com o vendedor.
