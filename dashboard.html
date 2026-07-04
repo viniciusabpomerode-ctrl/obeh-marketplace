@@ -172,6 +172,15 @@
           <button type="submit" class="btn btn-primary">Salvar loja</button>
         </form>
       </div>
+
+      <div style="margin-top:32px; padding-top:24px; border-top:1px solid var(--line);">
+        <h3 style="font-size:16px; margin-bottom:6px;">🆘 Precisa de ajuda?</h3>
+        <p style="font-size:13px; color:var(--ink-soft); margin-bottom:12px;">Fale direto com a equipe Obeh sobre configuração da sua loja, banner, logo, descrição ou qualquer dúvida.</p>
+        <input id="suporteAssunto" type="text" placeholder="Assunto" style="width:100%; padding:8px 12px; border:1px solid var(--line); border-radius:8px; margin-bottom:10px;" />
+        <textarea id="suporteMensagem" placeholder="Descreva o que você precisa..." style="width:100%; padding:8px 12px; border:1px solid var(--line); border-radius:8px; min-height:80px; margin-bottom:10px;"></textarea>
+        <button class="btn btn-primary" onclick="enviarSuporte()">Enviar solicitação</button>
+        <div id="suporteStatus" style="font-size:13px; margin-top:8px;"></div>
+      </div>
     </div>
 
     <!-- ===== TAB: CURSOS (plano Ultra) ===== -->
@@ -933,8 +942,39 @@
       await carregarProdutos()
     }
 
+    async function enviarSuporte() {
+      const assunto = document.getElementById('suporteAssunto').value.trim()
+      const mensagem = document.getElementById('suporteMensagem').value.trim()
+      const statusEl = document.getElementById('suporteStatus')
+
+      if (!mensagem) {
+        statusEl.innerHTML = '<span style="color:#c94a4a;">Escreva sua mensagem antes de enviar.</span>'
+        return
+      }
+
+      const { error } = await supabaseClient
+        .from('suporte_solicitacoes')
+        .insert({
+          user_id: currentUserId,
+          loja_id: lojaData?.id || null,
+          assunto: assunto || 'Sem assunto',
+          mensagem,
+          status: 'aberto'
+        })
+
+      if (error) {
+        statusEl.innerHTML = '<span style="color:#c94a4a;">Erro ao enviar: ' + error.message + '</span>'
+        return
+      }
+
+      document.getElementById('suporteAssunto').value = ''
+      document.getElementById('suporteMensagem').value = ''
+      statusEl.innerHTML = '<span style="color:#2f8f4e;">✅ Solicitação enviada! Nossa equipe vai entrar em contato.</span>'
+    }
+
 // Expor funções globalmente
     window.switchTab = switchTab
+    window.enviarSuporte = enviarSuporte
     window.bulkAtivar = bulkAtivar
     window.bulkDesativar = bulkDesativar
     window.bulkExcluir = bulkExcluir
