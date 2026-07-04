@@ -112,7 +112,7 @@
             <textarea id="prodDescricao" placeholder="Descreva sua peça..."></textarea>
           </div>
           <div class="form-group">
-            <label>Fotos (até 4 imagens, 500KB cada)</label>
+            <label>Fotos (até 4 imagens — grandes são comprimidas automaticamente)</label>
             <input type="file" id="prodFotosFiles" accept="image/*" multiple onchange="handleProdFotosChange(event)" />
             <div id="prodFotosPreview" style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;"></div>
             <small id="prodFotosStatus" style="color:var(--ink-soft); display:block; margin-top:4px;"></small>
@@ -156,12 +156,12 @@
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label>Logo (arquivo até 500KB ou URL)</label>
+              <label>Logo (arquivo ou URL — grandes são comprimidas automaticamente)</label>
               <input type="file" id="lojaLogoFile" accept="image/*" />
               <input type="text" id="lojaLogo" placeholder="https://imagem-logo.jpg" style="margin-top:8px;" />
             </div>
             <div class="form-group">
-              <label>Banner (arquivo até 500KB ou URL)</label>
+              <label>Banner (arquivo ou URL — grandes são comprimidas automaticamente)</label>
               <input type="file" id="lojaBannerFile" accept="image/*" />
               <input type="text" id="lojaBanner" placeholder="https://imagem-banner.jpg" style="margin-top:8px;" />
             </div>
