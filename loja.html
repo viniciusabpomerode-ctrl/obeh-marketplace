@@ -166,7 +166,21 @@
       </div>
     </div>
 
-    <!-- ===== PRODUTOS ===== -->
+    <div id="lojaApoioSection" style="display:none; margin:24px 0; border:1px solid var(--line); border-radius:8px; padding:16px;">
+  <h3 style="font-size:18px; margin-bottom:6px;">🤝 Apoie esta loja</h3>
+  <p id="lojaApoioDescricao" style="font-size:14px; color:var(--ink-soft); margin-bottom:10px;"></p>
+  <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+    <strong id="lojaApoioValor" style="font-size:16px;"></strong>
+    <button class="btn btn-primary" onclick="apoiarLoja()">Apoiar mensalmente</button>
+  </div>
+  <small id="lojaApoioStatus" style="display:block; margin-top:8px;"></small>
+</div>
+
+<div id="lojaConteudoExclusivoSection" style="display:none; margin:24px 0;">
+  <h3 style="font-size:18px; margin-bottom:10px;">🔒 Conteúdo exclusivo pros apoiadores</h3>
+  <div id="lojaConteudoExclusivoLista"></div>
+</div>
+<!-- ===== PRODUTOS ===== -->
     <h2 style="font-size:22px; margin-bottom:16px;">🧶 Produtos da loja</h2>
     <div class="loja-produtos-grid" id="lojaProdutos">
       <!-- Injetado via JS -->
@@ -240,6 +254,7 @@
 
       await carregarLoja(lojaId)
       await carregarCategoriasLoja(lojaId)
+    await carregarApoioPublico(lojaId)
       await carregarProdutosLoja(lojaId)
       await carregarCursosLoja(lojaId)
       carregarCarrinho()
@@ -248,7 +263,70 @@
       atualizarCarrinhoUI()
     })
 
-    // ===== CARREGAR LOJA =====
+    // ===== APOIE E TENHA BENEFÍCIOS =====
+async function carregarApoioPublico(id) {
+  const { data, error } = await supabaseClient
+    .from('lojas')
+    .select('id, apoio_ativo, apoio_valor_mensal, apoio_descricao')
+    .eq('id', id)
+    .maybeSingle()
+  if (error || !data || !data.apoio_ativo || !data.apoio_valor_mensal) return
+  const section = document.getElementById('lojaApoioSection')
+  if (!section) return
+  document.getElementById('lojaApoioDescricao').textContent = data.apoio_descricao || ''
+  document.getElementById('lojaApoioValor').textContent = `R$ ${Number(data.apoio_valor_mensal).toFixed(2)}/mês`
+  section.style.display = 'block'
+  await carregarConteudoExclusivo(id)
+}
+
+async function apoiarLoja() {
+  const statusEl = document.getElementById('lojaApoioStatus')
+  const usuario = await getCurrentUser()
+  if (!usuario) {
+    if (confirm('Você precisa estar logado para apoiar esta loja. Ir para o login?')) {
+      window.location.href = 'login.html'
+    }
+    return
+  }
+  statusEl.textContent = 'Preparando o apoio...'
+  try {
+    const res = await fetch('/.netlify/functions/mp-criar-assinatura-loja', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lojaId, apoiadorId: usuario.id, apoiadorEmail: usuario.email })
+    })
+    const data = await res.json()
+    if (!res.ok || !data.initPoint) {
+      statusEl.textContent = '❌ ' + (data.error || 'Não foi possível iniciar o apoio.')
+      return
+    }
+    window.location.href = data.initPoint
+  } catch (err) {
+    statusEl.textContent = '❌ Erro ao iniciar o apoio. Tente novamente.'
+  }
+}
+
+async function carregarConteudoExclusivo(id) {
+  const { data, error } = await supabaseClient
+    .from('conteudo_apoiadores').select('*').eq('loja_id', id)
+    .order('created_at', { ascending: false })
+  const section = document.getElementById('lojaConteudoExclusivoSection')
+  if (!section) return
+  if (error || !data || data.length === 0) {
+    section.style.display = 'none'
+    return
+  }
+  section.style.display = 'block'
+  document.getElementById('lojaConteudoExclusivoLista').innerHTML = data.map(c => `
+    <div style="border:1px solid var(--line); border-radius:8px; padding:12px; margin-bottom:10px;">
+      <strong>${c.titulo}</strong>
+      ${c.corpo ? `<p style="margin:6px 0; font-size:14px;">${c.corpo}</p>` : ''}
+      ${c.link ? `<a href="${c.link}" target="_blank" rel="noopener">Acessar conteúdo</a>` : ''}
+    </div>
+  `).join('')
+}
+
+// ===== CARREGAR LOJA =====
     async function carregarCategoriasLoja(id) {
       const container = document.getElementById('lojaCategoriasPills')
       if (!container) return
@@ -525,6 +603,7 @@
     window.atualizarQuantidadeCarrinho = atualizarQuantidadeCarrinho
     window.removerItemCarrinho = removerItemCarrinho
     window.abrirChat = abrirChat
+    window.apoiarLoja = apoiarLoja
 
     console.log('✅ Página da loja carregada com sucesso!')
   </script>
