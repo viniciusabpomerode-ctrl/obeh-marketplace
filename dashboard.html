@@ -802,6 +802,7 @@
                   ${p.status === 'ativo' ? 'Desativar' : 'Ativar'}
                 </button>
                 <button onclick="editarProduto('${p.id}')">✎ Editar</button>
+                <button onclick="clonarProduto('${p.id}')">⧉ Clonar</button>
                 <button class="delete" onclick="handleDeleteProduto('${p.id}')">✕</button>
               </div>
             </div>
@@ -1754,6 +1755,49 @@ pasta_id,
     // ===== EDIT =====
     function editarProduto(id) {
       alert('📝 Função de edição em desenvolvimento. Por enquanto, delete e recrie.')
+    }
+
+    // ===== CLONAR =====
+    // Preenche o formulário de "Novo produto" com os dados de um produto já
+    // existente, pra o vendedor só ajustar o que for diferente e salvar como
+    // um produto novo (agiliza cadastrar variações parecidas).
+    function clonarProduto(id) {
+      const produto = produtosCache.find(p => p.id === id)
+      if (!produto) return
+
+      switchTab('novo')
+
+      document.getElementById('prodNome').value = produto.nome ? `${produto.nome} (cópia)` : ''
+      document.getElementById('prodPreco').value = produto.preco || ''
+      document.getElementById('prodCategoria').value = produto.categoria_id || ''
+      document.getElementById('prodDescricao').value = produto.descricao || ''
+      document.getElementById('prodEstoque').value = produto.estoque || 1
+      document.getElementById('prodPeso').value = produto.peso_kg || 0.3
+      document.getElementById('prodAltura').value = produto.altura_cm || 10
+      document.getElementById('prodLargura').value = produto.largura_cm || 15
+      document.getElementById('prodComprimento').value = produto.comprimento_cm || 20
+      if (document.getElementById('prodPasta')) document.getElementById('prodPasta').value = produto.pasta_id || ''
+
+      document.getElementById('prodEmPromocao').checked = Boolean(produto.em_promocao)
+      document.getElementById('prodPrecoAntigoGroup').style.display = produto.em_promocao ? 'block' : 'none'
+      document.getElementById('prodPrecoAntigo').value = produto.preco_antigo || ''
+
+      document.getElementById('prodDestaque').checked = Boolean(produto.destaque)
+
+      document.getElementById('prodSobEncomenda').checked = Boolean(produto.sob_encomenda)
+      document.getElementById('prodPrazoProducaoGroup').style.display = produto.sob_encomenda ? 'block' : 'none'
+      document.getElementById('prodPrazoProducao').value = produto.prazo_producao_dias || ''
+
+      const temDescontoPix = Boolean(produto.desconto_pix_percentual)
+      document.getElementById('prodDescontoPixAtivo').checked = temDescontoPix
+      document.getElementById('prodDescontoPixGroup').style.display = temDescontoPix ? 'block' : 'none'
+      document.getElementById('prodDescontoPix').value = produto.desconto_pix_percentual || ''
+
+      // Reaproveita as fotos já enviadas (não precisa subir de novo pro R2)
+      prodFotosArr = Array.isArray(produto.fotos) ? [...produto.fotos] : []
+      renderProdFotosPreview()
+
+      alert('✅ Dados copiados pro formulário de novo produto. Ajuste o que for diferente e clique em "Salvar produto".')
     }
 
     // ===== TABS =====
