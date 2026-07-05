@@ -5,6 +5,7 @@
   "dependencies": {
     "stripe": "^11.0.0",
     "@aws-sdk/client-s3": "^3.400.0",
-    "@aws-sdk/s3-request-presigner": "^3.400.0"
+    "@aws-sdk/s3-request-presigner": "^3.400.0",
+    "cheerio": "^1.0.0"
   }
 }

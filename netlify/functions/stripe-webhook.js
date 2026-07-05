@@ -8,6 +8,7 @@
 // sem depender do usuário estar logado no navegador.
 // ============================================
 const Stripe = require('stripe')
+const { sincronizarStatusProdutosComPlano } = require('./lib/sincronizar-plano-produtos')
 
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET
@@ -53,6 +54,8 @@ async function ativarPlano(userId, plano, subscriptionId) {
       stripe_subscription_id: subscriptionId || null
     })
   })
+
+  await sincronizarStatusProdutosComPlano(userId)
 }
 
 async function cancelarPlano(userId, subscriptionId) {
@@ -69,6 +72,8 @@ async function cancelarPlano(userId, subscriptionId) {
       body: JSON.stringify({ status: 'cancelada', fim: new Date().toISOString() })
     })
   }
+
+  await sincronizarStatusProdutosComPlano(userId)
 }
 
 exports.handler = async (event) => {

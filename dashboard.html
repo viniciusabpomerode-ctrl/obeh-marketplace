@@ -203,6 +203,7 @@
         <button type="button" class="subtab-btn" data-lojasub="frete" onclick="switchLojaSubTab('frete')">Frete por região</button>
         <button type="button" class="subtab-btn" data-lojasub="categorias" onclick="switchLojaSubTab('categorias')">Categorias e pastas</button>
         <button type="button" class="subtab-btn" data-lojasub="apoio" onclick="switchLojaSubTab('apoio')">Apoio aos fãs</button>
+        <button type="button" class="subtab-btn" data-lojasub="importar" onclick="switchLojaSubTab('importar')">Importar loja</button>
         <button type="button" class="subtab-btn" data-lojasub="ajuda" onclick="switchLojaSubTab('ajuda')">Ajuda</button>
       </div>
 
@@ -449,6 +450,42 @@
         <h4 style="font-size:14px; margin-bottom:8px;">Seus apoiadores</h4>
         <div id="apoiadoresLista"></div>
       </div>
+    </div>
+      </div>
+
+      <div id="lojasub-importar" class="subtab-content">
+      <div>
+      <h3 style="font-size:16px; margin-bottom:6px;">📥 Importar produtos de outra loja</h3>
+      <p style="font-size:13px; color:var(--ink-soft); margin-bottom:16px;">
+        Já tem uma loja em outra plataforma? Cole o link dela abaixo pra trazer os produtos automaticamente pro Obeh.
+        Hoje funciona pra lojas do <strong>artesanou.com.br</strong>.
+      </p>
+
+      <div class="form-group">
+        <label>Link da sua loja no artesanou.com.br</label>
+        <input type="text" id="importarUrlLoja" placeholder="https://artesanou.com.br/loja/sua-loja" />
+      </div>
+
+      <div style="background:rgba(0,0,0,0.03); border:1px solid var(--line); border-radius:10px; padding:14px; margin-bottom:14px; max-height:220px; overflow-y:auto; font-size:12.5px; color:var(--ink-soft); line-height:1.6;">
+        <strong style="color:var(--ink); display:block; margin-bottom:6px;">Termo de autorização de importação</strong>
+        <p>Ao continuar, você declara que:</p>
+        <ul style="padding-left:18px; margin-top:6px;">
+          <li>A loja informada é sua, e você autoriza o Obeh a extrair os dados <strong>públicos</strong> dela (título, preço, descrição, categoria, imagens e prazo de produção) pra popular automaticamente sua loja aqui.</li>
+          <li>Você é responsável pela licitude do conteúdo importado (direitos autorais de fotos e textos, marcas registradas etc.), já que afirma ser dono(a)/responsável pela loja de origem.</li>
+          <li>Essa importação é feita a seu pedido — o Obeh não faz isso por conta própria com nenhuma loja.</li>
+          <li>Dados de clientes ou avaliações <strong>não</strong> são importados — só dados de produto.</li>
+          <li>Peso e dimensões (usados pro cálculo de frete) nunca vêm da origem — você vai precisar preencher esses dados depois, produto por produto.</li>
+        </ul>
+      </div>
+
+      <label style="display:flex; align-items:flex-start; gap:8px; margin-bottom:16px; font-size:13px;">
+        <input type="checkbox" id="importarAceiteTermos" style="margin-top:3px;" />
+        <span>Li e autorizo a importação dos dados públicos da minha loja, conforme descrito acima.</span>
+      </label>
+
+      <button type="button" class="btn btn-primary" id="importarLojaBtn" onclick="importarLojaDeOrigem()">Importar produtos</button>
+      <div id="importarStatus" style="font-size:13px; margin-top:10px;"></div>
+      <div id="importarResumo" style="margin-top:16px;"></div>
     </div>
       </div>
 
@@ -1113,6 +1150,61 @@
       await supabaseClient.from('apoio_beneficios').delete().eq('id', id)
       if (beneficio?.foto_url) await deletarImagensR2(beneficio.foto_url)
       await carregarBeneficiosApoioDashboard()
+    }
+
+    // ===== IMPORTAR LOJA DE OUTRA PLATAFORMA =====
+    async function importarLojaDeOrigem() {
+      const statusEl = document.getElementById('importarStatus')
+      const resumoEl = document.getElementById('importarResumo')
+      const urlLoja = document.getElementById('importarUrlLoja').value.trim()
+      const aceite = document.getElementById('importarAceiteTermos').checked
+
+      if (!urlLoja) {
+        statusEl.textContent = '❌ Cole o link da sua loja de origem.'
+        return
+      }
+      if (!aceite) {
+        statusEl.textContent = '❌ Você precisa aceitar o termo de autorização pra importar.'
+        return
+      }
+
+      const btn = document.getElementById('importarLojaBtn')
+      btn.disabled = true
+      btn.textContent = 'Importando...'
+      statusEl.textContent = 'Isso pode levar alguns minutos, dependendo de quantos produtos sua loja tem — não feche esta página.'
+      resumoEl.innerHTML = ''
+
+      try {
+        const res = await fetch('/.netlify/functions/importar-loja', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: currentUserId, urlLoja, aceiteTermos: aceite })
+        })
+        const data = await res.json()
+
+        if (!res.ok) {
+          statusEl.textContent = '❌ ' + (data.error || 'Não foi possível importar a loja.')
+          return
+        }
+
+        statusEl.textContent = '✅ Importação concluída!'
+        resumoEl.innerHTML = `
+          <div style="border:1px solid var(--line); border-radius:10px; padding:16px; font-size:13px; line-height:1.8;">
+            <p>✅ <strong>${data.publicados || 0}</strong> produto(s) publicado(s)</p>
+            <p>⏫ <strong>${data.pendenteUpgrade || 0}</strong> aguardando upgrade de plano — <a href="index.html#vender">ver planos</a></p>
+            <p>📦 <strong>${data.pendenteDadosFrete || 0}</strong> precisam de peso/dimensões antes do frete funcionar direito</p>
+            <p>🖼️ <strong>${data.semImagem || 0}</strong> sem imagem</p>
+            <p>⚠️ <strong>${data.extracaoIncompleta || 0}</strong> com dados incompletos, aguardando revisão manual</p>
+          </div>
+        `
+        await carregarProdutos()
+        await carregarDadosUsuario()
+      } catch (err) {
+        statusEl.textContent = '❌ Erro ao importar: ' + err.message
+      } finally {
+        btn.disabled = false
+        btn.textContent = 'Importar produtos'
+      }
     }
 
     async function salvarApoio() {
