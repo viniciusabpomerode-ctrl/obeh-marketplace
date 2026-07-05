@@ -347,9 +347,11 @@
               </div>
               <div style="display:flex; gap:12px; flex-wrap:wrap;">
                 <button class="btn btn-ghost" onclick="limparCarrinho()">Limpar carrinho</button>
+                <button class="btn btn-ghost" onclick="pagarComPix()">💠 Pagar com Pix</button>
                 <button class="btn btn-primary" onclick="finalizarCompra()">Finalizar compra</button>
               </div>
             </div>
+            <div id="pixResultado" style="margin-top:16px;"></div>
           `
     }
 
@@ -463,6 +465,91 @@
       `
     }
 
+    // ===== PAGAR COM PIX (split automático) =====
+    async function pagarComPix() {
+      if (carrinho.length === 0) {
+        alert('🛒 Seu carrinho está vazio!')
+        return
+      }
+
+      const usuario = await getCurrentUser()
+      if (!usuario) {
+        if (confirm('Você precisa estar logado pra pagar com Pix. Ir para o login agora?')) {
+          window.location.href = 'login.html'
+        }
+        return
+      }
+
+      const resultadoEl = document.getElementById('pixResultado')
+      resultadoEl.innerHTML = '<p style="color:var(--ink-soft); font-size:14px;">Gerando Pix...</p>'
+
+      const resultados = []
+      const erros = []
+
+      for (const item of carrinho) {
+        try {
+          const res = await fetch('/.netlify/functions/mp-criar-pix', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ produtoId: item.id, quantidade: item.quantidade, compradorId: usuario.id, cupomCodigo: cupomAplicado || undefined })
+          })
+          const data = await res.json()
+          if (!res.ok || !data.qrCode) {
+            erros.push(`${item.nome}: ${data.error || 'erro desconhecido'}`)
+            continue
+          }
+          resultados.push({ nome: item.nome, vendaId: data.vendaId, qrCode: data.qrCode, qrCodeBase64: data.qrCodeBase64 })
+        } catch (err) {
+          erros.push(`${item.nome}: erro de conexão`)
+        }
+      }
+
+      if (resultados.length === 0) {
+        resultadoEl.innerHTML = `<p style="color:#c94a4a; font-size:14px;">❌ Não foi possível gerar o Pix.${erros.length ? '<br>' + erros.join('<br>') : ''}</p>`
+        return
+      }
+
+      resultadoEl.innerHTML = `
+        ${erros.length > 0 ? `<p style="color:#c94a4a; font-size:13px; margin-bottom:12px;">⚠️ ${erros.join(', ')}</p>` : ''}
+        ${resultados.map((r, i) => `
+          <div style="border:1px solid var(--line); border-radius:8px; padding:16px; margin-bottom:12px; text-align:center;">
+            <p style="font-weight:600; margin-bottom:10px;">${r.nome}</p>
+            <img src="data:image/png;base64,${r.qrCodeBase64}" alt="QR Code Pix" style="width:200px; height:200px; margin:0 auto 10px;" />
+            <textarea readonly style="width:100%; font-size:11px; padding:8px; border:1px solid var(--line); border-radius:6px; resize:none; height:60px;">${r.qrCode}</textarea>
+            <button class="btn btn-ghost" style="margin-top:8px;" onclick="navigator.clipboard.writeText('${r.qrCode}'); this.textContent='Copiado!'">Copiar código</button>
+            <p id="pixStatus-${r.vendaId}" style="margin-top:10px; font-size:13px; color:var(--ink-soft);">⏳ Aguardando pagamento...</p>
+          </div>
+        `).join('')}
+      `
+
+      resultados.forEach(r => monitorarPagamentoPix(r.vendaId))
+    }
+
+    async function monitorarPagamentoPix(vendaId, tentativas = 0) {
+      if (!vendaId || tentativas > 60) return // ~5 minutos (60 x 5s)
+
+      const { data } = await supabaseClient.from('vendas').select('status').eq('id', vendaId).maybeSingle()
+      const statusEl = document.getElementById(`pixStatus-${vendaId}`)
+      if (!statusEl) return
+
+      if (data?.status === 'pago') {
+        statusEl.textContent = '✅ Pagamento confirmado!'
+        statusEl.style.color = '#2f7a4d'
+        carrinho = []
+        atualizarCarrinhoUI()
+        document.getElementById('cartCount').textContent = 0
+        return
+      }
+
+      if (data?.status === 'recusado' || data?.status === 'cancelado') {
+        statusEl.textContent = '❌ Pagamento não foi concluído.'
+        statusEl.style.color = '#c94a4a'
+        return
+      }
+
+      setTimeout(() => monitorarPagamentoPix(vendaId, tentativas + 1), 5000)
+    }
+
     async function calcularFrete() {
       const cep = document.getElementById('freteCep').value.replace(/\D/g, '')
       const resultadoEl = document.getElementById('freteResultado')
@@ -510,6 +597,7 @@
     window.removerItem = removerItem
     window.limparCarrinho = limparCarrinho
     window.finalizarCompra = finalizarCompra
+    window.pagarComPix = pagarComPix
     window.calcularFrete = calcularFrete
     window.aplicarCupom = aplicarCupom
 
