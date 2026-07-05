@@ -1171,11 +1171,11 @@
       const btn = document.getElementById('importarLojaBtn')
       btn.disabled = true
       btn.textContent = 'Importando...'
-      statusEl.textContent = 'Isso pode levar alguns minutos, dependendo de quantos produtos sua loja tem — não feche esta página.'
+      statusEl.textContent = 'Isso pode levar alguns minutos, dependendo de quantos produtos sua loja tem. Pode navegar pra outras abas — quando voltar aqui, o andamento continua aparecendo.'
       resumoEl.innerHTML = ''
 
       try {
-        const res = await fetch('/.netlify/functions/importar-loja', {
+        const res = await fetch('/.netlify/functions/importar-loja-iniciar', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ userId: currentUserId, urlLoja, aceiteTermos: aceite })
@@ -1183,28 +1183,64 @@
         const data = await res.json()
 
         if (!res.ok) {
-          statusEl.textContent = '❌ ' + (data.error || 'Não foi possível importar a loja.')
+          statusEl.textContent = '❌ ' + (data.error || 'Não foi possível iniciar a importação.')
+          btn.disabled = false
+          btn.textContent = 'Importar produtos'
           return
         }
 
-        statusEl.textContent = '✅ Importação concluída!'
-        resumoEl.innerHTML = `
-          <div style="border:1px solid var(--line); border-radius:10px; padding:16px; font-size:13px; line-height:1.8;">
-            <p>✅ <strong>${data.publicados || 0}</strong> produto(s) publicado(s)</p>
-            <p>⏫ <strong>${data.pendenteUpgrade || 0}</strong> aguardando upgrade de plano — <a href="index.html#vender">ver planos</a></p>
-            <p>📦 <strong>${data.pendenteDadosFrete || 0}</strong> precisam de peso/dimensões antes do frete funcionar direito</p>
-            <p>🖼️ <strong>${data.semImagem || 0}</strong> sem imagem</p>
-            <p>⚠️ <strong>${data.extracaoIncompleta || 0}</strong> com dados incompletos, aguardando revisão manual</p>
-          </div>
-        `
-        await carregarProdutos()
-        await carregarDadosUsuario()
+        acompanharImportacao(data.importacaoId)
       } catch (err) {
-        statusEl.textContent = '❌ Erro ao importar: ' + err.message
-      } finally {
+        statusEl.textContent = '❌ Erro ao iniciar a importação: ' + err.message
         btn.disabled = false
         btn.textContent = 'Importar produtos'
       }
+    }
+
+    async function acompanharImportacao(importacaoId, tentativas = 0) {
+      const statusEl = document.getElementById('importarStatus')
+      const resumoEl = document.getElementById('importarResumo')
+      const btn = document.getElementById('importarLojaBtn')
+
+      if (tentativas > 300) { // ~25 minutos de tentativas (5s cada), bem acima do limite da função
+        statusEl.textContent = '⚠️ A importação está demorando mais que o esperado. Recarregue a página em alguns minutos pra conferir se terminou.'
+        btn.disabled = false
+        btn.textContent = 'Importar produtos'
+        return
+      }
+
+      const { data } = await supabaseClient
+        .from('importacoes_lojas')
+        .select('status, resumo, erro_mensagem')
+        .eq('id', importacaoId)
+        .maybeSingle()
+
+      if (!data || data.status === 'processando') {
+        setTimeout(() => acompanharImportacao(importacaoId, tentativas + 1), 5000)
+        return
+      }
+
+      btn.disabled = false
+      btn.textContent = 'Importar produtos'
+
+      if (data.status === 'erro') {
+        statusEl.textContent = '❌ ' + (data.erro_mensagem || 'Não foi possível importar a loja.')
+        return
+      }
+
+      const resumo = data.resumo || {}
+      statusEl.textContent = '✅ Importação concluída!'
+      resumoEl.innerHTML = `
+        <div style="border:1px solid var(--line); border-radius:10px; padding:16px; font-size:13px; line-height:1.8;">
+          <p>✅ <strong>${resumo.publicados || 0}</strong> produto(s) publicado(s)</p>
+          <p>⏫ <strong>${resumo.pendenteUpgrade || 0}</strong> aguardando upgrade de plano — <a href="index.html#vender">ver planos</a></p>
+          <p>📦 <strong>${resumo.pendenteDadosFrete || 0}</strong> precisam de peso/dimensões antes do frete funcionar direito</p>
+          <p>🖼️ <strong>${resumo.semImagem || 0}</strong> sem imagem</p>
+          <p>⚠️ <strong>${resumo.extracaoIncompleta || 0}</strong> com dados incompletos, aguardando revisão manual</p>
+        </div>
+      `
+      await carregarProdutos()
+      await carregarDadosUsuario()
     }
 
     async function salvarApoio() {

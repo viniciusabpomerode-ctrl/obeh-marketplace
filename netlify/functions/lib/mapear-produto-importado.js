@@ -38,7 +38,7 @@ function mapearCategoria(categoriaOrigemTexto, categoriasObeh) {
   return { categoriaId: null, precisaRevisao: true } // "Sem categoria", sinalizado
 }
 
-function mapearProdutoImportado(extraido, { categoriasObeh, plataforma, loja }) {
+function mapearProdutoImportado(extraido, { categoriasObeh, plataforma }) {
   const nome = (extraido.titulo || '').trim()
   const precoAtual = extraido.precoAtual
 
