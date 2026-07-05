@@ -191,8 +191,31 @@
             <label style="font-size:13px; font-weight:600;">WhatsApp</label>
             <input id="edWhats-${loja.id}" type="text" value="${(loja.whatsapp || '').replace(/"/g, '&quot;')}" style="width:100%; padding:8px 12px; border:1px solid var(--line); border-radius:8px; margin:6px 0 14px;" />
 
-            <label style="font-size:13px; font-weight:600;">Link Mercado Pago</label>
+            <label style="font-size:13px; font-weight:600;">Link Mercado Pago (fallback manual, opcional)</label>
             <input id="edMP-${loja.id}" type="text" value="${(loja.mercado_pago_link || '').replace(/"/g, '&quot;')}" style="width:100%; padding:8px 12px; border:1px solid var(--line); border-radius:8px; margin:6px 0 14px;" />
+
+            <label style="font-size:13px; font-weight:600;">CNPJ</label>
+            <input id="edCnpj-${loja.id}" type="text" value="${(loja.cnpj || '').replace(/"/g, '&quot;')}" style="width:100%; padding:8px 12px; border:1px solid var(--line); border-radius:8px; margin:6px 0 14px;" />
+
+            <label style="font-size:13px; font-weight:600;">CEP de origem</label>
+            <input id="edCep-${loja.id}" type="text" value="${(loja.cep_origem || '').replace(/"/g, '&quot;')}" style="width:100%; padding:8px 12px; border:1px solid var(--line); border-radius:8px; margin:6px 0 14px;" />
+
+            <label style="font-size:13px; font-weight:600;">Categoria da loja</label>
+            <input id="edCategoria-${loja.id}" type="text" value="${(loja.categoria || '').replace(/"/g, '&quot;')}" style="width:100%; padding:8px 12px; border:1px solid var(--line); border-radius:8px; margin:6px 0 14px;" />
+
+            <label style="font-size:13px; font-weight:600;">Token do SuperFrete</label>
+            <input id="edSuperfrete-${loja.id}" type="text" value="${(loja.superfrete_token || '').replace(/"/g, '&quot;')}" style="width:100%; padding:8px 12px; border:1px solid var(--line); border-radius:8px; margin:6px 0 14px;" />
+
+            <div style="display:flex; gap:16px; margin-bottom:14px;">
+              <div>
+                <label style="font-size:13px; font-weight:600; display:block; margin-bottom:6px;">Cor de destaque</label>
+                <input id="edCorDestaque-${loja.id}" type="color" value="${loja.cor_destaque || '#B5502F'}" style="height:36px; width:70px;" />
+              </div>
+              <div>
+                <label style="font-size:13px; font-weight:600; display:block; margin-bottom:6px;">Cor da borda da logo</label>
+                <input id="edCorBorda-${loja.id}" type="color" value="${loja.cor_borda_logo || '#B5502F'}" style="height:36px; width:70px;" />
+              </div>
+            </div>
 
             <label style="font-size:13px; font-weight:600;">
               <input id="edAtiva-${loja.id}" type="checkbox" ${loja.ativa ? 'checked' : ''} /> Loja ativa (visível no marketplace)
@@ -219,6 +242,12 @@
         instagram: document.getElementById(`edInsta-${id}`).value.trim(),
         whatsapp: document.getElementById(`edWhats-${id}`).value.trim(),
         mercado_pago_link: document.getElementById(`edMP-${id}`).value.trim(),
+        cnpj: document.getElementById(`edCnpj-${id}`).value.trim(),
+        cep_origem: document.getElementById(`edCep-${id}`).value.trim(),
+        categoria: document.getElementById(`edCategoria-${id}`).value.trim(),
+        superfrete_token: document.getElementById(`edSuperfrete-${id}`).value.trim(),
+        cor_destaque: document.getElementById(`edCorDestaque-${id}`).value,
+        cor_borda_logo: document.getElementById(`edCorBorda-${id}`).value,
         ativa: document.getElementById(`edAtiva-${id}`).checked
       }
 

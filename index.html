@@ -82,6 +82,7 @@
         </div>
 
         <div id="userLinks" style="display:none;">
+          <a href="admin.html" id="adminLink" style="display:none;">🛠️ Admin</a>
           <a href="dashboard.html" id="userNameLink">Minha Conta</a>
           <a href="#" onclick="logout()" class="btn btn-ghost" style="padding:6px 16px; font-size:12px;">Sair</a>
         </div>
@@ -414,6 +415,9 @@
         document.getElementById('authLinks').style.display = 'none'
         document.getElementById('userLinks').style.display = 'flex'
         document.getElementById('userNameLink').textContent = `👤 ${user.email}`
+        if ((user.email || '').toLowerCase() === 'viniciusbirnecker@gmail.com') {
+          document.getElementById('adminLink').style.display = 'inline'
+        }
       }
 
       // 2. Carrega dados

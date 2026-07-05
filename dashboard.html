@@ -135,19 +135,31 @@
           <option value="">Sem pasta</option>
         </select>
       </div>
-      <div class="form-group" style="background:rgba(0,0,0,0.03); border:1px solid var(--line); border-radius:12px; padding:14px;">
-        <label style="display:flex; align-items:center; gap:8px;">
-          <input type="checkbox" id="prodEmPromocao" onchange="document.getElementById('prodPrecoAntigoGroup').style.display = this.checked ? 'block' : 'none'" />
-          🔥 Colocar em promoção
-        </label>
-        <div class="form-group" id="prodPrecoAntigoGroup" style="display:none; margin-top:10px; margin-bottom:0;">
+      <div class="form-group" style="background:rgba(0,0,0,0.03); border:1px solid var(--line); border-radius:12px; padding:4px 16px;">
+        <div class="toggle-row">
+          <div class="toggle-label">
+            <strong>🔥 Colocar em promoção</strong>
+            <p>Mostra o preço antigo riscado e um selo de promoção na vitrine.</p>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="prodEmPromocao" onchange="document.getElementById('prodPrecoAntigoGroup').style.display = this.checked ? 'block' : 'none'" />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="form-group" id="prodPrecoAntigoGroup" style="display:none; margin:0 0 14px;">
           <label>Preço antigo (R$, exibido riscado)</label>
           <input type="number" id="prodPrecoAntigo" step="0.01" min="0" />
         </div>
-        <label style="display:flex; align-items:center; gap:8px; margin-top:12px;">
-          <input type="checkbox" id="prodDestaque" />
-          ⭐ Dar destaque a este produto na vitrine da loja
-        </label>
+        <div class="toggle-row">
+          <div class="toggle-label">
+            <strong>⭐ Dar destaque</strong>
+            <p>Prioriza este produto na vitrine da loja.</p>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="prodDestaque" />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
       </div>
 <button type="submit" class="btn btn-primary">Salvar produto</button>
         </form>
@@ -181,9 +193,9 @@
           <div class="form-row">
             <div class="form-group">
               <label>Logo (arquivo ou URL — grandes são comprimidas automaticamente)</label>
-              <input type="file" id="lojaLogoFile" accept="image/*" />
+              <input type="file" id="lojaLogoFile" accept="image/*" onchange="abrirLogoCropModal(event)" />
               <input type="text" id="lojaLogo" placeholder="https://imagem-logo.jpg" style="margin-top:8px;" />
-              <small style="color:var(--ink-soft); display:block; margin-top:4px;">Recomendado: imagem quadrada (ex: 400×400).</small>
+              <small style="color:var(--ink-soft); display:block; margin-top:4px;">Ao escolher um arquivo, você pode arrastar e dar zoom pra encaixar a foto na moldura redonda.</small>
             </div>
             <div class="form-group">
               <label>Banner (arquivo ou URL — grandes são comprimidas automaticamente)</label>
@@ -509,6 +521,21 @@
     <div id="tab-mensagens" class="tab-content">
       <div id="mensagensList">
         <p style="color:var(--ink-soft); text-align:center; padding:40px;">Nenhuma mensagem.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL: ENCAIXAR LOGO ===== -->
+  <div id="logoCropModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:1000; align-items:center; justify-content:center;">
+    <div style="background:var(--white, #fff); border-radius:12px; padding:24px; max-width:340px; width:90%; text-align:center;">
+      <h3 style="font-size:16px; margin-bottom:14px;">Encaixe sua logo</h3>
+      <div id="logoCropBox" style="width:260px; height:260px; border-radius:50%; overflow:hidden; position:relative; margin:0 auto; background:#eee; cursor:grab; touch-action:none;">
+        <img id="logoCropImg" style="position:absolute; user-select:none; -webkit-user-drag:none;" draggable="false" />
+      </div>
+      <input type="range" id="logoCropZoom" min="1" max="3" step="0.01" value="1" style="width:100%; margin-top:16px;" />
+      <div style="display:flex; gap:10px; margin-top:16px; justify-content:center;">
+        <button type="button" class="btn btn-ghost" onclick="fecharLogoCropModal()">Cancelar</button>
+        <button type="button" class="btn btn-primary" onclick="confirmarLogoCrop()">Usar esta foto</button>
       </div>
     </div>
   </div>
@@ -1378,12 +1405,113 @@ pasta_id,
       }
     }
 
+    // ===== ENCAIXAR LOGO (arrastar + zoom antes de enviar) =====
+    const LOGO_CROP_SIZE = 260
+    const LOGO_CROP_OUT = 500
+    let logoCrop = { natW: 0, natH: 0, baseScale: 1, scale: 1, left: 0, top: 0, dragging: false, startX: 0, startY: 0, startLeft: 0, startTop: 0 }
+    let logoCropBlob = null
+
+    function abrirLogoCropModal(event) {
+      const file = event.target.files[0]
+      if (!file) return
+
+      const img = document.getElementById('logoCropImg')
+      const url = URL.createObjectURL(file)
+      img.onload = () => {
+        logoCrop.natW = img.naturalWidth
+        logoCrop.natH = img.naturalHeight
+        logoCrop.baseScale = LOGO_CROP_SIZE / Math.min(logoCrop.natW, logoCrop.natH)
+        logoCrop.scale = 1
+        posicionarLogoCropCentro()
+        document.getElementById('logoCropZoom').value = 1
+        renderLogoCrop()
+        document.getElementById('logoCropModal').style.display = 'flex'
+      }
+      img.src = url
+    }
+
+    function posicionarLogoCropCentro() {
+      const dispW = logoCrop.natW * logoCrop.baseScale * logoCrop.scale
+      const dispH = logoCrop.natH * logoCrop.baseScale * logoCrop.scale
+      logoCrop.left = (LOGO_CROP_SIZE - dispW) / 2
+      logoCrop.top = (LOGO_CROP_SIZE - dispH) / 2
+    }
+
+    function clampLogoCropPos() {
+      const dispW = logoCrop.natW * logoCrop.baseScale * logoCrop.scale
+      const dispH = logoCrop.natH * logoCrop.baseScale * logoCrop.scale
+      logoCrop.left = Math.min(0, Math.max(LOGO_CROP_SIZE - dispW, logoCrop.left))
+      logoCrop.top = Math.min(0, Math.max(LOGO_CROP_SIZE - dispH, logoCrop.top))
+    }
+
+    function renderLogoCrop() {
+      const img = document.getElementById('logoCropImg')
+      const dispW = logoCrop.natW * logoCrop.baseScale * logoCrop.scale
+      const dispH = logoCrop.natH * logoCrop.baseScale * logoCrop.scale
+      img.style.width = dispW + 'px'
+      img.style.height = dispH + 'px'
+      img.style.left = logoCrop.left + 'px'
+      img.style.top = logoCrop.top + 'px'
+    }
+
+    function iniciarLogoCropDrag(clientX, clientY) {
+      logoCrop.dragging = true
+      logoCrop.startX = clientX
+      logoCrop.startY = clientY
+      logoCrop.startLeft = logoCrop.left
+      logoCrop.startTop = logoCrop.top
+    }
+
+    function moverLogoCropDrag(clientX, clientY) {
+      if (!logoCrop.dragging) return
+      logoCrop.left = logoCrop.startLeft + (clientX - logoCrop.startX)
+      logoCrop.top = logoCrop.startTop + (clientY - logoCrop.startY)
+      clampLogoCropPos()
+      renderLogoCrop()
+    }
+
+    function fecharLogoCropModal() {
+      document.getElementById('logoCropModal').style.display = 'none'
+      document.getElementById('lojaLogoFile').value = ''
+    }
+
+    async function confirmarLogoCrop() {
+      const canvas = document.createElement('canvas')
+      canvas.width = LOGO_CROP_OUT
+      canvas.height = LOGO_CROP_OUT
+      const ctx = canvas.getContext('2d')
+      const factor = LOGO_CROP_OUT / LOGO_CROP_SIZE
+      const dispW = logoCrop.natW * logoCrop.baseScale * logoCrop.scale
+      const dispH = logoCrop.natH * logoCrop.baseScale * logoCrop.scale
+      ctx.drawImage(document.getElementById('logoCropImg'), logoCrop.left * factor, logoCrop.top * factor, dispW * factor, dispH * factor)
+
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.9))
+      logoCropBlob = new File([blob], 'logo.jpg', { type: 'image/jpeg' })
+      document.getElementById('logoCropModal').style.display = 'none'
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const box = document.getElementById('logoCropBox')
+      if (!box) return
+      box.addEventListener('mousedown', (e) => iniciarLogoCropDrag(e.clientX, e.clientY))
+      window.addEventListener('mousemove', (e) => moverLogoCropDrag(e.clientX, e.clientY))
+      window.addEventListener('mouseup', () => { logoCrop.dragging = false })
+      box.addEventListener('touchstart', (e) => { const t = e.touches[0]; iniciarLogoCropDrag(t.clientX, t.clientY) }, { passive: true })
+      box.addEventListener('touchmove', (e) => { const t = e.touches[0]; moverLogoCropDrag(t.clientX, t.clientY) }, { passive: true })
+      box.addEventListener('touchend', () => { logoCrop.dragging = false })
+      document.getElementById('logoCropZoom').addEventListener('input', (e) => {
+        logoCrop.scale = Number(e.target.value)
+        clampLogoCropPos()
+        renderLogoCrop()
+      })
+    })
+
     // ===== LOJA FORM =====
     async function handleLojaSubmit(e) {
       e.preventDefault()
 
       try {
-        const logoFile = document.getElementById('lojaLogoFile').files[0]
+        const logoFile = logoCropBlob || document.getElementById('lojaLogoFile').files[0]
         const bannerFile = document.getElementById('lojaBannerFile').files[0]
         const logoValue = logoFile ? await uploadImagemR2(logoFile, 'lojas') : document.getElementById('lojaLogo').value.trim()
         const bannerValue = bannerFile ? await uploadImagemR2(bannerFile, 'lojas') : document.getElementById('lojaBanner').value.trim()
@@ -1414,6 +1542,7 @@ pasta_id,
         const result = await atualizarLoja(currentUserId, updates)
         if (result && result.persisted !== false) {
           if (fotosAntigas.length) await deletarImagensR2(fotosAntigas)
+          logoCropBlob = null
           lojaData = result
           alert('✅ Loja salva com sucesso!')
           window.location.href = `loja.html?id=${result.id}`
