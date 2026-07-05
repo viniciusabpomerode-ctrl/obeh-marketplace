@@ -172,11 +172,13 @@
               <label>Logo (arquivo ou URL — grandes são comprimidas automaticamente)</label>
               <input type="file" id="lojaLogoFile" accept="image/*" />
               <input type="text" id="lojaLogo" placeholder="https://imagem-logo.jpg" style="margin-top:8px;" />
+              <small style="color:var(--ink-soft); display:block; margin-top:4px;">Recomendado: imagem quadrada (ex: 400×400).</small>
             </div>
             <div class="form-group">
               <label>Banner (arquivo ou URL — grandes são comprimidas automaticamente)</label>
               <input type="file" id="lojaBannerFile" accept="image/*" />
               <input type="text" id="lojaBanner" placeholder="https://imagem-banner.jpg" style="margin-top:8px;" />
+              <small style="color:var(--ink-soft); display:block; margin-top:4px;">Recomendado: 1920×400 (formato bem largo) pra caber certinho no topo da loja.</small>
             </div>
           </div>
           <div class="form-row">
@@ -194,24 +196,8 @@
             <input type="text" id="lojaCnpj" placeholder="00.000.000/0000-00" />
           </div>
           <div class="form-group">
-            <label>Link de pagamento Mercado Pago *</label>
-            <input type="text" id="lojaMercadoPago" placeholder="https://link.mercadopago.com.br/sua-loja" />
-          </div>
-          <div class="form-group">
             <label>CEP de origem (pra calcular frete)</label>
             <input type="text" id="lojaCepOrigem" placeholder="00000-000" maxlength="9" />
-            <small style="color:var(--ink-soft); display:block; margin-top:4px;">
-              É pra esse link que o comprador vai ser levado ao clicar em "comprar". O pagamento cai direto na sua conta — o Obeh não retém nem intermedeia.
-              Crie o seu em <a href="https://www.mercadopago.com.br/link-de-pagamento" target="_blank" rel="noopener">mercadopago.com.br/link-de-pagamento</a>.
-            </small>
-          </div>
-          <div class="form-group">
-            <label>Token do SuperFrete (opcional)</label>
-            <input type="text" id="lojaSuperfreteToken" placeholder="Cole aqui o token gerado no SuperFrete" />
-            <small style="color:var(--ink-soft); display:block; margin-top:4px;">
-              Com esse token o frete é calculado automaticamente com o preço real dos Correios/transportadoras via SuperFrete. Gere o seu em
-              <a href="https://web.superfrete.com/#/integrations" target="_blank" rel="noopener">web.superfrete.com/#/integrations</a>. Sem token, usamos uma estimativa aproximada.
-            </small>
           </div>
                 <div class="form-row">
         <div class="form-group">
@@ -247,6 +233,18 @@
       <p style="font-size:13px; color:var(--muted); margin-bottom:12px;">Conecte sua conta do Mercado Pago pra receber os pagamentos das suas vendas direto, com a taxa da Obeh descontada automaticamente.</p>
       <div id="mpConexaoStatus" style="margin-bottom:12px; font-size:14px;">Carregando...</div>
       <button type="button" class="btn btn-primary" id="mpConectarBtn" onclick="conectarMercadoPago()">Conectar Mercado Pago</button>
+    </div>
+
+    <div style="margin-top:32px; padding-top:24px; border-top:1px solid var(--line);">
+      <h3 style="font-size:16px; margin-bottom:6px;">🚚 Token do SuperFrete</h3>
+      <p style="font-size:13px; color:var(--muted); margin-bottom:12px;">Com esse token o frete é calculado automaticamente com o preço real dos Correios/transportadoras via SuperFrete. Sem token, usamos uma estimativa aproximada.</p>
+      <div class="form-group" style="margin:0;">
+        <input type="text" id="lojaSuperfreteToken" placeholder="Cole aqui o token gerado no SuperFrete" onchange="salvarSuperfreteToken()" />
+        <small style="color:var(--ink-soft); display:block; margin-top:4px;">
+          Gere o seu em <a href="https://web.superfrete.com/#/integrations" target="_blank" rel="noopener">web.superfrete.com/#/integrations</a>.
+        </small>
+      </div>
+      <small id="superfreteStatus" style="display:block; margin-top:6px;"></small>
     </div>
 
     <div style="margin-top:32px; padding-top:24px; border-top:1px solid var(--line);">
@@ -648,8 +646,11 @@
     }
 
     // ===== CARREGAR PRODUTOS =====
+    let produtosCache = []
+
     async function carregarProdutos() {
       const data = await getUserProducts(currentUserId)
+      produtosCache = data || []
 
       const container = document.getElementById('productList')
       if (!data || data.length === 0) {
@@ -740,7 +741,6 @@
         document.getElementById('lojaBanner').value = data.banner || ''
         document.getElementById('lojaInstagram').value = data.instagram || ''
         document.getElementById('lojaWhatsapp').value = data.whatsapp || ''
-        document.getElementById('lojaMercadoPago').value = data.mercado_pago_link || ''
       document.getElementById('lojaCepOrigem').value = data.cep_origem || ''
       document.getElementById('lojaSuperfreteToken').value = data.superfrete_token || ''
       document.getElementById('lojaCnpj').value = data.cnpj || ''
@@ -925,6 +925,21 @@
       window.location.href = `/.netlify/functions/mp-oauth-start?userId=${currentUserId}`
     }
 
+    async function salvarSuperfreteToken() {
+      const statusEl = document.getElementById('superfreteStatus')
+      if (!lojaData) return
+      const superfrete_token = document.getElementById('lojaSuperfreteToken').value.trim()
+
+      const { error } = await supabaseClient.from('lojas').update({ superfrete_token }).eq('id', lojaData.id)
+      if (error) {
+        statusEl.textContent = '❌ Erro ao salvar: ' + error.message
+        return
+      }
+      lojaData.superfrete_token = superfrete_token
+      statusEl.textContent = '✅ Token salvo.'
+      setTimeout(() => { statusEl.textContent = '' }, 2500)
+    }
+
     async function carregarApoio() {
       if (!lojaData) return
 
@@ -1014,7 +1029,9 @@
     }
 
     async function deletarBeneficioApoio(id) {
+      const { data: beneficio } = await supabaseClient.from('apoio_beneficios').select('foto_url').eq('id', id).maybeSingle()
       await supabaseClient.from('apoio_beneficios').delete().eq('id', id)
+      if (beneficio?.foto_url) await deletarImagensR2(beneficio.foto_url)
       await carregarBeneficiosApoioDashboard()
     }
 
@@ -1186,7 +1203,9 @@ async function criarPasta() {
 
 async function removerPasta(id) {
   if (!confirm('Remover esta pasta? Os produtos dela continuam na loja, só perdem a organização.')) return
+  const { data: pasta } = await supabaseClient.from('loja_pastas').select('imagem').eq('id', id).maybeSingle()
   await supabaseClient.from('loja_pastas').delete().eq('id', id)
+  if (pasta?.imagem) await deletarImagensR2(pasta.imagem)
   await carregarPastas()
   await carregarPastasSelectProduto()
 }
@@ -1219,7 +1238,8 @@ async function carregarPastasSelectProduto() {
     }
 
     function removeProdFoto(index) {
-      prodFotosArr.splice(index, 1)
+      const [url] = prodFotosArr.splice(index, 1)
+      deletarImagensR2(url)
       renderProdFotosPreview()
     }
 
@@ -1350,9 +1370,7 @@ pasta_id,
           banner: bannerValue,
           instagram: document.getElementById('lojaInstagram').value.trim(),
           whatsapp: document.getElementById('lojaWhatsapp').value.trim(),
-          mercado_pago_link: document.getElementById('lojaMercadoPago').value.trim(),
       cep_origem: document.getElementById('lojaCepOrigem').value.trim(),
-      superfrete_token: document.getElementById('lojaSuperfreteToken').value.trim(),
       cnpj: document.getElementById('lojaCnpj').value.trim(),
       cor_destaque: document.getElementById('lojaCorDestaque').value,
       cor_borda_logo: document.getElementById('lojaCorBorda').value,
@@ -1364,8 +1382,13 @@ pasta_id,
           return
         }
 
+        const fotosAntigas = []
+        if (logoFile && lojaData?.logo && lojaData.logo !== logoValue) fotosAntigas.push(lojaData.logo)
+        if (bannerFile && lojaData?.banner && lojaData.banner !== bannerValue) fotosAntigas.push(lojaData.banner)
+
         const result = await atualizarLoja(currentUserId, updates)
         if (result && result.persisted !== false) {
+          if (fotosAntigas.length) await deletarImagensR2(fotosAntigas)
           lojaData = result
           alert('✅ Loja salva com sucesso!')
           window.location.href = `loja.html?id=${result.id}`
@@ -1390,8 +1413,10 @@ pasta_id,
 
     // ===== DELETE =====
     async function handleDeleteProduto(id) {
+      const produto = produtosCache.find(p => p.id === id)
       const success = await deletarProduto(id)
       if (success) {
+        if (produto?.fotos?.length) await deletarImagensR2(produto.fotos)
         await carregarProdutos()
         await carregarDadosUsuario()
       }
@@ -1433,8 +1458,11 @@ pasta_id,
     }
 
     // ===== CURSOS (plano Ultra) =====
+    let cursosCache = []
+
     async function carregarCursos() {
       const data = await getUserCursos(currentUserId)
+      cursosCache = data || []
       const container = document.getElementById('cursoList')
 
       if (!data || data.length === 0) {
@@ -1539,8 +1567,10 @@ pasta_id,
 
     async function handleDeleteCurso(id) {
       if (!confirm('Excluir este curso e todos os seus tópicos? Essa ação não pode ser desfeita.')) return
+      const curso = cursosCache.find(c => c.id === id)
       const success = await deletarCurso(id)
       if (success) {
+        if (curso?.capa_url) await deletarImagensR2(curso.capa_url)
         await carregarCursos()
         if (cursoAtualId === id) fecharTopicos()
       }
@@ -1774,9 +1804,11 @@ pasta_id,
         return
       }
 
+      const fotosAntigas = produtosCache.filter(p => ids.includes(p.id)).flatMap(p => p.fotos || [])
       for (const id of ids) {
         await atualizarProduto(id, { fotos: [url] })
       }
+      if (fotosAntigas.length) await deletarImagensR2(fotosAntigas)
       await carregarProdutos()
     }
 
@@ -1784,9 +1816,11 @@ pasta_id,
       const ids = getSelecionadosIds()
       if (ids.length === 0) return
       if (!confirm(`Tem certeza que deseja excluir ${ids.length} produto(s)? Essa ação não pode ser desfeita.`)) return
+      const todasFotos = produtosCache.filter(p => ids.includes(p.id)).flatMap(p => p.fotos || [])
       for (const id of ids) {
         await deletarProdutoDireto(id)
       }
+      if (todasFotos.length) await deletarImagensR2(todasFotos)
       await carregarProdutos()
     }
 

@@ -565,7 +565,29 @@ async function getCategorias() {
 // FUNÇÕES DO CARRINHO
 // ============================================
 
-let carrinho = []
+const CARRINHO_STORAGE_KEY = 'obeh_carrinho'
+
+function carregarCarrinhoStorage() {
+  try {
+    const salvo = localStorage.getItem(CARRINHO_STORAGE_KEY)
+    return salvo ? JSON.parse(salvo) : []
+  } catch (e) {
+    return []
+  }
+}
+
+let carrinho = carregarCarrinhoStorage()
+
+// O carrinho é um array em memória, mas o navegador carrega cada página do
+// zero — sem salvar no localStorage a cada mudança, o carrinho "sumiria"
+// assim que o comprador saísse da página atual (ex: indo pro carrinho.html).
+function salvarCarrinhoStorage() {
+  try {
+    localStorage.setItem(CARRINHO_STORAGE_KEY, JSON.stringify(carrinho))
+  } catch (e) {
+    console.error('Não foi possível salvar o carrinho localmente:', e)
+  }
+}
 
 function adicionarAoCarrinho(produto) {
   const existente = carrinho.find(item => item.id === produto.id)
@@ -601,6 +623,7 @@ function getQuantidadeCarrinho() {
 }
 
 function atualizarCarrinhoUI() {
+  salvarCarrinhoStorage()
   const countEl = document.getElementById('cartCount')
   if (countEl) countEl.textContent = getQuantidadeCarrinho()
 }

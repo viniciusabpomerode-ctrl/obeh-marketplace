@@ -123,5 +123,23 @@ async function uploadImagemR2(file, folder = 'produtos') {
   return publicUrl
 }
 
+// Apaga uma ou mais imagens do R2 (sem travar a ação principal se falhar —
+// é só limpeza, nunca deve impedir excluir/trocar algo por causa disso).
+async function deletarImagensR2(urls) {
+  const lista = (Array.isArray(urls) ? urls : [urls]).filter(Boolean)
+  if (lista.length === 0) return
+
+  try {
+    await fetch('/.netlify/functions/r2-delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ urls: lista })
+    })
+  } catch (e) {
+    console.error('Não foi possível apagar imagem(ns) antigas do armazenamento:', e)
+  }
+}
+
 window.uploadImagemR2 = uploadImagemR2
+window.deletarImagensR2 = deletarImagensR2
 window.R2_MAX_BYTES = R2_MAX_BYTES

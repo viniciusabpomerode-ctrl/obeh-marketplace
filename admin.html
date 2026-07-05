@@ -118,6 +118,7 @@
 
   <!-- ===== SCRIPTS ===== -->
   <script src="js/supabase.js"></script>
+  <script src="js/upload-r2.js"></script>
   <script>
     const ADMIN_EMAIL = 'viniciusbirnecker@gmail.com'
 
@@ -237,12 +238,27 @@
 
         async function excluirLojaAdmin(id) {
       if (!confirm('Tem certeza que deseja EXCLUIR esta loja e todos os seus produtos? Essa ação não pode ser desfeita.')) return
+
+      const [{ data: loja }, { data: produtos }, { data: cursos }] = await Promise.all([
+        supabaseClient.from('lojas').select('logo, banner').eq('id', id).maybeSingle(),
+        supabaseClient.from('produtos').select('fotos').eq('loja_id', id),
+        supabaseClient.from('cursos').select('capa_url').eq('loja_id', id)
+      ])
+
       await supabaseClient.from('produtos').delete().eq('loja_id', id)
       const { error } = await supabaseClient.from('lojas').delete().eq('id', id)
       if (error) {
         alert('❌ Erro ao excluir loja: ' + error.message)
         return
       }
+
+      const imagens = [
+        loja?.logo, loja?.banner,
+        ...(produtos || []).flatMap(p => p.fotos || []),
+        ...(cursos || []).map(c => c.capa_url)
+      ].filter(Boolean)
+      if (imagens.length) await deletarImagensR2(imagens)
+
       alert('✅ Loja excluída com sucesso.')
       await carregarTodasLojas()
     }
@@ -298,11 +314,13 @@
 
     async function excluirProdutoAdmin(produtoId, lojaId) {
       if (!confirm('Excluir este produto?')) return
+      const { data: produto } = await supabaseClient.from('produtos').select('fotos').eq('id', produtoId).maybeSingle()
       const { error } = await supabaseClient.from('produtos').delete().eq('id', produtoId)
       if (error) {
         alert('❌ Erro ao excluir produto: ' + error.message)
         return
       }
+      if (produto?.fotos?.length) await deletarImagensR2(produto.fotos)
       await carregarProdutosLojaAdmin(lojaId)
     }
 

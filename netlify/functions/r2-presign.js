@@ -15,7 +15,7 @@ const PUBLIC_URL = process.env.R2_PUBLIC_URL // ex: https://pub-xxxxxxxx.r2.dev 
 
 const MAX_BYTES = 500 * 1024 // 500KB por imagem (também validado no cliente)
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
-const ALLOWED_FOLDERS = ['produtos', 'lojas', 'cursos']
+const ALLOWED_FOLDERS = ['produtos', 'lojas', 'cursos', 'pastas', 'apoio']
 
 function sanitizeFilename(name) {
   const clean = (name || 'imagem').toLowerCase().replace(/[^a-z0-9.\-]/g, '-')

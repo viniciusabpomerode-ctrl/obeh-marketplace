@@ -247,9 +247,6 @@
           <h1 id="lojaNome">Nome da Loja</h1>
           <p class="desc" id="lojaDescricao">Descrição da loja...</p>
         <div id="lojaCategoriasPills" style="display:flex; gap:8px; flex-wrap:wrap; margin:10px 0;"></div>
-          <div class="loja-social-public" id="lojaSocial">
-            <!-- Injetado via JS -->
-          </div>
           <button class="btn btn-primary btn-chat" id="btnChat" onclick="abrirChat()">💬 Conversar com artesão</button>
         </div>
       </div>
@@ -442,13 +439,19 @@ async function carregarConteudoExclusivo(id) {
     return
   }
   section.style.display = 'block'
-  document.getElementById('lojaConteudoExclusivoLista').innerHTML = data.map(c => `
-    <div style="border:1px solid var(--line); border-radius:8px; padding:12px; margin-bottom:10px;">
-      <strong>${c.titulo}</strong>
-      ${c.corpo ? `<p style="margin:6px 0; font-size:14px;">${c.corpo}</p>` : ''}
-      ${c.link ? `<a href="${c.link}" target="_blank" rel="noopener">Acessar conteúdo</a>` : ''}
+  document.getElementById('lojaConteudoExclusivoLista').innerHTML = data.map((c, i) => `
+    <div class="beneficio-item" id="conteudo-${i}" onclick="toggleConteudoExclusivo(${i})">
+      <div class="beneficio-titulo"><span>🔒 ${c.titulo}</span><span>▾</span></div>
+      <div class="beneficio-corpo">
+        ${c.corpo ? `<p>${c.corpo}</p>` : ''}
+        ${c.link ? `<a href="${c.link}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Acessar conteúdo</a>` : ''}
+      </div>
     </div>
   `).join('')
+}
+
+function toggleConteudoExclusivo(indice) {
+  document.getElementById(`conteudo-${indice}`)?.classList.toggle('aberto')
 }
 
 // ===== CARREGAR LOJA =====
@@ -533,18 +536,8 @@ async function carregarLoja(id) {
           `<div style="display:flex; align-items:center; justify-content:center; height:100%; font-size:32px;">🧵</div>`
       }
 
-      // Redes sociais
-      const socialEl = document.getElementById('lojaSocial')
-      let socialHtml = ''
-      if (data.instagram) {
-        socialHtml += `<a href="https://instagram.com/${data.instagram.replace('@', '')}" target="_blank">📸 ${data.instagram}</a>`
-      }
-      if (data.whatsapp) {
-        const whatsappClean = data.whatsapp.replace(/\D/g, '')
-        socialHtml +=
-          `<a href="https://wa.me/55${whatsappClean}" target="_blank">💬 WhatsApp</a>`
-      }
-      socialEl.innerHTML = socialHtml || ''
+      // Instagram/WhatsApp da loja não aparecem publicamente — o contato fica
+      // dentro do chat da plataforma, pra não furar o fluxo de compra/split de taxa.
 
       // Botão de chat
       const btnChat = document.getElementById('btnChat')
@@ -681,21 +674,7 @@ function filtrarPorPasta(pastaId) {
           alert('🛒 Seu carrinho está vazio!')
           return
         }
-
-        const mpLink = (lojaData && lojaData.mercado_pago_link) ? lojaData.mercado_pago_link.trim() : ''
-
-        if (!mpLink) {
-          alert('⚠️ Este artesão ainda não cadastrou um link de pagamento do Mercado Pago. Entre em contato pelo WhatsApp ou Instagram da loja para combinar o pagamento.')
-          return
-        }
-
-        alert('💳 Você será redirecionado ao Mercado Pago do artesão. O pagamento é direto — o Obeh não retém nem intermedeia esse valor.')
-        window.open(mpLink, '_blank')
-
-        carrinho = []
-        atualizarCarrinhoUI()
-        renderizarCarrinho()
-        document.getElementById('cartModal').style.display = 'none'
+        window.location.href = 'carrinho.html'
       })
     }
 

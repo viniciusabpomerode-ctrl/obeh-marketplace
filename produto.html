@@ -527,21 +527,7 @@
           alert('🛒 Seu carrinho está vazio!')
           return
         }
-
-        const mpLink = (lojaData && lojaData.mercado_pago_link) ? lojaData.mercado_pago_link.trim() : ''
-
-        if (!mpLink) {
-          alert('⚠️ Este artesão ainda não cadastrou um link de pagamento do Mercado Pago. Entre em contato pelo WhatsApp ou Instagram da loja para combinar o pagamento.')
-          return
-        }
-
-        alert('💳 Você será redirecionado ao Mercado Pago do artesão. O pagamento é direto — o Obeh não retém nem intermedeia esse valor.')
-        window.open(mpLink, '_blank')
-
-        carrinho = []
-        atualizarCarrinhoUI()
-        renderizarCarrinho()
-        document.getElementById('cartModal').style.display = 'none'
+        window.location.href = 'carrinho.html'
       })
     }
 

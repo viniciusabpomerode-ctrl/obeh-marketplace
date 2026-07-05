@@ -587,37 +587,7 @@
           alert('🛒 Seu carrinho está vazio! ')
           return
         }
-
-        // Agrupa os itens por loja: cada artesão recebe direto no seu Mercado Pago
-        const porLoja = {}
-        carrinho.forEach(item => {
-          const key = item.loja_id || 'sem-loja'
-          if (!porLoja[key]) {
-            porLoja[key] = { nome: item.loja_nome || 'Loja', mpLink: (item.mp_link || '').trim(), total: 0 }
-          }
-          porLoja[key].total += Number(item.preco) * item.quantidade
-        })
-
-        const grupos = Object.values(porLoja)
-        const semLink = grupos.filter(g => !g.mpLink)
-        const comLink = grupos.filter(g => g.mpLink)
-
-        if (semLink.length > 0) {
-          alert('⚠️ ' + semLink.map(g => g.nome).join(', ') + ' ainda não cadastrou um link de pagamento do Mercado Pago. Entre em contato pela loja para combinar o pagamento.')
-        }
-
-        if (comLink.length === 0) return
-
-        let resumo = '💳 Você será redirecionado ao Mercado Pago de cada artesão. O pagamento é direto — o Obeh não retém nem intermedeia esse valor.\n\n'
-        comLink.forEach(g => { resumo += `${g.nome}: R$ ${g.total.toFixed(2)}\n` })
-        alert(resumo)
-
-        comLink.forEach(g => window.open(g.mpLink, '_blank'))
-
-        carrinho = []
-        atualizarCarrinhoUI()
-        renderizarCarrinho()
-        document.getElementById('cartModal').style.display = 'none'
+        window.location.href = 'carrinho.html'
       })
     }
 
