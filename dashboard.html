@@ -156,6 +156,17 @@
 
     <!-- ===== TAB: LOJA ===== -->
     <div id="tab-loja" class="tab-content">
+      <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px; border-bottom:1px solid var(--line); padding-bottom:14px;">
+        <button type="button" class="subtab-btn active" data-lojasub="geral" onclick="switchLojaSubTab('geral')">Geral</button>
+        <button type="button" class="subtab-btn" data-lojasub="pagamento" onclick="switchLojaSubTab('pagamento')">Pagamento</button>
+        <button type="button" class="subtab-btn" data-lojasub="cupons" onclick="switchLojaSubTab('cupons')">Cupons</button>
+        <button type="button" class="subtab-btn" data-lojasub="frete" onclick="switchLojaSubTab('frete')">Frete por região</button>
+        <button type="button" class="subtab-btn" data-lojasub="categorias" onclick="switchLojaSubTab('categorias')">Categorias e pastas</button>
+        <button type="button" class="subtab-btn" data-lojasub="apoio" onclick="switchLojaSubTab('apoio')">Apoio aos fãs</button>
+        <button type="button" class="subtab-btn" data-lojasub="ajuda" onclick="switchLojaSubTab('ajuda')">Ajuda</button>
+      </div>
+
+      <div id="lojasub-geral" class="subtab-content active">
       <div class="loja-form">
         <h3 style="margin-bottom:16px;">Configurar minha loja</h3>
         <form id="lojaForm" onsubmit="handleLojaSubmit(event)">
@@ -227,8 +238,10 @@
 <button type="submit" class="btn btn-primary">Salvar loja</button>
         </form>
       </div>
+      </div>
 
-      <div style="margin-top:32px; padding-top:24px; border-top:1px solid var(--line);">
+      <div id="lojasub-pagamento" class="subtab-content">
+      <div>
       <h3 style="font-size:16px; margin-bottom:6px;">💳 Recebimento via Mercado Pago</h3>
       <p style="font-size:13px; color:var(--muted); margin-bottom:12px;">Conecte sua conta do Mercado Pago pra receber os pagamentos das suas vendas direto, com a taxa da Obeh descontada automaticamente.</p>
       <div id="mpConexaoStatus" style="margin-bottom:12px; font-size:14px;">Carregando...</div>
@@ -246,8 +259,10 @@
       </div>
       <small id="superfreteStatus" style="display:block; margin-top:6px;"></small>
     </div>
+      </div>
 
-    <div style="margin-top:32px; padding-top:24px; border-top:1px solid var(--line);">
+      <div id="lojasub-cupons" class="subtab-content">
+    <div>
       <h3 style="font-size:16px; margin-bottom:6px;">🏷️ Cupons de desconto</h3>
       <p style="font-size:13px; color:var(--ink-soft); margin-bottom:12px;">Crie códigos de desconto pra sua loja. O comprador insere o código no carrinho antes de finalizar a compra.</p>
       <div id="cuponsLista" style="margin-bottom:16px;"></div>
@@ -268,8 +283,10 @@
       </div>
       <div id="cupomStatus" style="font-size:13px; margin-top:8px;"></div>
     </div>
+      </div>
 
-    <div style="margin-top:32px; padding-top:24px; border-top:1px solid var(--line);">
+      <div id="lojasub-frete" class="subtab-content">
+    <div>
       <h3 style="font-size:16px; margin-bottom:6px;">🚚 Frete manual por região</h3>
       <p style="font-size:13px; color:var(--ink-soft); margin-bottom:12px;">Usado como alternativa quando o SuperFrete não estiver configurado: defina um preço fixo por região do país conforme a quantidade de itens comprados.</p>
       <div id="fretesRegiaoLista" style="margin-bottom:16px;"></div>
@@ -304,8 +321,10 @@
       </div>
       <div id="freteRegiaoStatus" style="font-size:13px; margin-top:8px;"></div>
     </div>
+      </div>
 
-    <div style="margin-top:32px; padding-top:24px; border-top:1px solid var(--line);">
+      <div id="lojasub-categorias" class="subtab-content">
+    <div>
         <h3 style="font-size:16px; margin-bottom:6px;">🏷️ Categorias da loja</h3>
         <p style="font-size:13px; color:var(--ink-soft); margin-bottom:12px;">Escolha até 3 categorias em que sua loja deve aparecer no marketplace, além da categoria principal dos produtos.</p>
         <div id="categoriasLojaCheckboxes" style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:12px;"></div>
@@ -330,7 +349,10 @@
       </div>
       <div id="pastaStatus" style="font-size:13px; margin-top:8px;"></div>
     </div>
-<div style="margin-top:32px; padding-top:24px; border-top:1px solid var(--line);">
+      </div>
+
+      <div id="lojasub-apoio" class="subtab-content">
+<div>
       <h3 style="font-size:16px; margin-bottom:6px;">🤝 Apoie e tenha benefícios</h3>
       <p style="font-size:13px; color:var(--muted); margin-bottom:12px;">Ative um apoio mensal pra sua loja: fãs podem te apoiar todo mês via Mercado Pago e ganham acesso a conteúdo exclusivo que só você publica aqui.</p>
       <label style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
@@ -388,8 +410,10 @@
         <div id="apoiadoresLista"></div>
       </div>
     </div>
+      </div>
 
-    <div style="margin-top:32px; padding-top:24px; border-top:1px solid var(--line);">
+      <div id="lojasub-ajuda" class="subtab-content">
+    <div>
         <h3 style="font-size:16px; margin-bottom:6px;">🆘 Precisa de ajuda?</h3>
         <p style="font-size:13px; color:var(--ink-soft); margin-bottom:12px;">Fale direto com a equipe Obeh sobre configuração da sua loja, banner, logo, descrição ou qualquer dúvida.</p>
         <input id="suporteAssunto" type="text" placeholder="Assunto" style="width:100%; padding:8px 12px; border:1px solid var(--line); border-radius:8px; margin-bottom:10px;" />
@@ -398,6 +422,7 @@
         <div id="suporteStatus" style="font-size:13px; margin-top:8px;"></div>
       </div>
     </div>
+      </div>
 
     <!-- ===== TAB: CURSOS (plano Ultra) ===== -->
     <div id="tab-cursos" class="tab-content">
@@ -1445,6 +1470,14 @@ pasta_id,
       }
     }
 
+    function switchLojaSubTab(nome) {
+      document.querySelectorAll('.subtab-content').forEach(el => el.classList.remove('active'))
+      document.querySelectorAll('.subtab-btn').forEach(el => el.classList.remove('active'))
+
+      document.getElementById(`lojasub-${nome}`)?.classList.add('active')
+      document.querySelector(`.subtab-btn[data-lojasub="${nome}"]`)?.classList.add('active')
+    }
+
     function getTabLabel(tab) {
       const map = {
         'produtos': 'Meus Produtos',
@@ -1903,6 +1936,7 @@ pasta_id,
 
 // Expor funções globalmente
     window.switchTab = switchTab
+    window.switchLojaSubTab = switchLojaSubTab
     window.salvarCategoriasLoja = salvarCategoriasLoja
     window.conectarMercadoPago = conectarMercadoPago
     window.salvarApoio = salvarApoio

@@ -1144,6 +1144,36 @@ header {
   display: block;
 }
 
+.subtab-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+  font-family: 'Work Sans';
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--ink-soft);
+  transition: all 0.2s;
+}
+
+.subtab-btn.active {
+  background: var(--olive);
+  color: white;
+}
+
+.subtab-btn:hover:not(.active) {
+  background: rgba(110, 115, 80, 0.1);
+}
+
+.subtab-content {
+  display: none;
+}
+
+.subtab-content.active {
+  display: block;
+}
+
 /* ===== FORMULÁRIOS ===== */
 .product-form,
 .loja-form {
