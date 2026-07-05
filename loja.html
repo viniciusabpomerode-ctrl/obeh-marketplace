@@ -743,7 +743,9 @@ function filtrarPorPasta(pastaId) {
         id: produto.id,
         nome: produto.nome,
         preco: produto.preco,
-        fotos: produto.fotos
+        fotos: produto.fotos,
+        loja_id: produto.loja_id,
+        loja_nome: lojaData?.nome_loja || 'Loja'
       })
 
       renderizarCarrinho()

@@ -1,13 +1,17 @@
 // ============================================
 // FUNÇÃO NETLIFY - CRIAR PAGAMENTO PIX (Mercado Pago / split automático)
-// Gera um pagamento Pix direto (QR code + código copia-e-cola) sem
-// redirecionar o comprador pro Checkout Pro, usando a API de Pagamentos
-// (/v1/payments) do Mercado Pago com o access_token do próprio vendedor
-// (mesma conexão OAuth usada em mp-criar-pagamento.js).
+// Recebe os itens de UMA loja (o carrinho já vem agrupado por loja do
+// lado do cliente) e gera um único pagamento Pix (QR code + código
+// copia-e-cola) somando produtos (com cupom e desconto de Pix do
+// produto, se houver) + frete, sem redirecionar o comprador pro
+// Checkout Pro — usa a API de Pagamentos (/v1/payments) do Mercado
+// Pago com o access_token do próprio vendedor (mesma conexão OAuth
+// usada em mp-criar-pagamento.js).
 //
 // IMPORTANTE: o campo de split nessa API é "application_fee" — é
 // diferente do "marketplace_fee" usado no /checkout/preferences. Usar o
 // nome errado não dá erro nenhum, só faz a Obeh não receber a taxa.
+// A taxa incide só sobre o valor dos produtos, nunca sobre o frete.
 //
 // Precisa da variável de ambiente SUPABASE_SERVICE_ROLE_KEY (chave
 // "service_role" do Supabase).
@@ -35,6 +39,25 @@ async function supabaseRequest(path, options = {}) {
   return res
 }
 
+async function buscarFreteMaisBarato(cepDestino, itens) {
+  if (!cepDestino) return 0
+  try {
+    const res = await fetch(`${SITE_URL}/.netlify/functions/calcular-frete`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cepDestino, itens })
+    })
+    if (!res.ok) return 0
+    const data = await res.json()
+    const opcoes = data?.fretes?.[0]?.opcoes || []
+    if (opcoes.length === 0) return 0
+    return Math.min(...opcoes.map(o => Number(o.preco) || 0))
+  } catch (err) {
+    console.error('Não foi possível calcular o frete, seguindo sem cobrar frete:', err.message)
+    return 0
+  }
+}
+
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Método não permitido.' }
@@ -52,43 +75,70 @@ exports.handler = async (event) => {
     return { statusCode: 400, body: JSON.stringify({ error: 'Corpo da requisição inválido.' }) }
   }
 
-  const { produtoId, quantidade, compradorId, cupomCodigo } = payload
+  const { itens, compradorId, cupomCodigo, cepDestino } = payload
 
-  if (!produtoId || !quantidade || !compradorId) {
-    return { statusCode: 400, body: JSON.stringify({ error: 'produtoId, quantidade e compradorId são obrigatórios.' }) }
+  if (!Array.isArray(itens) || itens.length === 0 || !compradorId) {
+    return { statusCode: 400, body: JSON.stringify({ error: 'itens e compradorId são obrigatórios.' }) }
   }
 
   try {
-    // 1. Busca o produto e a loja/vendedor dono dele
+    // 1. Busca todos os produtos do grupo (todos devem ser da mesma loja)
+    const ids = itens.map(i => i.produtoId).filter(Boolean)
     const produtoRes = await supabaseRequest(
-      `produtos?id=eq.${produtoId}&select=id,nome,preco,loja_id,user_id,lojas(id,nome_loja,user_id)`
+      `produtos?id=in.(${ids.join(',')})&select=id,nome,preco,loja_id,user_id,desconto_pix_percentual,lojas(id,nome_loja,user_id)`
     )
     const produtos = await produtoRes.json()
-    const produto = produtos[0]
 
-    if (!produto) {
-      return { statusCode: 404, body: JSON.stringify({ error: 'Produto não encontrado.' }) }
+    if (produtos.length === 0) {
+      return { statusCode: 404, body: JSON.stringify({ error: 'Nenhum produto encontrado.' }) }
     }
 
-    const vendedorId = produto.user_id || produto.lojas?.user_id
-    let valorUnitario = Number(produto.preco)
+    const lojaIdsUnicos = [...new Set(produtos.map(p => p.loja_id))]
+    if (lojaIdsUnicos.length > 1) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'Todos os itens de uma cobrança precisam ser da mesma loja.' }) }
+    }
 
-    // 1b. Aplica cupom de desconto da loja, se um código válido foi informado
+    const vendedorId = produtos[0].user_id || produtos[0].lojas?.user_id
+    const nomeLoja = produtos[0].lojas?.nome_loja || 'Loja'
+
+    // 1b. Busca cupom da loja, se um código válido foi informado
+    let cupom = null
     if (cupomCodigo) {
       const hoje = new Date().toISOString().slice(0, 10)
       const cupomRes = await supabaseRequest(
-        `cupons?loja_id=eq.${produto.loja_id}&codigo=eq.${encodeURIComponent(cupomCodigo)}&ativo=eq.true&select=*`
+        `cupons?loja_id=eq.${produtos[0].loja_id}&codigo=eq.${encodeURIComponent(cupomCodigo)}&ativo=eq.true&select=*`
       )
       const cupons = await cupomRes.json()
-      const cupom = cupons.find(c => !c.validade || c.validade >= hoje)
+      cupom = cupons.find(c => !c.validade || c.validade >= hoje) || null
+    }
+
+    // 2. Calcula o valor de cada item (com cupom e desconto de Pix do produto)
+    const itensPagamento = []
+    let valorProdutos = 0
+
+    for (const item of itens) {
+      const produto = produtos.find(p => p.id === item.produtoId)
+      if (!produto) continue
+      const quantidade = Number(item.quantidade || 1)
+      let valorUnitario = Number(produto.preco)
       if (cupom) {
         valorUnitario = Math.round(valorUnitario * (1 - Number(cupom.desconto_percentual) / 100) * 100) / 100
       }
+      if (produto.desconto_pix_percentual) {
+        valorUnitario = Math.round(valorUnitario * (1 - Number(produto.desconto_pix_percentual) / 100) * 100) / 100
+      }
+      const subtotal = Math.round(valorUnitario * quantidade * 100) / 100
+      valorProdutos += subtotal
+      itensPagamento.push({ produto, quantidade, subtotal })
     }
+    valorProdutos = Math.round(valorProdutos * 100) / 100
 
-    const valorTotal = Math.round(valorUnitario * Number(quantidade) * 100) / 100
+    // 3. Calcula o frete pra esse grupo e soma no total cobrado
+    const valorFrete = await buscarFreteMaisBarato(cepDestino, itens)
+    const valorTotal = Math.round((valorProdutos + valorFrete) * 100) / 100
 
-    // 2. Busca o plano do vendedor pra saber a taxa da Obeh
+    // 4. Busca o plano do vendedor pra saber a taxa da Obeh — incide só sobre
+    // os produtos, nunca sobre o frete
     const usuarioRes = await supabaseRequest(`users?id=eq.${vendedorId}&select=id,plano`)
     const usuarios = await usuarioRes.json()
     const planoSlug = usuarios[0]?.plano || 'free'
@@ -96,9 +146,9 @@ exports.handler = async (event) => {
     const planoRes = await supabaseRequest(`planos?slug=eq.${planoSlug}&select=taxa_percentual`)
     const planos = await planoRes.json()
     const taxaPercentual = Number(planos[0]?.taxa_percentual ?? 5)
-    const valorTaxa = Math.round(valorTotal * (taxaPercentual / 100) * 100) / 100
+    const valorTaxa = Math.round(valorProdutos * (taxaPercentual / 100) * 100) / 100
 
-    // 3. Pix exige que o vendedor tenha conectado o Mercado Pago (não existe
+    // 5. Pix exige que o vendedor tenha conectado o Mercado Pago (não existe
     // fallback de link estático pra pagamento direto via Pix)
     const contaRes = await supabaseRequest(
       `mercado_pago_contas?user_id=eq.${vendedorId}&status=eq.conectado&select=access_token`
@@ -110,7 +160,7 @@ exports.handler = async (event) => {
       return { statusCode: 422, body: JSON.stringify({ error: 'Este vendedor ainda não conectou o Mercado Pago — Pix não está disponível pra essa loja.' }) }
     }
 
-    // 4. Busca os dados do comprador (Pix exige e-mail, nome e CPF do pagador)
+    // 6. Busca os dados do comprador (Pix exige e-mail, nome e CPF do pagador)
     const compradorRes = await supabaseRequest(`users?id=eq.${compradorId}&select=nome,email,cpf`)
     const compradores = await compradorRes.json()
     const comprador = compradores[0]
@@ -125,36 +175,43 @@ exports.handler = async (event) => {
 
     const [primeiroNome, ...restoNome] = (comprador.nome || 'Comprador Obeh').trim().split(' ')
 
-    // 5. Registra a venda como pendente
+    // 7. Registra uma linha de "vendas" por produto, todas com o mesmo pedido_id
+    const pedidoId = `pedido_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
+    const vendasParaCriar = itensPagamento.map((ip, i) => ({
+      produto_id: ip.produto.id,
+      comprador_id: compradorId,
+      vendedor_id: vendedorId,
+      quantidade: ip.quantidade,
+      valor_total: ip.subtotal,
+      valor_frete: i === 0 ? valorFrete : 0,
+      pedido_id: pedidoId,
+      status: 'pendente'
+    }))
+
     const vendaRes = await supabaseRequest('vendas', {
       method: 'POST',
       prefer: 'return=representation',
       headers: { 'Content-Profile': 'public' },
-      body: JSON.stringify({
-        produto_id: produtoId,
-        comprador_id: compradorId,
-        vendedor_id: vendedorId,
-        quantidade,
-        valor_total: valorTotal,
-        status: 'pendente'
-      })
+      body: JSON.stringify(vendasParaCriar)
     })
-    const vendas = await vendaRes.json()
-    const venda = vendas[0]
+    await vendaRes.json()
 
-    // 6. Cria o pagamento Pix na API de Pagamentos, usando o access_token do
-    // PRÓPRIO vendedor. O campo de split aqui é "application_fee" (não
-    // "marketplace_fee" — esse é só do /checkout/preferences).
+    // 8. Cria o pagamento Pix na API de Pagamentos, usando o access_token do
+    // PRÓPRIO vendedor. O campo de split aqui é "application_fee".
+    const descricao = itensPagamento.length === 1
+      ? itensPagamento[0].produto.nome
+      : `${itensPagamento.length} produtos - ${nomeLoja}`
+
     const pagamentoRes = await fetch('https://api.mercadopago.com/v1/payments', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${accessTokenVendedor}`,
-        'X-Idempotency-Key': String(venda?.id || `${produtoId}-${Date.now()}`)
+        'X-Idempotency-Key': pedidoId
       },
       body: JSON.stringify({
         transaction_amount: valorTotal,
-        description: produto.nome,
+        description: descricao,
         payment_method_id: 'pix',
         payer: {
           email: comprador.email,
@@ -163,7 +220,7 @@ exports.handler = async (event) => {
           identification: { type: 'CPF', number: cpfLimpo }
         },
         application_fee: valorTaxa,
-        external_reference: String(venda?.id || ''),
+        external_reference: pedidoId,
         notification_url: `${SITE_URL}/.netlify/functions/mp-webhook`
       })
     })
@@ -180,10 +237,12 @@ exports.handler = async (event) => {
     return {
       statusCode: 200,
       body: JSON.stringify({
-        vendaId: venda?.id,
+        pedidoId,
         paymentId: pagamentoData.id,
         qrCode,
-        qrCodeBase64
+        qrCodeBase64,
+        valorTotal,
+        valorFrete
       })
     }
   } catch (err) {

@@ -1,16 +1,21 @@
 // ============================================
 // FUNÇÃO NETLIFY - CRIAR PAGAMENTO (Mercado Pago / split payment)
-// Recebe os dados do produto/quantidade/comprador vindos do carrinho,
-// calcula a taxa da Obeh de acordo com o plano do vendedor, cria uma
-// preferência de pagamento no Mercado Pago (Checkout Pro) usando a
-// própria conta conectada do vendedor (quando conectada via OAuth) e
-// registra a venda na tabela "vendas" como pendente até o webhook
-// confirmar o pagamento.
+// Recebe os itens de UMA loja (o carrinho já vem agrupado por loja do
+// lado do cliente), calcula o valor dos produtos (com cupom), soma o
+// frete (mesma lógica de calcular-frete.js) e cria UMA preferência de
+// pagamento no Checkout Pro pra tudo junto, usando a própria conta
+// conectada do vendedor (split automático da taxa da Obeh).
 //
-// Se o vendedor ainda não conectou a conta do Mercado Pago (OAuth),
-// cai no modelo antigo: usa o link estático de pagamento cadastrado
-// na loja (lojas.mercado_pago_link) e registra a venda como pendente
-// mesmo assim, só que sem split automático de taxa.
+// A taxa da Obeh incide só sobre o valor dos produtos, nunca sobre o frete.
+//
+// Cada produto vira uma linha em "vendas" (histórico por produto), todas
+// compartilhando o mesmo "pedido_id" pra serem atualizadas juntas quando
+// o pagamento for confirmado (ver mp-webhook.js).
+//
+// Se o vendedor ainda não conectou a conta do Mercado Pago (OAuth), cai
+// no modelo antigo: usa o link estático de pagamento cadastrado na loja
+// (lojas.mercado_pago_link) e registra as vendas como pendentes mesmo
+// assim, só que sem split automático de taxa nem frete embutido.
 //
 // Precisa da variável de ambiente SUPABASE_SERVICE_ROLE_KEY (chave
 // "service_role" do Supabase).
@@ -38,6 +43,29 @@ async function supabaseRequest(path, options = {}) {
   return res
 }
 
+// Busca o frete mais barato disponível pra esse grupo de itens, reaproveitando
+// a mesma priorização usada em calcular-frete.js (SuperFrete > Correios >
+// manual por região > estimativa). Se não der pra calcular, segue sem cobrar
+// frete a não travar a compra por causa disso.
+async function buscarFreteMaisBarato(cepDestino, itens) {
+  if (!cepDestino) return 0
+  try {
+    const res = await fetch(`${SITE_URL}/.netlify/functions/calcular-frete`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cepDestino, itens })
+    })
+    if (!res.ok) return 0
+    const data = await res.json()
+    const opcoes = data?.fretes?.[0]?.opcoes || []
+    if (opcoes.length === 0) return 0
+    return Math.min(...opcoes.map(o => Number(o.preco) || 0))
+  } catch (err) {
+    console.error('Não foi possível calcular o frete, seguindo sem cobrar frete:', err.message)
+    return 0
+  }
+}
+
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Método não permitido.' }
@@ -55,44 +83,67 @@ exports.handler = async (event) => {
     return { statusCode: 400, body: JSON.stringify({ error: 'Corpo da requisição inválido.' }) }
   }
 
-  const { produtoId, quantidade, compradorId, cupomCodigo } = payload
+  const { itens, compradorId, cupomCodigo, cepDestino } = payload
 
-  if (!produtoId || !quantidade || !compradorId) {
-    return { statusCode: 400, body: JSON.stringify({ error: 'produtoId, quantidade e compradorId são obrigatórios.' }) }
+  if (!Array.isArray(itens) || itens.length === 0 || !compradorId) {
+    return { statusCode: 400, body: JSON.stringify({ error: 'itens e compradorId são obrigatórios.' }) }
   }
 
   try {
-    // 1. Busca o produto e a loja/vendedor dono dele
+    // 1. Busca todos os produtos do grupo (todos devem ser da mesma loja)
+    const ids = itens.map(i => i.produtoId).filter(Boolean)
     const produtoRes = await supabaseRequest(
-      `produtos?id=eq.${produtoId}&select=id,nome,preco,loja_id,user_id,lojas(id,nome_loja,user_id,mercado_pago_link)`
+      `produtos?id=in.(${ids.join(',')})&select=id,nome,preco,loja_id,user_id,lojas(id,nome_loja,user_id,mercado_pago_link)`
     )
     const produtos = await produtoRes.json()
-    const produto = produtos[0]
 
-    if (!produto) {
-      return { statusCode: 404, body: JSON.stringify({ error: 'Produto não encontrado.' }) }
+    if (produtos.length === 0) {
+      return { statusCode: 404, body: JSON.stringify({ error: 'Nenhum produto encontrado.' }) }
     }
 
-    const vendedorId = produto.user_id || produto.lojas?.user_id
-    let valorUnitario = Number(produto.preco)
+    const lojaIdsUnicos = [...new Set(produtos.map(p => p.loja_id))]
+    if (lojaIdsUnicos.length > 1) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'Todos os itens de uma cobrança precisam ser da mesma loja.' }) }
+    }
 
-    // 1b. Aplica cupom de desconto da loja, se um código válido foi informado
-    // (a validação é sempre refeita aqui no servidor, nunca confiando no desconto calculado no navegador)
+    const lojaInfo = produtos[0].lojas
+    const vendedorId = produtos[0].user_id || lojaInfo?.user_id
+
+    // 1b. Busca cupom da loja, se um código válido foi informado
+    let cupom = null
     if (cupomCodigo) {
       const hoje = new Date().toISOString().slice(0, 10)
       const cupomRes = await supabaseRequest(
-        `cupons?loja_id=eq.${produto.loja_id}&codigo=eq.${encodeURIComponent(cupomCodigo)}&ativo=eq.true&select=*`
+        `cupons?loja_id=eq.${produtos[0].loja_id}&codigo=eq.${encodeURIComponent(cupomCodigo)}&ativo=eq.true&select=*`
       )
       const cupons = await cupomRes.json()
-      const cupom = cupons.find(c => !c.validade || c.validade >= hoje)
+      cupom = cupons.find(c => !c.validade || c.validade >= hoje) || null
+    }
+
+    // 2. Calcula o valor de cada item (com cupom, se houver)
+    const itensPagamento = []
+    let valorProdutos = 0
+
+    for (const item of itens) {
+      const produto = produtos.find(p => p.id === item.produtoId)
+      if (!produto) continue
+      const quantidade = Number(item.quantidade || 1)
+      let valorUnitario = Number(produto.preco)
       if (cupom) {
         valorUnitario = Math.round(valorUnitario * (1 - Number(cupom.desconto_percentual) / 100) * 100) / 100
       }
+      const subtotal = Math.round(valorUnitario * quantidade * 100) / 100
+      valorProdutos += subtotal
+      itensPagamento.push({ produto, quantidade, valorUnitario, subtotal })
     }
+    valorProdutos = Math.round(valorProdutos * 100) / 100
 
-    const valorTotal = Math.round(valorUnitario * Number(quantidade) * 100) / 100
+    // 3. Calcula o frete pra esse grupo (mesmos itens) e soma no total cobrado
+    const valorFrete = await buscarFreteMaisBarato(cepDestino, itens)
+    const valorTotal = Math.round((valorProdutos + valorFrete) * 100) / 100
 
-    // 2. Busca o plano do vendedor pra saber a taxa da Obeh
+    // 4. Busca o plano do vendedor pra saber a taxa da Obeh — incide só sobre
+    // os produtos, nunca sobre o frete
     const usuarioRes = await supabaseRequest(`users?id=eq.${vendedorId}&select=id,plano`)
     const usuarios = await usuarioRes.json()
     const planoSlug = usuarios[0]?.plano || 'free'
@@ -100,47 +151,63 @@ exports.handler = async (event) => {
     const planoRes = await supabaseRequest(`planos?slug=eq.${planoSlug}&select=taxa_percentual`)
     const planos = await planoRes.json()
     const taxaPercentual = Number(planos[0]?.taxa_percentual ?? 5)
-    const valorTaxa = Math.round(valorTotal * (taxaPercentual / 100) * 100) / 100
+    const valorTaxa = Math.round(valorProdutos * (taxaPercentual / 100) * 100) / 100
 
-    // 3. Verifica se o vendedor já conectou a conta do Mercado Pago
+    // 5. Verifica se o vendedor já conectou a conta do Mercado Pago
     const contaRes = await supabaseRequest(
       `mercado_pago_contas?user_id=eq.${vendedorId}&status=eq.conectado&select=access_token`
     )
     const contas = await contaRes.json()
     const accessTokenVendedor = contas[0]?.access_token
 
-    // 4. Registra a venda como pendente
+    // 6. Registra uma linha de "vendas" por produto, todas com o mesmo
+    // pedido_id — assim o webhook consegue atualizar todas juntas quando o
+    // pagamento confirmar (ver mp-webhook.js)
+    const pedidoId = `pedido_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
+    const vendasParaCriar = itensPagamento.map((ip, i) => ({
+      produto_id: ip.produto.id,
+      comprador_id: compradorId,
+      vendedor_id: vendedorId,
+      quantidade: ip.quantidade,
+      valor_total: ip.subtotal,
+      valor_frete: i === 0 ? valorFrete : 0, // frete só na primeira linha, pra não contar em dobro na soma
+      pedido_id: pedidoId,
+      status: 'pendente'
+    }))
+
     const vendaRes = await supabaseRequest('vendas', {
       method: 'POST',
       prefer: 'return=representation',
       headers: { 'Content-Profile': 'public' },
-      body: JSON.stringify({
-        produto_id: produtoId,
-        comprador_id: compradorId,
-        vendedor_id: vendedorId,
-        quantidade,
-        valor_total: valorTotal,
-        status: 'pendente'
-      })
+      body: JSON.stringify(vendasParaCriar)
     })
-    const vendas = await vendaRes.json()
-    const venda = vendas[0]
+    await vendaRes.json()
 
-    // 5. Sem conta conectada: cai no link estático antigo (sem split automático)
+    // 7. Sem conta conectada: cai no link estático antigo (sem split automático nem frete embutido)
     if (!accessTokenVendedor) {
-      const linkEstatico = produto.lojas?.mercado_pago_link
+      const linkEstatico = lojaInfo?.mercado_pago_link
       if (!linkEstatico) {
         return { statusCode: 422, body: JSON.stringify({ error: 'Vendedor ainda não configurou um jeito de receber pagamentos.' }) }
       }
       return {
         statusCode: 200,
-        body: JSON.stringify({ initPoint: linkEstatico, vendaId: venda?.id, splitAutomatico: false })
+        body: JSON.stringify({ initPoint: linkEstatico, pedidoId, splitAutomatico: false })
       }
     }
 
-    // 6. Com conta conectada: cria a preferência no Checkout Pro do Mercado Pago,
-    // usando o access_token do PRÓPRIO vendedor. A "marketplace_fee" é retida
-    // automaticamente pela Obeh (dona da aplicação usada no OAuth).
+    // 8. Com conta conectada: cria a preferência no Checkout Pro com uma linha
+    // por produto + uma linha de frete (se houver), usando o access_token do
+    // PRÓPRIO vendedor. A "marketplace_fee" é retida automaticamente pela Obeh.
+    const items = itensPagamento.map(ip => ({
+      title: ip.produto.nome,
+      quantity: ip.quantidade,
+      unit_price: ip.valorUnitario,
+      currency_id: 'BRL'
+    }))
+    if (valorFrete > 0) {
+      items.push({ title: 'Frete', quantity: 1, unit_price: valorFrete, currency_id: 'BRL' })
+    }
+
     const prefRes = await fetch('https://api.mercadopago.com/checkout/preferences', {
       method: 'POST',
       headers: {
@@ -148,16 +215,9 @@ exports.handler = async (event) => {
         Authorization: `Bearer ${accessTokenVendedor}`
       },
       body: JSON.stringify({
-        items: [
-          {
-            title: produto.nome,
-            quantity: Number(quantidade),
-            unit_price: valorUnitario,
-            currency_id: 'BRL'
-          }
-        ],
+        items,
         marketplace_fee: valorTaxa,
-        external_reference: String(venda?.id || ''),
+        external_reference: pedidoId,
         back_urls: {
           success: `${SITE_URL}/carrinho.html?pagamento=sucesso`,
           failure: `${SITE_URL}/carrinho.html?pagamento=falha`,
@@ -177,7 +237,7 @@ exports.handler = async (event) => {
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ initPoint: prefData.init_point, vendaId: venda?.id, splitAutomatico: true })
+      body: JSON.stringify({ initPoint: prefData.init_point, pedidoId, splitAutomatico: true, valorTotal, valorFrete })
     }
   } catch (err) {
     console.error('Erro em mp-criar-pagamento:', err)

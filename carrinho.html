@@ -300,25 +300,40 @@
         return
       }
 
+      const gruposVisuais = agruparCarrinhoPorLoja().map(grupo => {
+        const itensCompletos = grupo.itens.map(i => carrinho.find(c => c.id === i.produtoId)).filter(Boolean)
+        const desconto = descontosPorLoja[grupo.lojaId] || 0
+        const subtotal = itensCompletos.reduce((acc, item) => acc + Number(item.preco) * (1 - desconto / 100) * item.quantidade, 0)
+        return { ...grupo, itensCompletos, subtotal }
+      })
+
       container.innerHTML = `
-            ${carrinho.map(item => `
-              <div class="carrinho-item">
-                <div class="thumb">
-                  ${item.fotos && item.fotos.length > 0
-                    ? `<img src="${item.fotos[0]}" alt="${item.nome}" />`
-                    : '🧵'
-                  }
+            ${gruposVisuais.map(grupo => `
+              <div style="border:1px solid var(--line); border-radius:8px; margin-bottom:16px; overflow:hidden;">
+                <div style="background:var(--bg-card); padding:10px 16px; font-weight:600; display:flex; justify-content:space-between; align-items:center;">
+                  <span>🏪 ${grupo.nomeLoja}</span>
+                  <span style="font-weight:400; font-size:13px; color:var(--ink-soft);">Subtotal: R$ ${grupo.subtotal.toFixed(2)}</span>
                 </div>
-                <div class="info">
-                  <div class="nome">${item.nome}</div>
-                  <div class="preco">R$ ${Number(item.preco).toFixed(2)}</div>
-                </div>
-                <div class="quantidade">
-                  <button onclick="alterarQuantidade('${item.id}', -1)">−</button>
-                  <span>${item.quantidade}</span>
-                  <button onclick="alterarQuantidade('${item.id}', 1)">+</button>
-                </div>
-                <button class="remover" onclick="removerItem('${item.id}')">✕</button>
+                ${grupo.itensCompletos.map(item => `
+                  <div class="carrinho-item" style="border:none; border-radius:0; border-top:1px solid var(--line); margin-bottom:0;">
+                    <div class="thumb">
+                      ${item.fotos && item.fotos.length > 0
+                        ? `<img src="${item.fotos[0]}" alt="${item.nome}" />`
+                        : '🧵'
+                      }
+                    </div>
+                    <div class="info">
+                      <div class="nome">${item.nome}</div>
+                      <div class="preco">R$ ${Number(item.preco).toFixed(2)}</div>
+                    </div>
+                    <div class="quantidade">
+                      <button onclick="alterarQuantidade('${item.id}', -1)">−</button>
+                      <span>${item.quantidade}</span>
+                      <button onclick="alterarQuantidade('${item.id}', 1)">+</button>
+                    </div>
+                    <button class="remover" onclick="removerItem('${item.id}')">✕</button>
+                  </div>
+                `).join('')}
               </div>
             `).join('')}
 
@@ -378,6 +393,25 @@
       document.getElementById('cartCount').textContent = 0
     }
 
+    // Agrupa o carrinho por loja: cada grupo vira UMA cobrança (produtos +
+    // frete), já que cada vendedor despacha e recebe separadamente.
+    function agruparCarrinhoPorLoja() {
+      const porLoja = {}
+      for (const item of carrinho) {
+        const lojaId = item.loja_id || 'sem-loja'
+        if (!porLoja[lojaId]) {
+          porLoja[lojaId] = { lojaId, nomeLoja: item.loja_nome || 'Loja', itens: [] }
+        }
+        porLoja[lojaId].itens.push({ produtoId: item.id, quantidade: item.quantidade })
+      }
+      return Object.values(porLoja)
+    }
+
+    function getCepDestinoInformado() {
+      const cep = document.getElementById('freteCep')?.value.replace(/\D/g, '') || ''
+      return cep.length === 8 ? cep : undefined
+    }
+
     async function finalizarCompra() {
       if (carrinho.length === 0) {
         alert('🛒 Seu carrinho está vazio!')
@@ -392,11 +426,13 @@
         return
       }
 
-      // Calcula total
-      const total = getTotalComDesconto()
-      const quantidade = getQuantidadeCarrinho()
+      const cepDestino = getCepDestinoInformado()
+      if (!cepDestino && !confirm('⚠️ Você não informou o CEP pra calcular o frete — a compra vai seguir sem cobrar frete. Continuar assim mesmo?')) {
+        return
+      }
 
-      if (!confirm(`🛍️ Confirmar compra de ${quantidade} item(s) no valor total de R$ ${total.toFixed(2)}?`)) {
+      const quantidade = getQuantidadeCarrinho()
+      if (!confirm(`🛍️ Confirmar compra de ${quantidade} item(s)?`)) {
         return
       }
 
@@ -406,24 +442,25 @@
         btnFinalizar.textContent = 'Processando...'
       }
 
+      const grupos = agruparCarrinhoPorLoja()
       const resultados = []
       const erros = []
 
-      for (const item of carrinho) {
+      for (const grupo of grupos) {
         try {
           const res = await fetch('/.netlify/functions/mp-criar-pagamento', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ produtoId: item.id, quantidade: item.quantidade, compradorId: usuario.id, cupomCodigo: cupomAplicado || undefined })
+            body: JSON.stringify({ itens: grupo.itens, compradorId: usuario.id, cupomCodigo: cupomAplicado || undefined, cepDestino })
           })
           const data = await res.json()
           if (!res.ok || !data.initPoint) {
-            erros.push(item.nome)
+            erros.push(grupo.nomeLoja)
             continue
           }
-          resultados.push({ nome: item.nome, initPoint: data.initPoint })
+          resultados.push({ nome: grupo.nomeLoja, initPoint: data.initPoint })
         } catch (err) {
-          erros.push(item.nome)
+          erros.push(grupo.nomeLoja)
         }
       }
 
@@ -443,7 +480,7 @@
       document.getElementById('cartCount').textContent = 0
 
       if (erros.length > 0) {
-        alert(`⚠️ Não foi possível iniciar o pagamento de: ${erros.join(', ')}. Os outros itens seguem normalmente pro pagamento.`)
+        alert(`⚠️ Não foi possível iniciar o pagamento de: ${erros.join(', ')}. As outras lojas seguem normalmente pro pagamento.`)
       }
 
       if (resultados.length === 1) {
@@ -451,13 +488,13 @@
         return
       }
 
-      // Carrinho com produtos de vendedores diferentes: o Mercado Pago processa
-      // um pagamento por vez pra cada vendedor, então mostra um link pra cada um.
+      // Carrinho com produtos de lojas diferentes: o Mercado Pago processa um
+      // pagamento por vez pra cada loja, então mostra um link pra cada uma.
       const container = document.getElementById('carrinhoContent')
       container.innerHTML = `
         <div class="carrinho-vazio">
           <p style="font-size:18px; font-weight:500;">✅ Pedido registrado!</p>
-          <p style="font-size:14px; margin-top:8px;">Como seu carrinho tinha produtos de vendedores diferentes, finalize o pagamento de cada um separadamente:</p>
+          <p style="font-size:14px; margin-top:8px;">Como seu carrinho tinha produtos de lojas diferentes, finalize o pagamento de cada uma separadamente:</p>
           <div style="display:flex; flex-direction:column; gap:10px; margin-top:16px; align-items:center;">
             ${resultados.map(r => `<a class="btn btn-primary" href="${r.initPoint}" target="_blank" rel="noopener">Pagar: ${r.nome}</a>`).join('')}
           </div>
@@ -480,27 +517,33 @@
         return
       }
 
+      const cepDestino = getCepDestinoInformado()
+      if (!cepDestino && !confirm('⚠️ Você não informou o CEP pra calcular o frete — a compra vai seguir sem cobrar frete. Continuar assim mesmo?')) {
+        return
+      }
+
       const resultadoEl = document.getElementById('pixResultado')
       resultadoEl.innerHTML = '<p style="color:var(--ink-soft); font-size:14px;">Gerando Pix...</p>'
 
+      const grupos = agruparCarrinhoPorLoja()
       const resultados = []
       const erros = []
 
-      for (const item of carrinho) {
+      for (const grupo of grupos) {
         try {
           const res = await fetch('/.netlify/functions/mp-criar-pix', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ produtoId: item.id, quantidade: item.quantidade, compradorId: usuario.id, cupomCodigo: cupomAplicado || undefined })
+            body: JSON.stringify({ itens: grupo.itens, compradorId: usuario.id, cupomCodigo: cupomAplicado || undefined, cepDestino })
           })
           const data = await res.json()
           if (!res.ok || !data.qrCode) {
-            erros.push(`${item.nome}: ${data.error || 'erro desconhecido'}`)
+            erros.push(`${grupo.nomeLoja}: ${data.error || 'erro desconhecido'}`)
             continue
           }
-          resultados.push({ nome: item.nome, vendaId: data.vendaId, qrCode: data.qrCode, qrCodeBase64: data.qrCodeBase64 })
+          resultados.push({ nome: grupo.nomeLoja, pedidoId: data.pedidoId, qrCode: data.qrCode, qrCodeBase64: data.qrCodeBase64, valorTotal: data.valorTotal })
         } catch (err) {
-          erros.push(`${item.nome}: erro de conexão`)
+          erros.push(`${grupo.nomeLoja}: erro de conexão`)
         }
       }
 
@@ -513,23 +556,24 @@
         ${erros.length > 0 ? `<p style="color:#c94a4a; font-size:13px; margin-bottom:12px;">⚠️ ${erros.join(', ')}</p>` : ''}
         ${resultados.map((r, i) => `
           <div style="border:1px solid var(--line); border-radius:8px; padding:16px; margin-bottom:12px; text-align:center;">
-            <p style="font-weight:600; margin-bottom:10px;">${r.nome}</p>
+            <p style="font-weight:600; margin-bottom:4px;">${r.nome}</p>
+            <p style="font-size:13px; color:var(--ink-soft); margin-bottom:10px;">Total: R$ ${Number(r.valorTotal).toFixed(2)}</p>
             <img src="data:image/png;base64,${r.qrCodeBase64}" alt="QR Code Pix" style="width:200px; height:200px; margin:0 auto 10px;" />
             <textarea readonly style="width:100%; font-size:11px; padding:8px; border:1px solid var(--line); border-radius:6px; resize:none; height:60px;">${r.qrCode}</textarea>
             <button class="btn btn-ghost" style="margin-top:8px;" onclick="navigator.clipboard.writeText('${r.qrCode}'); this.textContent='Copiado!'">Copiar código</button>
-            <p id="pixStatus-${r.vendaId}" style="margin-top:10px; font-size:13px; color:var(--ink-soft);">⏳ Aguardando pagamento...</p>
+            <p id="pixStatus-${r.pedidoId}" style="margin-top:10px; font-size:13px; color:var(--ink-soft);">⏳ Aguardando pagamento...</p>
           </div>
         `).join('')}
       `
 
-      resultados.forEach(r => monitorarPagamentoPix(r.vendaId))
+      resultados.forEach(r => monitorarPagamentoPix(r.pedidoId))
     }
 
-    async function monitorarPagamentoPix(vendaId, tentativas = 0) {
-      if (!vendaId || tentativas > 60) return // ~5 minutos (60 x 5s)
+    async function monitorarPagamentoPix(pedidoId, tentativas = 0) {
+      if (!pedidoId || tentativas > 60) return // ~5 minutos (60 x 5s)
 
-      const { data } = await supabaseClient.from('vendas').select('status').eq('id', vendaId).maybeSingle()
-      const statusEl = document.getElementById(`pixStatus-${vendaId}`)
+      const { data } = await supabaseClient.from('vendas').select('status').eq('pedido_id', pedidoId).limit(1).maybeSingle()
+      const statusEl = document.getElementById(`pixStatus-${pedidoId}`)
       if (!statusEl) return
 
       if (data?.status === 'pago') {
@@ -547,7 +591,7 @@
         return
       }
 
-      setTimeout(() => monitorarPagamentoPix(vendaId, tentativas + 1), 5000)
+      setTimeout(() => monitorarPagamentoPix(pedidoId, tentativas + 1), 5000)
     }
 
     async function calcularFrete() {

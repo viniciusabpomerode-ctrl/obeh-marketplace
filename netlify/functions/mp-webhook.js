@@ -147,14 +147,17 @@ exports.handler = async (event) => {
       return { statusCode: 200, body: 'ok' }
     }
 
-    const vendaId = pagamento.external_reference
-    if (!vendaId) {
+    const referencia = pagamento.external_reference
+    if (!referencia) {
       return { statusCode: 200, body: 'ok' }
     }
 
     const novoStatus = mapearStatus(pagamento.status)
 
-    await supabaseRequest(`vendas?id=eq.${vendaId}`, {
+    // A referência pode ser um "pedido_id" (várias vendas pagas juntas, uma
+    // por produto) ou, em vendas antigas, o "id" de uma única venda — os dois
+    // formatos são tratados na mesma atualização.
+    await supabaseRequest(`vendas?or=(pedido_id.eq.${referencia},id.eq.${referencia})`, {
       method: 'PATCH',
       body: JSON.stringify({ status: novoStatus })
     })

@@ -469,6 +469,11 @@
                 ${p.em_promocao && p.preco_antigo ? `<span style="text-decoration:line-through; color:var(--ink-soft); font-size:16px; margin-right:10px;">R$ ${Number(p.preco_antigo).toFixed(2)}</span>` : ''}
                 R$ ${Number(p.preco).toFixed(2)}
               </div>
+              ${p.desconto_pix_percentual ? `
+                <p style="font-size:13px; color:#2f7a4d; font-weight:600; margin:-8px 0 12px;">
+                  💠 R$ ${(Number(p.preco) * (1 - Number(p.desconto_pix_percentual) / 100)).toFixed(2)} pagando com Pix (${p.desconto_pix_percentual}% de desconto)
+                </p>
+              ` : ''}
               <div class="descricao">${p.descricao || 'Sem descrição detalhada.'}</div>
               ${p.sob_encomenda ? `
                 <div style="background:rgba(0,0,0,0.03); border:1px solid var(--line); border-radius:8px; padding:10px 14px; font-size:13px; margin-bottom:16px;">
@@ -572,7 +577,9 @@
         id: produtoData.id,
         nome: produtoData.nome,
         preco: produtoData.preco,
-        fotos: produtoData.fotos
+        fotos: produtoData.fotos,
+        loja_id: produtoData.loja_id,
+        loja_nome: lojaData?.nome_loja || 'Loja'
       })
 
       renderizarCarrinho()
