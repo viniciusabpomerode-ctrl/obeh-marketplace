@@ -470,6 +470,11 @@
                 R$ ${Number(p.preco).toFixed(2)}
               </div>
               <div class="descricao">${p.descricao || 'Sem descrição detalhada.'}</div>
+              ${p.sob_encomenda ? `
+                <div style="background:rgba(0,0,0,0.03); border:1px solid var(--line); border-radius:8px; padding:10px 14px; font-size:13px; margin-bottom:16px;">
+                  📦 <strong>Sob encomenda</strong>${p.prazo_producao_dias ? ` — prazo de produção de ${p.prazo_producao_dias} dia(s) antes do envio.` : ''}
+                </div>
+              ` : ''}
 
               <div class="produto-actions">
                 <button class="btn btn-primary" onclick="adicionarAoCarrinhoClique()">

@@ -160,6 +160,20 @@
             <span class="toggle-slider"></span>
           </label>
         </div>
+        <div class="toggle-row">
+          <div class="toggle-label">
+            <strong>📦 Sob encomenda</strong>
+            <p>O produto não sai pronto — avisa o comprador do prazo de produção.</p>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="prodSobEncomenda" onchange="document.getElementById('prodPrazoProducaoGroup').style.display = this.checked ? 'block' : 'none'" />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="form-group" id="prodPrazoProducaoGroup" style="display:none; margin:0 0 14px;">
+          <label>Prazo de produção (dias)</label>
+          <input type="number" id="prodPrazoProducao" min="1" step="1" placeholder="Ex: 7" />
+        </div>
       </div>
 <button type="submit" class="btn btn-primary">Salvar produto</button>
         </form>
@@ -1346,9 +1360,16 @@ async function carregarPastasSelectProduto() {
       const em_promocao = document.getElementById('prodEmPromocao').checked
       const preco_antigo = em_promocao ? (parseFloat(document.getElementById('prodPrecoAntigo').value) || null) : null
       const destaque = document.getElementById('prodDestaque').checked
+      const sob_encomenda = document.getElementById('prodSobEncomenda').checked
+      const prazo_producao_dias = sob_encomenda ? (parseInt(document.getElementById('prodPrazoProducao').value) || null) : null
 
       if (em_promocao && (!preco_antigo || preco_antigo <= preco)) {
         alert('❌ Informe um preço antigo maior que o preço atual pra colocar o produto em promoção.')
+        return
+      }
+
+      if (sob_encomenda && !prazo_producao_dias) {
+        alert('❌ Informe o prazo de produção (em dias) pra marcar como sob encomenda.')
         return
       }
 
@@ -1389,6 +1410,8 @@ pasta_id,
         em_promocao,
         preco_antigo,
         destaque,
+        sob_encomenda,
+        prazo_producao_dias,
         status: 'ativo',
         mes_criacao: new Date().toISOString().split('T')[0]
       }
@@ -1397,6 +1420,7 @@ pasta_id,
       if (result) {
         document.getElementById('productForm').reset()
         document.getElementById('prodPrecoAntigoGroup').style.display = 'none'
+        document.getElementById('prodPrazoProducaoGroup').style.display = 'none'
         prodFotosArr = []
         renderProdFotosPreview()
         await carregarProdutos()
