@@ -67,6 +67,11 @@
 
     <div class="perfil-avatar">
       <div class="avatar-circle" id="avatarCircle">🧵</div>
+      <div style="margin-top:10px;">
+        <input type="file" id="perfilAvatarFile" accept="image/*" onchange="handleAvatarUpload(event)" style="display:none;" />
+        <button type="button" class="btn btn-ghost" style="padding:6px 16px; font-size:12px;" onclick="document.getElementById('perfilAvatarFile').click()">📷 Trocar foto</button>
+        <div id="avatarUploadStatus" style="font-size:12px; color:var(--ink-soft); margin-top:6px;"></div>
+      </div>
     </div>
 
     <form id="perfilForm" onsubmit="handlePerfilSubmit(event)">
@@ -81,10 +86,6 @@
       <div class="form-group">
         <label>Telefone</label>
         <input type="tel" id="perfilTelefone" placeholder="(11) 99999-9999" />
-      </div>
-      <div class="form-group">
-        <label>Foto de perfil (URL)</label>
-        <input type="text" id="perfilAvatar" placeholder="https://imagem-perfil.jpg" />
       </div>
       <div class="form-group">
         <label>Biografia</label>
@@ -127,12 +128,14 @@
   </div>
 
   <script src="js/supabase.js"></script>
+  <script src="js/upload-r2.js"></script>
   <script>
     // ============================================
     // PERFIL.JS - EDIÇÃO DE PERFIL
     // ============================================
 
     let currentUser = null
+    let avatarUrlAtual = ''
 
     // ===== INICIALIZAÇÃO =====
     document.addEventListener('DOMContentLoaded', async () => {
@@ -163,7 +166,7 @@
       document.getElementById('perfilNome').value = data.nome || ''
       document.getElementById('perfilEmail').value = data.email || ''
       document.getElementById('perfilTelefone').value = data.telefone || ''
-      document.getElementById('perfilAvatar').value = data.avatar || ''
+      avatarUrlAtual = data.avatar || ''
       document.getElementById('perfilBio').value = data.bio || ''
       document.getElementById('perfilCpf').value = data.cpf || ''
       document.getElementById('perfilCep').value = data.cep || ''
@@ -182,13 +185,33 @@
       }
     }
 
+    // ===== UPLOAD DA FOTO DE PERFIL =====
+    async function handleAvatarUpload(event) {
+      const file = event.target.files[0]
+      if (!file) return
+
+      const statusEl = document.getElementById('avatarUploadStatus')
+      statusEl.textContent = 'Enviando foto...'
+
+      try {
+        const urlAntiga = avatarUrlAtual
+        const novaUrl = await uploadImagemR2(file, 'perfis')
+        avatarUrlAtual = novaUrl
+        document.getElementById('avatarCircle').innerHTML = `<img src="${novaUrl}" alt="Avatar" />`
+        statusEl.textContent = '✅ Foto enviada! Clique em "Salvar alterações" pra confirmar.'
+        if (urlAntiga) deletarImagensR2(urlAntiga)
+      } catch (err) {
+        statusEl.textContent = '❌ ' + err.message
+      }
+    }
+
     // ===== SALVAR PERFIL =====
     async function handlePerfilSubmit(e) {
       e.preventDefault()
 
       const nome = document.getElementById('perfilNome').value
       const telefone = document.getElementById('perfilTelefone').value
-      const avatar = document.getElementById('perfilAvatar').value
+      const avatar = avatarUrlAtual
       const bio = document.getElementById('perfilBio').value
       const cpf = document.getElementById('perfilCpf').value.trim()
       const cep = document.getElementById('perfilCep').value.trim()

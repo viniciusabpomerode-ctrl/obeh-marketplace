@@ -47,7 +47,7 @@
 </form>
 
 <div class="auth-link">
-Não tem conta? <a href="cadastro.html">Criar conta grátis</a>
+Não tem conta? <a href="cadastro.html" id="linkCriarConta">Criar conta grátis</a>
 </div>
 <div class="auth-link" style="margin-top:8px;">
 <a href="index.html">← Voltar para a loja</a>
@@ -64,11 +64,18 @@ const password = document.getElementById('password').value
 await login(email, password)
 }
 
+// Se veio de um fluxo de compra (?retorno=carrinho.html), repassa isso pro
+// link de cadastro também, senão quem cria conta agora perde o caminho de volta.
+const retornoParam = new URLSearchParams(window.location.search).get('retorno')
+if (retornoParam) {
+document.getElementById('linkCriarConta').href = `cadastro.html?retorno=${encodeURIComponent(retornoParam)}`
+}
+
 // Redireciona se já estiver logado
 document.addEventListener('DOMContentLoaded', async () => {
 const user = await getCurrentUser()
 if (user) {
-window.location.href = 'index.html'
+window.location.href = getRetornoUrl()
 }
 })
 </script>

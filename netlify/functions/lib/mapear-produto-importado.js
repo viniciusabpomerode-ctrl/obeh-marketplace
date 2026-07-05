@@ -48,8 +48,8 @@ function mapearProdutoImportado(extraido, { categoriasObeh, plataforma }) {
   // 2) OPCIONAIS
   const { categoriaId, precisaRevisao: categoriaPrecisaRevisao } = mapearCategoria(extraido.categoriaTexto, categoriasObeh)
 
-  const emPromocao = Boolean(extraido.precoAntigo && extraido.precoAntigo > (precoAtual || 0))
-  const precoAntigo = emPromocao ? extraido.precoAntigo : null
+  const temPrecoAntigo = Boolean(extraido.precoAntigo && extraido.precoAntigo > (precoAtual || 0))
+  const precoAntigo = temPrecoAntigo ? extraido.precoAntigo : null
 
   const sobEncomenda = Boolean(extraido.sobEncomenda)
   const prazoProducaoDias = sobEncomenda ? (extraido.prazoProducaoDias || null) : null
@@ -69,7 +69,7 @@ function mapearProdutoImportado(extraido, { categoriasObeh, plataforma }) {
     descricao: extraido.descricao || null,
     categoria_id: categoriaId,
     estoque: 1, // origem não expõe estoque publicamente — usa o mesmo padrão do cadastro manual
-    em_promocao: emPromocao,
+    em_promocao: false, // habilitação sempre manual, mesmo com preço riscado vindo da origem
     preco_antigo: precoAntigo,
     destaque: false, // NUNCA vem da origem — é sempre uma decisão manual do vendedor no Obeh
     sob_encomenda: sobEncomenda,

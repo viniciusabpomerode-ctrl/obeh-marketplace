@@ -21,6 +21,7 @@
       <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
         <span id="userEmail" style="font-size:13px; color:var(--ink-soft);"></span>
         <a href="loja.html" class="btn btn-primary" style="padding:6px 16px; font-size:12px;">Ver minha loja</a>
+        <a href="perfil.html" class="btn btn-ghost" style="padding:6px 16px; font-size:12px;">👤 Meu perfil</a>
         <a href="#" onclick="logout()" class="btn btn-ghost" style="padding:6px 16px; font-size:12px;">Sair</a>
       </div>
     </div>
@@ -216,6 +217,16 @@
             <input type="text" id="lojaNome" required />
           </div>
           <div class="form-group">
+            <label>Link da sua loja (opcional)</label>
+            <div style="display:flex; align-items:center; gap:4px; flex-wrap:wrap;">
+              <span style="color:var(--ink-soft); font-size:13px;">obeh.com.br/</span>
+              <input type="text" id="lojaSlug" placeholder="sua-loja" style="flex:1; min-width:140px;"
+                oninput="this.value = this.value.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9-]/g,'-').replace(/-+/g,'-')" />
+            </div>
+            <small style="color:var(--ink-soft); display:block; margin-top:4px;">Só letras minúsculas, números e hífen. Deixe em branco pra continuar usando o link padrão.</small>
+            <small id="lojaSlugStatus" style="display:block; margin-top:4px;"></small>
+          </div>
+          <div class="form-group">
             <label>Descrição da loja</label>
             <textarea id="lojaDescricao" placeholder="Conte um pouco sobre seu trabalho..."></textarea>
           </div>
@@ -285,6 +296,15 @@
       <div>
       <h3 style="font-size:16px; margin-bottom:6px;">💳 Recebimento via Mercado Pago</h3>
       <p style="font-size:13px; color:var(--muted); margin-bottom:12px;">Conecte sua conta do Mercado Pago pra receber os pagamentos das suas vendas direto, com a taxa da Obeh descontada automaticamente.</p>
+      <div style="background:rgba(0,0,0,0.03); border:1px solid var(--line); border-radius:10px; padding:14px; margin-bottom:14px; font-size:13px; line-height:1.5;">
+        <strong>💰 Entenda as taxas de cada venda</strong>
+        <p style="margin-top:8px;">Toda venda passa por <strong>duas</strong> taxas, cobradas automaticamente e sem nenhuma ação sua:</p>
+        <ol style="margin:8px 0 8px 18px; padding:0;">
+          <li><strong>Taxa de processamento do Mercado Pago</strong> — é o que o próprio Mercado Pago cobra por processar o pagamento (cartão, Pix etc). Essa taxa é deles, não da Obeh, e varia por forma de pagamento e parcelamento. Ela é descontada primeiro.</li>
+          <li><strong>Taxa da Obeh</strong> — descontada depois, sobre o valor que sobra: <strong>5% no plano Free, 4% no Basic e 2% no Pro</strong>. Nunca incide sobre o frete.</li>
+        </ol>
+        <p style="margin-top:8px;">O restante cai direto na sua conta do Mercado Pago. Quanto maior o seu plano, menor a taxa da Obeh — e a do Mercado Pago você confere direto com eles, já que pode mudar conforme a forma de pagamento.</p>
+      </div>
       <div id="mpConexaoStatus" style="margin-bottom:12px; font-size:14px;">Carregando...</div>
       <button type="button" class="btn btn-primary" id="mpConectarBtn" onclick="conectarMercadoPago()">Conectar Mercado Pago</button>
     </div>
@@ -328,6 +348,13 @@
 
       <div id="lojasub-frete" class="subtab-content">
     <div>
+      <div style="background:rgba(0,0,0,0.03); border:1px solid var(--line); border-radius:10px; padding:14px; margin-bottom:18px; font-size:13px; line-height:1.5;">
+        <strong>📦 Você tem duas formas de calcular o frete — escolha uma (ou as duas):</strong>
+        <ol style="margin:8px 0 0 18px; padding:0;">
+          <li><strong>Automático (recomendado):</strong> conecte o token do SuperFrete na aba <strong>💳 Pagamento</strong> — o preço vem certinho, direto dos Correios/transportadoras, sem você precisar calcular nada.</li>
+          <li><strong>Manual por região:</strong> configure abaixo, você mesmo define um preço fixo pra cada região do país. Serve como alternativa caso não queira (ou não possa) usar o SuperFrete — o sistema só usa isso quando não tiver o token configurado.</li>
+        </ol>
+      </div>
       <h3 style="font-size:16px; margin-bottom:6px;">🚚 Frete manual por região</h3>
       <p style="font-size:13px; color:var(--ink-soft); margin-bottom:12px;">Usado como alternativa quando o SuperFrete não estiver configurado: defina um preço fixo por região do país conforme a quantidade de itens comprados.</p>
       <div id="fretesRegiaoLista" style="margin-bottom:16px;"></div>
@@ -457,13 +484,13 @@
       <div>
       <h3 style="font-size:16px; margin-bottom:6px;">📥 Importar produtos de outra loja</h3>
       <p style="font-size:13px; color:var(--ink-soft); margin-bottom:16px;">
-        Já tem uma loja em outra plataforma? Cole o link dela abaixo pra trazer os produtos automaticamente pro Obeh.
-        Hoje funciona pra lojas do <strong>artesanou.com.br</strong>.
+        Já tem uma loja em outro site? Cole o link dela abaixo pra trazer os produtos automaticamente pro Obeh.
+        Ainda não funciona pra qualquer site — se o seu não for compatível, avisamos na hora.
       </p>
 
       <div class="form-group">
-        <label>Link da sua loja no artesanou.com.br</label>
-        <input type="text" id="importarUrlLoja" placeholder="https://artesanou.com.br/loja/sua-loja" />
+        <label>Link da sua loja no site de origem</label>
+        <input type="text" id="importarUrlLoja" placeholder="https://seusite.com.br/loja/sua-loja" />
       </div>
 
       <div style="background:rgba(0,0,0,0.03); border:1px solid var(--line); border-radius:10px; padding:14px; margin-bottom:14px; max-height:220px; overflow-y:auto; font-size:12.5px; color:var(--ink-soft); line-height:1.6;">
@@ -854,6 +881,7 @@
 
       if (data) {
         document.getElementById('lojaNome').value = data.nome_loja || ''
+        document.getElementById('lojaSlug').value = data.slug || ''
         document.getElementById('lojaDescricao').value = data.descricao || ''
         document.getElementById('lojaLogo').value = data.logo || ''
         document.getElementById('lojaBanner').value = data.banner || ''
@@ -1233,6 +1261,7 @@
       statusEl.textContent = '✅ Importação concluída!'
       resumoEl.innerHTML = `
         <div style="border:1px solid var(--line); border-radius:10px; padding:16px; font-size:13px; line-height:1.8;">
+          ${resumo.nomeLojaOrigem ? `<p>🔗 Importado de: <strong>${resumo.nomeLojaOrigem}</strong></p>` : ''}
           <p>✅ <strong>${resumo.publicados || 0}</strong> produto(s) publicado(s)</p>
           <p>⏫ <strong>${resumo.pendenteUpgrade || 0}</strong> aguardando upgrade de plano — <a href="index.html#vender">ver planos</a></p>
           <p>📦 <strong>${resumo.pendenteDadosFrete || 0}</strong> precisam de peso/dimensões antes do frete funcionar direito</p>
@@ -1687,6 +1716,24 @@ pasta_id,
       e.preventDefault()
 
       try {
+        const slugStatusEl = document.getElementById('lojaSlugStatus')
+        slugStatusEl.textContent = ''
+
+        const slugValue = document.getElementById('lojaSlug').value.trim().replace(/^-+|-+$/g, '')
+        if (slugValue) {
+          const { data: lojaComMesmoSlug } = await supabaseClient
+            .from('lojas')
+            .select('id')
+            .eq('slug', slugValue)
+            .neq('user_id', currentUserId)
+            .maybeSingle()
+          if (lojaComMesmoSlug) {
+            slugStatusEl.textContent = '❌ Esse link já está em uso por outra loja — escolha outro.'
+            slugStatusEl.style.color = '#c94a4a'
+            return
+          }
+        }
+
         const logoFile = logoCropBlob || document.getElementById('lojaLogoFile').files[0]
         const bannerFile = document.getElementById('lojaBannerFile').files[0]
         const logoValue = logoFile ? await uploadImagemR2(logoFile, 'lojas') : document.getElementById('lojaLogo').value.trim()
@@ -1694,6 +1741,7 @@ pasta_id,
 
         const updates = {
           nome_loja: document.getElementById('lojaNome').value.trim(),
+          slug: slugValue || null,
           descricao: document.getElementById('lojaDescricao').value.trim(),
           logo: logoValue,
           banner: bannerValue,
@@ -1721,7 +1769,7 @@ pasta_id,
           logoCropBlob = null
           lojaData = result
           alert('✅ Loja salva com sucesso!')
-          window.location.href = `loja.html?id=${result.id}`
+          window.location.href = result.slug ? `/${result.slug}` : `loja.html?id=${result.id}`
         } else {
           console.error('[Dashboard] loja save result:', result)
           alert('❌ Não foi possível salvar a loja.\n\n' + (result?.error || 'Erro desconhecido') + '\n\nSe aparecer "row-level security", execute o arquivo supabase/fix_lojas_rls.sql no SQL Editor do Supabase.')

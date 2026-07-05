@@ -316,9 +316,20 @@
 
     // ===== INICIALIZAÇÃO =====
     document.addEventListener('DOMContentLoaded', async () => {
-      // Pega o ID da loja da URL ou resolve pela conta logada
+      // Pega o ID da loja da URL (link antigo ?id=, link bonito ?slug= vindo
+      // do redirecionamento da Netlify, ou resolve pela conta logada)
       const urlParams = new URLSearchParams(window.location.search)
       lojaId = urlParams.get('id')
+
+      const slugParam = urlParams.get('slug')
+      if (!lojaId && slugParam) {
+        const { data: lojaPorSlug } = await supabaseClient
+          .from('lojas')
+          .select('id')
+          .eq('slug', slugParam)
+          .maybeSingle()
+        if (lojaPorSlug?.id) lojaId = lojaPorSlug.id
+      }
 
       if (!lojaId) {
         const user = await getCurrentUser()

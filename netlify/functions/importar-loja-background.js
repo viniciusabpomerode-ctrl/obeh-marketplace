@@ -74,12 +74,21 @@ exports.handler = async (event) => {
   }
 
   try {
+    // 0. Nome de exibição da loja de origem, só pra mostrar no resumo pro
+    // vendedor (não falha a importação se não conseguir pegar isso)
+    let nomeLojaOrigem = null
+    try {
+      if (adapter.extrairNomeLoja) nomeLojaOrigem = await adapter.extrairNomeLoja(urlLoja)
+    } catch (err) {
+      console.error('Não foi possível extrair o nome da loja de origem:', err.message)
+    }
+
     // 1. Extrai a lista de produtos da loja de origem (todas as páginas)
     const cartoes = await adapter.extrairProdutosDaLoja(urlLoja)
     if (cartoes.length === 0) {
       await marcarImportacao(importacaoId, {
         status: 'concluida',
-        resumo: { publicados: 0, pendenteUpgrade: 0, pendenteDadosFrete: 0, semImagem: 0, extracaoIncompleta: 0, totalExtraido: 0, mensagem: 'Nenhum produto encontrado nessa loja.' }
+        resumo: { publicados: 0, pendenteUpgrade: 0, pendenteDadosFrete: 0, semImagem: 0, extracaoIncompleta: 0, totalExtraido: 0, nomeLojaOrigem, mensagem: 'Nenhum produto encontrado nessa loja.' }
       })
       return { statusCode: 200, body: 'ok' }
     }
@@ -163,6 +172,7 @@ exports.handler = async (event) => {
 
     // 6. Resumo final — um mesmo produto pode contar em mais de um grupo
     const resumo = {
+      nomeLojaOrigem,
       publicados: paraInserir.filter(p => p.status === 'ativo').length,
       pendenteUpgrade: paraInserir.filter(p => p.pendente_upgrade).length,
       pendenteDadosFrete: paraInserir.filter(p => p.pendente_dados_frete).length,

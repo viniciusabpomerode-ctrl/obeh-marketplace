@@ -4,3 +4,12 @@
 
 [functions]
   node_bundler = "esbuild"
+
+# Link bonito da loja: obeh.com.br/nome-da-loja reescreve por trás dos panos
+# pra loja.html?slug=nome-da-loja. Como o Netlify sempre tenta servir um
+# arquivo real primeiro, isso só entra em ação quando o caminho não bate com
+# nenhuma página/arquivo existente — não conflita com index.html, css/, js/ etc.
+[[redirects]]
+  from = "/:slug"
+  to = "/loja.html?slug=:slug"
+  status = 200

@@ -112,6 +112,15 @@ async function extrairCategorias(lojaSlugOuUrl) {
   return extrairCategoriasDoHtml($)
 }
 
+// Nome de exibição da loja de origem (ex: "CK Atelier") — usado só pra
+// mostrar no resumo da importação pro vendedor, não é gravado como dado
+// oficial de nenhum produto.
+async function extrairNomeLoja(lojaSlugOuUrl) {
+  const slug = extrairSlugLojaDaUrl(lojaSlugOuUrl)
+  const $ = await buscarHtml(`${BASE_URL}/loja/${slug}`)
+  return $('h1.store-page__title').first().text().trim() || null
+}
+
 // Percorre todas as páginas da loja (ou de uma pasta específica, se
 // pastaUrl for informada) coletando os cartões de produto.
 async function extrairProdutosDaLoja(lojaSlugOuUrl, pastaUrl, aoBuscarPagina) {
@@ -190,6 +199,7 @@ module.exports = {
   plataforma: PLATAFORMA,
   camposSuportados,
   extrairCategorias,
+  extrairNomeLoja,
   extrairProdutosDaLoja,
   extrairDetalhesProduto,
   parsePrecoBRL,

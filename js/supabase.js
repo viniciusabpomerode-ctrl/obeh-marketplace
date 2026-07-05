@@ -39,6 +39,14 @@ async function registrarPrimeiroLogin(userId) {
 }
 
 // Login com email/senha
+// Se a pessoa veio de um fluxo que precisa voltar pra algum lugar depois de
+// logar/cadastrar (ex: tentou finalizar compra sem conta), a página de origem
+// manda isso na URL como "?retorno=carrinho.html".
+function getRetornoUrl() {
+  const retorno = new URLSearchParams(window.location.search).get('retorno')
+  return retorno && retorno.startsWith('/') === false && !retorno.includes('://') ? retorno : 'index.html'
+}
+
 async function login(email, password) {
   const { data, error } = await supabaseClient.auth.signInWithPassword({
     email,
@@ -51,7 +59,7 @@ async function login(email, password) {
   if (data?.user?.id) {
     await registrarPrimeiroLogin(data.user.id)
   }
-  window.location.href = 'index.html'
+  window.location.href = getRetornoUrl()
   return true
 }
 
@@ -60,7 +68,7 @@ async function loginComGoogle() {
   const { data, error } = await supabaseClient.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: window.location.origin + '/index.html'
+      redirectTo: window.location.origin + '/' + getRetornoUrl()
     }
   })
   if (error) {
@@ -75,7 +83,7 @@ async function loginComFacebook() {
   const { data, error } = await supabaseClient.auth.signInWithOAuth({
     provider: 'facebook',
     options: {
-      redirectTo: window.location.origin + '/index.html'
+      redirectTo: window.location.origin + '/' + getRetornoUrl()
     }
   })
   if (error) {
@@ -119,7 +127,8 @@ async function cadastrarUsuario(email, password, nome, telefone, dadosEndereco =
     }
 
     alert('✅ Cadastro realizado com sucesso! Faça login para continuar.')
-    window.location.href = 'login.html'
+    const retorno = new URLSearchParams(window.location.search).get('retorno')
+    window.location.href = retorno ? `login.html?retorno=${encodeURIComponent(retorno)}` : 'login.html'
     return true
   }
 

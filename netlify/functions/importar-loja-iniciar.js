@@ -78,10 +78,12 @@ exports.handler = async (event) => {
     })
     const importacao = importacoes[0]
 
-    // Dispara a função em segundo plano (não espera ela terminar — o
-    // Netlify responde 202 assim que aceita a chamada, o processamento
-    // continua rodando por conta própria depois disso)
-    fetch(`${SITE_URL}/.netlify/functions/importar-loja-background`, {
+    // Dispara a função em segundo plano. Precisa do "await" aqui: sem ele, a
+    // Lambda desta função pode congelar/finalizar antes do fetch sair de
+    // verdade pela rede, e a importação nunca chega a começar. O await só
+    // espera o Netlify ACEITAR a chamada (responde rápido, 202) — não espera
+    // os até 15 minutos de processamento da função em segundo plano.
+    await fetch(`${SITE_URL}/.netlify/functions/importar-loja-background`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId, urlLoja, plataforma, lojaId: loja.id, importacaoId: importacao.id })
