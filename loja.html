@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" type="image/svg+xml" href="favicon.svg" />
   <title>Loja — Obeh</title>
+  <meta name="description" content="Conheça esta loja de artesanato na Obeh. Peças feitas à mão, direto de quem faz, com pagamento seguro." />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Obeh" />
+  <meta name="theme-color" content="#B5502F" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Work+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
@@ -224,9 +228,9 @@
         <img src="https://i.postimg.cc/gjpXKcn5/imagem-2026-07-01-110451621.png" alt="Obeh Logo" style="height:40px;" />
       </a>
       <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
-        <a href="index.html" class="btn btn-ghost" style="padding:6px 16px; font-size:12px;">← Voltar</a>
-        <button class="cart-btn" id="cartToggle" title="Carrinho">
-          🛒 <span id="cartCount">0</span>
+        <a href="index.html" class="btn btn-ghost">← Voltar ao início</a>
+        <button class="cart-btn" id="cartToggle" title="Carrinho" aria-label="Abrir carrinho">
+          🛒 <span class="cart-btn-text">Carrinho</span> <span id="cartCount">0</span>
         </button>
       </div>
     </div>
@@ -312,7 +316,8 @@
         <span>Total</span>
         <span>R$ 0,00</span>
       </div>
-      <button class="btn btn-primary" id="checkoutBtn">Finalizar compra</button>
+      <button class="btn btn-primary btn-lg" id="checkoutBtn">Finalizar compra</button>
+      <p class="secure-note" style="justify-content:center;"><span class="secure-icon" aria-hidden="true">🔒</span> Pagamento seguro pelo Mercado Pago</p>
     </div>
   </div>
 
@@ -596,6 +601,42 @@ async function carregarLoja(id) {
       // Nome
       document.getElementById('lojaNome').textContent = data.nome_loja || 'Loja sem nome'
       document.title = `${data.nome_loja || 'Loja'} — Artesanato | Obeh`
+
+      // SEO: canonical + JSON-LD da loja (apenas leitura dos dados já carregados)
+      const urlLoja = `https://obeh.com.br/loja.html?id=${data.id}`
+      let canonical = document.querySelector('link[rel="canonical"]')
+      if (!canonical) {
+        canonical = document.createElement('link')
+        canonical.rel = 'canonical'
+        document.head.appendChild(canonical)
+      }
+      canonical.href = urlLoja
+
+      const metaDesc = document.querySelector('meta[name="description"]')
+      if (metaDesc && data.descricao) {
+        metaDesc.setAttribute('content', `${data.nome_loja} — ${(data.descricao || '').slice(0, 150)}`)
+      }
+
+      const ldLoja = {
+        '@context': 'https://schema.org',
+        '@type': 'Store',
+        name: data.nome_loja || 'Loja de artesanato',
+        description: (data.descricao || 'Loja de artesanato na Obeh.').slice(0, 300),
+        url: urlLoja,
+        image: data.logo || undefined,
+        parentOrganization: { '@type': 'Organization', name: 'Obeh', url: 'https://obeh.com.br/' },
+        ...(data.nota_media ? {
+          aggregateRating: {
+            '@type': 'AggregateRating',
+            ratingValue: Number(data.nota_media).toFixed(1),
+            reviewCount: data.total_avaliacoes || 1
+          }
+        } : {})
+      }
+      const ldScript = document.createElement('script')
+      ldScript.type = 'application/ld+json'
+      ldScript.textContent = JSON.stringify(ldLoja)
+      document.head.appendChild(ldScript)
 
       // Descrição
       document.getElementById('lojaDescricao').textContent = data.descricao || ''
