@@ -576,6 +576,9 @@
               ` : ''}
 
               <div class="produto-actions">
+                <button class="btn btn-outline" onclick="comprarAgora()">
+                  ⚡ Comprar agora
+                </button>
                 <button class="btn btn-primary" onclick="adicionarAoCarrinhoClique()">
                   🛒 Adicionar ao carrinho
                 </button>
@@ -693,6 +696,23 @@
       }
     }
 
+    // Compra direta: bota o produto no carrinho e já leva pro checkout dessa
+    // loja (aba já aberta), sem precisar passar pelo carrinho manualmente.
+    function comprarAgora() {
+      if (!produtoData) return
+
+      adicionarAoCarrinho({
+        id: produtoData.id,
+        nome: produtoData.nome,
+        preco: produtoData.preco,
+        fotos: produtoData.fotos,
+        loja_id: produtoData.loja_id,
+        loja_nome: lojaData?.nome_loja || 'Loja'
+      })
+
+      window.location.href = `carrinho.html?loja=${produtoData.loja_id}`
+    }
+
     function atualizarQuantidadeCarrinho(produtoId, delta) {
       atualizarQuantidade(produtoId, delta)
       renderizarCarrinho()
@@ -717,6 +737,7 @@
     // ===== FUNÇÕES GLOBAIS =====
     window.trocarImagem = trocarImagem
     window.adicionarAoCarrinhoClique = adicionarAoCarrinhoClique
+    window.comprarAgora = comprarAgora
     window.atualizarQuantidadeCarrinho = atualizarQuantidadeCarrinho
     window.removerItemCarrinho = removerItemCarrinho
     window.abrirChat = abrirChat

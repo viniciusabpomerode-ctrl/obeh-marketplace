@@ -269,6 +269,9 @@
     // ===== CUPOM DE DESCONTO =====
     let cupomAplicado = null
     let descontosPorLoja = {} // { lojaId: desconto_percentual }
+    // Como só a aba ativa fica no DOM, guarda aqui o HTML do resultado do Pix
+    // de cada loja pra não sumir se a pessoa trocar de aba e voltar.
+    let pixResultadoPorLoja = {}
 
     function getTotalComDesconto() {
       return carrinho.reduce((total, item) => {
@@ -326,6 +329,8 @@
     }
 
     // ===== INICIALIZAÇÃO =====
+    let lojaAtivaId = new URLSearchParams(window.location.search).get('loja') || null
+
     document.addEventListener('DOMContentLoaded', () => {
       renderizarCarrinhoCompleto()
       atualizarCarrinhoUI()
@@ -333,6 +338,11 @@
       // Atualiza contador do header
       document.getElementById('cartCount').textContent = getQuantidadeCarrinho()
     })
+
+    function mostrarLojaCarrinho(lojaId) {
+      lojaAtivaId = lojaId
+      renderizarCarrinhoCompleto()
+    }
 
     // ===== RENDERIZAR CARRINHO =====
     function renderizarCarrinhoCompleto() {
@@ -357,45 +367,55 @@
         return { ...grupo, itensCompletos, subtotal }
       })
 
+      // Se a loja ativa não existe mais nesse carrinho (foi finalizada/removida),
+      // volta pra primeira aba disponível.
+      if (!gruposVisuais.some(g => g.lojaId === lojaAtivaId)) {
+        lojaAtivaId = gruposVisuais[0].lojaId
+      }
+
+      const grupoAtivo = gruposVisuais.find(g => g.lojaId === lojaAtivaId)
+
       container.innerHTML = `
-            ${gruposVisuais.map(grupo => `
-              <div style="border:1px solid var(--line); border-radius:8px; margin-bottom:16px; overflow:hidden;">
-                <div style="background:var(--bg-card); padding:10px 16px; font-weight:600; display:flex; justify-content:space-between; align-items:center;">
-                  <span>🏪 ${grupo.nomeLoja}</span>
-                  <span style="font-weight:400; font-size:13px; color:var(--ink-soft);">${grupo.itensCompletos.length} item(ns)</span>
-                </div>
-                ${grupo.itensCompletos.map(item => `
-                  <div class="carrinho-item" style="border:none; border-radius:0; border-top:1px solid var(--line); margin-bottom:0;">
-                    <div class="thumb">
-                      ${item.fotos && item.fotos.length > 0
-                        ? `<img src="${item.fotos[0]}" alt="${item.nome}" />`
-                        : '🧵'
-                      }
-                    </div>
-                    <div class="info">
-                      <div class="nome">${item.nome}</div>
-                      <div class="preco">R$ ${Number(item.preco).toFixed(2)}</div>
-                    </div>
-                    <div class="quantidade">
-                      <button onclick="alterarQuantidade('${item.id}', -1)">−</button>
-                      <span>${item.quantidade}</span>
-                      <button onclick="alterarQuantidade('${item.id}', 1)">+</button>
-                    </div>
-                    <button class="remover" onclick="removerItem('${item.id}')">✕</button>
+            <div style="display:flex; gap:8px; overflow-x:auto; padding-bottom:12px; margin-bottom:16px; border-bottom:1px solid var(--line);">
+              ${gruposVisuais.map(grupo => `
+                <button onclick="mostrarLojaCarrinho('${grupo.lojaId}')" style="flex-shrink:0; padding:10px 16px; border-radius:8px; border:1px solid var(--line); font-size:13px; font-weight:600; cursor:pointer; white-space:nowrap; ${grupo.lojaId === lojaAtivaId ? 'background:var(--clay); color:#fff; border-color:var(--clay);' : 'background:transparent; color:var(--ink);'}">
+                  🏪 ${grupo.nomeLoja} (${grupo.itensCompletos.length})
+                </button>
+              `).join('')}
+            </div>
+
+            <div style="border:1px solid var(--line); border-radius:8px; overflow:hidden;">
+              ${grupoAtivo.itensCompletos.map(item => `
+                <div class="carrinho-item" style="border:none; border-radius:0; border-bottom:1px solid var(--line); margin-bottom:0;">
+                  <div class="thumb">
+                    ${item.fotos && item.fotos.length > 0
+                      ? `<img src="${item.fotos[0]}" alt="${item.nome}" />`
+                      : '🧵'
+                    }
                   </div>
-                `).join('')}
-                <div style="border-top:1px solid var(--line); padding:12px 16px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; background:var(--bg-card);">
-                  <span style="font-weight:600;">Total desta loja: R$ ${grupo.subtotal.toFixed(2)}</span>
-                  <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                    <button class="btn btn-ghost" style="padding:6px 14px; font-size:13px;" onclick="pagarComPix('${grupo.lojaId}')">💠 Pix</button>
-                    <button class="btn btn-ghost" style="padding:6px 14px; font-size:13px;" onclick="abrirPagamentoCartao('${grupo.lojaId}')">💳 Cartão</button>
-                    <button class="btn btn-primary" style="padding:6px 14px; font-size:13px;" onclick="finalizarCompra('${grupo.lojaId}', this)">Finalizar esta loja</button>
+                  <div class="info">
+                    <div class="nome">${item.nome}</div>
+                    <div class="preco">R$ ${Number(item.preco).toFixed(2)}</div>
                   </div>
+                  <div class="quantidade">
+                    <button onclick="alterarQuantidade('${item.id}', -1)">−</button>
+                    <span>${item.quantidade}</span>
+                    <button onclick="alterarQuantidade('${item.id}', 1)">+</button>
+                  </div>
+                  <button class="remover" onclick="removerItem('${item.id}')">✕</button>
                 </div>
-                <div id="pixResultado-${grupo.lojaId}" style="padding:0 16px 16px;"></div>
-                <div id="cartaoResultado-${grupo.lojaId}" style="padding:0 16px 16px;"></div>
+              `).join('')}
+              <div style="padding:12px 16px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; background:var(--bg-card);">
+                <span style="font-weight:600;">Total desta loja: R$ ${grupoAtivo.subtotal.toFixed(2)}</span>
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                  <button class="btn btn-ghost" style="padding:6px 14px; font-size:13px;" onclick="pagarComPix('${grupoAtivo.lojaId}')">💠 Pix</button>
+                  <button class="btn btn-ghost" style="padding:6px 14px; font-size:13px;" onclick="abrirPagamentoCartao('${grupoAtivo.lojaId}')">💳 Cartão</button>
+                  <button class="btn btn-primary" style="padding:6px 14px; font-size:13px;" onclick="finalizarCompra('${grupoAtivo.lojaId}', this)">Finalizar esta loja</button>
+                </div>
               </div>
-            `).join('')}
+              <div id="pixResultado-${grupoAtivo.lojaId}" style="padding:0 16px 16px;">${pixResultadoPorLoja[grupoAtivo.lojaId] || ''}</div>
+              <div id="cartaoResultado-${grupoAtivo.lojaId}" style="padding:0 16px 16px;"></div>
+            </div>
 
             <div style="border:1px solid var(--line); border-radius:8px; padding:16px; margin-bottom:16px;">
         <div style="font-weight:500; margin-bottom:8px;">📦 Calcular frete</div>
@@ -422,7 +442,7 @@
                 <div class="total-value">R$ ${getTotalComDesconto().toFixed(2)}</div>
               </div>
               ` : `
-              <div style="font-size:13px; color:var(--ink-soft);">Cada loja acima é cobrada separadamente — use o botão "Finalizar esta loja" de cada uma.</div>
+              <div style="font-size:13px; color:var(--ink-soft);">Cada loja é cobrada separadamente — troque de aba acima e use "Finalizar esta loja" em cada uma.</div>
               `}
               <div style="display:flex; gap:12px; flex-wrap:wrap;">
                 <button class="btn btn-ghost" onclick="limparCarrinho()">Limpar carrinho</button>
@@ -642,10 +662,13 @@
             <p id="pixStatus-${r.pedidoId}" style="margin-top:10px; font-size:13px; color:var(--ink-soft);">⏳ Aguardando pagamento...</p>
           </div>
         `
+        // Guarda o HTML pra reaparecer certinho se a pessoa trocar de aba e voltar
+        pixResultadoPorLoja[r.lojaId] = alvoEl.innerHTML
       })
 
       if (erros.length > 0 && resultadoEl) {
         resultadoEl.insertAdjacentHTML('afterbegin', `<p style="color:#c94a4a; font-size:13px; margin-bottom:8px;">⚠️ ${erros.join(', ')}</p>`)
+        if (lojaId) pixResultadoPorLoja[lojaId] = resultadoEl.innerHTML
       }
 
       resultados.forEach(r => monitorarPagamentoPix(r.pedidoId, r.lojaId))
@@ -655,21 +678,31 @@
       if (!pedidoId || tentativas > 60) return // ~5 minutos (60 x 5s)
 
       const { data } = await supabaseClient.from('vendas').select('status').eq('pedido_id', pedidoId).limit(1).maybeSingle()
+      // O elemento pode não existir se a pessoa trocou de aba (só a aba ativa
+      // fica no DOM) — mesmo assim continua verificando em segundo plano e
+      // atualiza o cache, pra aparecer certo quando ela voltar pra essa loja.
       const statusEl = document.getElementById(`pixStatus-${pedidoId}`)
-      if (!statusEl) return
 
       if (data?.status === 'pago') {
-        statusEl.textContent = '✅ Pagamento confirmado!'
-        statusEl.style.color = '#2f7a4d'
-        if (lojaId) removerLojaDoCarrinho(lojaId)
+        if (statusEl) {
+          statusEl.textContent = '✅ Pagamento confirmado!'
+          statusEl.style.color = '#2f7a4d'
+        }
+        if (lojaId) {
+          delete pixResultadoPorLoja[lojaId]
+          removerLojaDoCarrinho(lojaId)
+        }
         atualizarCarrinhoUI()
         document.getElementById('cartCount').textContent = getQuantidadeCarrinho()
         return
       }
 
       if (data?.status === 'recusado' || data?.status === 'cancelado') {
-        statusEl.textContent = '❌ Pagamento não foi concluído.'
-        statusEl.style.color = '#c94a4a'
+        if (statusEl) {
+          statusEl.textContent = '❌ Pagamento não foi concluído.'
+          statusEl.style.color = '#c94a4a'
+        }
+        if (lojaId) delete pixResultadoPorLoja[lojaId]
         return
       }
 
@@ -832,6 +865,7 @@
     window.alterarQuantidade = alterarQuantidade
     window.removerItem = removerItem
     window.limparCarrinho = limparCarrinho
+    window.mostrarLojaCarrinho = mostrarLojaCarrinho
     window.finalizarCompra = finalizarCompra
     window.pagarComPix = pagarComPix
     window.abrirPagamentoCartao = abrirPagamentoCartao
