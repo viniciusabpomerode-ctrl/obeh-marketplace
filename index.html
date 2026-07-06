@@ -3,7 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Obeh — Marketplace de Artesanato</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <title>Obeh — Marketplace de Artesanato Brasileiro | Compre Direto do Artesão</title>
+  <meta name="description" content="Compre artesanato brasileiro direto de quem faz: cerâmica, tecelagem, madeira, couro e mais. Pagamento direto ao artesão, taxas justas e frete pra todo o Brasil." />
+  <meta property="og:title" content="Obeh — Marketplace de Artesanato Brasileiro" />
+  <meta property="og:description" content="Cada peça carrega a marca de quem fez. Compre direto do artesão, sem intermediário no dinheiro." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://obeh.com.br/" />
+  <meta name="theme-color" content="#B5502F" />
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -208,6 +215,16 @@
       </div>
     </div>
   </section>
+
+  <!-- ===== FAIXA DE CONFIANÇA (prova social / segurança) ===== -->
+  <div style="background:var(--ink, #2B2620); color:#F7F2E7;">
+    <div class="wrap" style="display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:10px 36px; padding:14px 28px; font-size:14px;">
+      <div style="display:flex; align-items:center; gap:8px;"><span aria-hidden="true">🔒</span> Compra protegida</div>
+      <div style="display:flex; align-items:center; gap:8px;"><span aria-hidden="true">⚡</span> Pix e cartão em até 12x</div>
+      <div style="display:flex; align-items:center; gap:8px;"><span aria-hidden="true">🤝</span> Dinheiro direto pro artesão</div>
+      <div style="display:flex; align-items:center; gap:8px;"><span aria-hidden="true">📦</span> Envio pra todo o Brasil</div>
+    </div>
+  </div>
 
   <!-- ===== CATEGORIAS ===== -->
   <div style="border-top:1px solid var(--line); border-bottom:1px solid var(--line);">
@@ -531,12 +548,12 @@
       if (p.em_promocao && p.preco_antigo) {
         return `
           <div class="price">
-            <span style="text-decoration:line-through; color:var(--ink-soft); font-size:12px; margin-right:6px;">R$ ${Number(p.preco_antigo).toFixed(2)}</span>
-            R$ ${Number(p.preco).toFixed(2)}
+            <span style="text-decoration:line-through; color:var(--ink-soft); font-size:12px; margin-right:6px;">R$ ${Number(p.preco_antigo).toFixed(2).replace('.', ',')}</span>
+            R$ ${Number(p.preco).toFixed(2).replace('.', ',')}
           </div>
         `
       }
-      return `<div class="price">R$ ${Number(p.preco).toFixed(2)}</div>`
+      return `<div class="price">R$ ${Number(p.preco).toFixed(2).replace('.', ',')}</div>`
     }
 
     // Gerador pseudo-aleatório determinístico (mulberry32) — com a mesma
@@ -595,13 +612,13 @@
                   ${p.em_promocao ? '<span class="card-badge" style="position:absolute; top:10px; left:10px; background:var(--clay); color:#fff; font-size:11px; font-weight:700; padding:3px 10px; border-radius:999px;">🔥 Promoção</span>' : ''}
                   <button class="card-fav" data-produto-id="${p.id}" onclick="event.stopPropagation(); toggleFavoritoCard('${p.id}', this)" title="Favoritar">🤍</button>
                   ${p.fotos && p.fotos.length > 0
-                    ? `<img src="${p.fotos[0]}" alt="${p.nome}" loading="lazy" />`
+                    ? `<img src="${p.fotos[0]}" alt="${esc(p.nome)}" loading="lazy" />`
                     : `<span class="placeholder">🧵</span>`
                   }
                 </div>
                 <div class="card-body">
                   <div class="card-cat">${p.categorias?.nome || 'Artesanato'}</div>
-                  <div class="card-title">${p.nome}</div>
+                  <div class="card-title">${esc(p.nome)}</div>
                   <div class="card-maker">${p.lojas?.nome_loja || 'Artesão'}</div>
                   ${p.sob_encomenda ? `<div style="font-size:11px; color:var(--olive); font-weight:600; margin-top:2px;">📦 Sob encomenda${p.prazo_producao_dias ? ` — ${p.prazo_producao_dias} dia(s)` : ''}</div>` : ''}
                   <div class="card-foot">
@@ -683,7 +700,7 @@
               <div class="cart-item">
                 <div class="cart-item-info">
                   <div class="cart-item-name">${item.nome}</div>
-                  <div class="cart-item-detail">R$ ${Number(item.preco).toFixed(2)} x ${item.quantidade}</div>
+                  <div class="cart-item-detail">R$ ${Number(item.preco).toFixed(2).replace('.', ',')} x ${item.quantidade}</div>
                 </div>
                 <div class="cart-item-actions">
                   <button onclick="atualizarQuantidadeCarrinho('${item.id}', -1)">−</button>
@@ -695,7 +712,7 @@
             `).join('')
 
       const totalValue = getTotalCarrinho()
-      total.textContent = `R$ ${totalValue.toFixed(2)}`
+      total.textContent = `R$ ${totalValue.toFixed(2).replace('.', ',')}`
     }
 
     function adicionarAoCarrinhoClique(produtoId) {
@@ -797,13 +814,13 @@
                   ${p.em_promocao ? '<span class="card-badge" style="position:absolute; top:10px; left:10px; background:var(--clay); color:#fff; font-size:11px; font-weight:700; padding:3px 10px; border-radius:999px;">🔥 Promoção</span>' : ''}
                   <button class="card-fav" data-produto-id="${p.id}" onclick="event.stopPropagation(); toggleFavoritoCard('${p.id}', this)" title="Favoritar">🤍</button>
                   ${p.fotos && p.fotos.length > 0
-                    ? `<img src="${p.fotos[0]}" alt="${p.nome}" loading="lazy" />`
+                    ? `<img src="${p.fotos[0]}" alt="${esc(p.nome)}" loading="lazy" />`
                     : `<span class="placeholder">🧵</span>`
                   }
                 </div>
                 <div class="card-body">
                   <div class="card-cat">${p.categorias?.nome || 'Artesanato'}</div>
-                  <div class="card-title">${p.nome}</div>
+                  <div class="card-title">${esc(p.nome)}</div>
                   <div class="card-maker">${p.lojas?.nome_loja || 'Artesão'}</div>
                   ${p.sob_encomenda ? `<div style="font-size:11px; color:var(--olive); font-weight:600; margin-top:2px;">📦 Sob encomenda${p.prazo_producao_dias ? ` — ${p.prazo_producao_dias} dia(s)` : ''}</div>` : ''}
                   <div class="card-foot">

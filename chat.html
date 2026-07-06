@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
   <title>Chat — Obeh</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Work+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
@@ -312,7 +313,7 @@
 
       const avatarEl = document.getElementById('chatAvatar')
       if (data.avatar) {
-        avatarEl.innerHTML = `<img src="${data.avatar}" alt="${data.nome}" />`
+        avatarEl.innerHTML = `<img src="${esc(data.avatar)}" alt="${esc(data.nome)}" />`
       } else {
         avatarEl.textContent = '🧵'
       }
@@ -352,7 +353,7 @@
 
         return `
               <div class="mensagem ${isEnviada ? 'enviada' : 'recebida'}">
-                ${m.conteudo}
+                ${esc(m.conteudo)}
                 <span class="hora">${hora}</span>
               </div>
             `

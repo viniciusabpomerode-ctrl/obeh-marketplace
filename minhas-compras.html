@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
   <title>Minhas compras — Obeh</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Work+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
@@ -259,12 +260,12 @@
                 <div class="thumb">${i.foto ? `<img src="${i.foto}" alt="${i.nome}" />` : '🧵'}</div>
                 <div>
                   <div class="nome">${i.nome}</div>
-                  <div class="qtd">Qtd: ${i.quantidade} · R$ ${i.valorTotal.toFixed(2)}</div>
+                  <div class="qtd">Qtd: ${i.quantidade} · R$ ${i.valorTotal.toFixed(2).replace('.', ',')}</div>
                 </div>
               </div>
             `).join('')}
             <div class="pedido-total">
-              ${p.frete > 0 ? `Produtos: R$ ${totalProdutos.toFixed(2)} + Frete: R$ ${p.frete.toFixed(2)} = ` : ''}Total: R$ ${totalPedido.toFixed(2)}
+              ${p.frete > 0 ? `Produtos: R$ ${totalProdutos.toFixed(2).replace('.', ',')} + Frete: R$ ${p.frete.toFixed(2).replace('.', ',')} = ` : ''}Total: R$ ${totalPedido.toFixed(2).replace('.', ',')}
             </div>
             ${p.status === 'pendente' ? renderContinuarPagamento(p) : ''}
           </div>

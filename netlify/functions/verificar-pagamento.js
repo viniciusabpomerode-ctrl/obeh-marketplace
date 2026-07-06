@@ -29,6 +29,8 @@ async function supabaseRequest(path, options = {}) {
   return res.json()
 }
 
+const { baixarEstoquePorReferencia } = require('./lib/baixar-estoque')
+
 function mapearStatus(statusMp) {
   if (statusMp === 'approved') return 'pago'
   if (statusMp === 'rejected') return 'recusado'
@@ -93,6 +95,12 @@ exports.handler = async (event) => {
         prefer: 'return=minimal',
         body: JSON.stringify({ status: novoStatus })
       })
+
+      // Baixa de estoque (mesma lógica idempotente do mp-webhook.js —
+      // não importa qual dos dois rodar primeiro, só desconta uma vez).
+      if (novoStatus === 'pago') {
+        await baixarEstoquePorReferencia(pedidoId)
+      }
     }
 
     return { statusCode: 200, body: JSON.stringify({ status: novoStatus }) }

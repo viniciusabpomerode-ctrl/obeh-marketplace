@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
   <title>Dashboard — Obeh</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Work+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
@@ -950,12 +951,12 @@
       <input type="checkbox" class="produto-check" value="${p.id}" onchange="atualizarBulkToolbar()" style="margin-right:10px;" />
               <div class="info">
                 <div class="thumb">
-                  ${p.fotos && p.fotos.length > 0 ? `<img src="${p.fotos[0]}" alt="${p.nome}" />` : '🧶'}
+                  ${p.fotos && p.fotos.length > 0 ? `<img src="${p.fotos[0]}" alt="${esc(p.nome)}" />` : '🧶'}
                 </div>
                 <div>
-                  <strong>${p.nome}</strong>
+                  <strong>${esc(p.nome)}</strong>
                   <div style="font-size:12px; color:var(--ink-soft);">
-                    R$ ${Number(p.preco).toFixed(2)} • ${p.categorias?.nome || 'Sem categoria'} • 
+                    R$ ${Number(p.preco).toFixed(2).replace('.', ',')} • ${p.categorias?.nome || 'Sem categoria'} • 
                     <span style="color:${p.status === 'ativo' ? 'var(--olive)' : 'var(--clay)'}">
                       ${p.status === 'ativo' ? '✓ Ativo' : 'Rascunho'}
                     </span>
@@ -1148,7 +1149,7 @@
       }
       lista.innerHTML = data.map(f => `
         <div style="display:flex; align-items:center; gap:10px; justify-content:space-between; padding:8px 12px; border:1px solid var(--line); border-radius:8px; margin-bottom:6px; font-size:13px;">
-          <span><strong>${f.regiao}</strong> — ${f.quantidade_min} a ${f.quantidade_max} item(ns): ${f.frete_gratis ? 'grátis' : 'R$ ' + Number(f.preco).toFixed(2)}</span>
+          <span><strong>${f.regiao}</strong> — ${f.quantidade_min} a ${f.quantidade_max} item(ns): ${f.frete_gratis ? 'grátis' : 'R$ ' + Number(f.preco).toFixed(2).replace('.', ',')}</span>
           <button type="button" class="btn btn-ghost" style="padding:4px 10px; font-size:12px;" onclick="deletarFreteRegiao('${f.id}')">Excluir</button>
         </div>
       `).join('')
@@ -1633,7 +1634,7 @@
       lista.innerHTML = data.map(a => `
         <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--line); padding:8px 0; font-size:13px;">
           <span>${a.users?.nome || a.users?.email || 'Apoiador'}</span>
-          <span>R$ ${Number(a.valor_mensal || 0).toFixed(2)}/mês ${statusEmoji[a.status] || ''} ${a.status}</span>
+          <span>R$ ${Number(a.valor_mensal || 0).toFixed(2).replace('.', ',')}/mês ${statusEmoji[a.status] || ''} ${a.status}</span>
         </div>
       `).join('')
     }
@@ -1654,9 +1655,9 @@ async function carregarPastas() {
   container.innerHTML = data.map(p => `
     <div style="border:1px solid var(--line); border-radius:8px; overflow:hidden; text-align:center;">
       <div style="height:70px; background:var(--sand,#f0ece4); display:flex; align-items:center; justify-content:center; overflow:hidden; font-size:24px;">
-        ${p.imagem ? `<img src="${p.imagem}" alt="${p.nome}" style="width:100%; height:100%; object-fit:cover;" />` : '🗂️'}
+        ${p.imagem ? `<img src="${p.imagem}" alt="${esc(p.nome)}" style="width:100%; height:100%; object-fit:cover;" />` : '🗂️'}
       </div>
-      <div style="padding:6px; font-size:12px; font-weight:500;">${p.nome}</div>
+      <div style="padding:6px; font-size:12px; font-weight:500;">${esc(p.nome)}</div>
       <button onclick="removerPasta('${p.id}')" style="width:100%; border:none; border-top:1px solid var(--line); background:none; color:var(--ink-soft); font-size:11px; padding:4px; cursor:pointer;">Remover</button>
     </div>
   `).join('')
@@ -1710,7 +1711,7 @@ async function carregarPastasSelectProduto() {
     .eq('loja_id', lojaData.id)
     .order('nome', { ascending: true })
   const atual = select.value
-  select.innerHTML = '<option value="">Sem pasta</option>' + (data || []).map(p => `<option value="${p.id}">${p.nome}</option>`).join('')
+  select.innerHTML = '<option value="">Sem pasta</option>' + (data || []).map(p => `<option value="${p.id}">${esc(p.nome)}</option>`).join('')
   select.value = atual
 }
 // ===== CRUD PRODUTOS =====
@@ -2327,7 +2328,7 @@ pasta_id,
                 <div>
                   <strong>${c.titulo}</strong>
                   <div style="font-size:12px; color:var(--ink-soft);">
-                    R$ ${Number(c.preco).toFixed(2)} • 
+                    R$ ${Number(c.preco).toFixed(2).replace('.', ',')} • 
                     <span style="color:${c.status === 'ativo' ? 'var(--olive)' : 'var(--clay)'}">
                       ${c.status === 'ativo' ? '✓ Ativo' : 'Rascunho'}
                     </span>

@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
   <title>Lojas — Obeh</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Work+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
@@ -198,11 +199,11 @@
       grid.innerHTML = filtradas.map(l => `
         <div class="loja-tile" style="border-color:${l.cor_destaque || 'var(--line)'};" onclick="window.location.href='loja.html?id=${l.id}'">
           <div class="loja-logo">
-            ${l.logo ? `<img src="${l.logo}" alt="${l.nome_loja}" />` : '🧵'}
+            ${l.logo ? `<img src="${l.logo}" alt="${esc(l.nome_loja)}" />` : '🧵'}
           </div>
-          <div class="loja-nome">${l.nome_loja}</div>
-          ${l.categoria ? `<div class="loja-categoria">${l.categoria}</div>` : ''}
-          ${l.descricao ? `<div class="loja-desc">${l.descricao}</div>` : ''}
+          <div class="loja-nome">${esc(l.nome_loja)}</div>
+          ${l.categoria ? `<div class="loja-categoria">${esc(l.categoria)}</div>` : ''}
+          ${l.descricao ? `<div class="loja-desc">${esc(l.descricao)}</div>` : ''}
           <div class="loja-nota">⭐ ${Number(l.nota_media || 5).toFixed(1)} ${l.total_avaliacoes ? `(${l.total_avaliacoes})` : ''}</div>
         </div>
       `).join('')

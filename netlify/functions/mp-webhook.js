@@ -14,6 +14,8 @@
 // Precisa da variável de ambiente SUPABASE_SERVICE_ROLE_KEY (chave
 // "service_role" do Supabase).
 // ============================================
+const { baixarEstoquePorReferencia } = require('./lib/baixar-estoque')
+
 const SUPABASE_URL = 'https://pzvqtpestzrmipcyqbsp.supabase.co'
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
 
@@ -161,6 +163,12 @@ exports.handler = async (event) => {
       method: 'PATCH',
       body: JSON.stringify({ status: novoStatus })
     })
+
+    // Baixa de estoque quando o pagamento é aprovado (lógica compartilhada
+    // com verificar-pagamento.js, idempotente e à prova de migração pendente).
+    if (novoStatus === 'pago') {
+      await baixarEstoquePorReferencia(referencia)
+    }
 
     return { statusCode: 200, body: 'ok' }
   } catch (err) {
