@@ -150,7 +150,7 @@ exports.handler = async (event) => {
 
     const planoRes = await supabaseRequest(`planos?slug=eq.${planoSlug}&select=taxa_percentual`)
     const planos = await planoRes.json()
-    const taxaPercentual = Number(planos[0]?.taxa_percentual ?? 5)
+    const taxaPercentual = Number(planos[0]?.taxa_percentual ?? 8)
     const valorTaxa = Math.round(itensPagamento.reduce((acc, ip) => {
       const taxaItem = ip.produto.destaque ? TAXA_PRODUTO_IMPULSIONADO : taxaPercentual
       return acc + ip.subtotal * (taxaItem / 100)
