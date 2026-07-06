@@ -1226,7 +1226,13 @@
       const desconectarBtn = document.getElementById('superfreteDesconectarBtn')
       if (token) {
         const mascarado = token.length > 4 ? `••••••${token.slice(-4)}` : '••••••'
-        conexaoEl.innerHTML = `✅ Conectado — token ${mascarado}`
+        // O SuperFrete só funciona de verdade se o CEP de origem da loja
+        // também estiver preenchido (é dele que ele calcula a distância) —
+        // sem isso, o token fica salvo mas nunca é usado de verdade.
+        const semCepOrigem = !lojaData?.cep_origem
+        conexaoEl.innerHTML = semCepOrigem
+          ? `✅ Conectado — token ${mascarado}<br>⚠️ <strong>Falta preencher o "CEP de origem" acima</strong> — sem ele, o SuperFrete não calcula nada e o sistema usa frete manual/estimado.`
+          : `✅ Conectado — token ${mascarado}`
         conectarBtn.textContent = 'Trocar token'
         desconectarBtn.style.display = 'inline-block'
       } else {

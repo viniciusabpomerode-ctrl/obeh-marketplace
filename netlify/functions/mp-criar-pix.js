@@ -242,12 +242,19 @@ exports.handler = async (event) => {
 
     // Guarda o QR code/código copia-e-cola pra "Minhas compras" poder
     // mostrar de novo se o pedido ficar pendente (a pessoa fechou a aba
-    // antes de pagar, por exemplo)
-    await supabaseRequest(`vendas?pedido_id=eq.${pedidoId}`, {
-      method: 'PATCH',
-      prefer: 'return=minimal',
-      body: JSON.stringify({ qr_code: qrCode, qr_code_base64: qrCodeBase64, mp_payment_id: String(pagamentoData.id) })
-    })
+    // antes de pagar, por exemplo). Isso é só um "extra" pra melhorar a
+    // experiência depois — se essas colunas ainda não existirem no banco (ou
+    // qualquer outro erro), NUNCA pode derrubar o pagamento que já foi
+    // criado de verdade no Mercado Pago.
+    try {
+      await supabaseRequest(`vendas?pedido_id=eq.${pedidoId}`, {
+        method: 'PATCH',
+        prefer: 'return=minimal',
+        body: JSON.stringify({ qr_code: qrCode, qr_code_base64: qrCodeBase64, mp_payment_id: String(pagamentoData.id) })
+      })
+    } catch (err) {
+      console.error('Não foi possível salvar o QR code pra retomada depois (pagamento já foi criado normalmente):', err.message)
+    }
 
     return {
       statusCode: 200,

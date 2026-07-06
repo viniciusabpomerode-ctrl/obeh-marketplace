@@ -195,12 +195,18 @@ exports.handler = async (event) => {
         return { statusCode: 422, body: JSON.stringify({ error: 'Vendedor ainda não configurou um jeito de receber pagamentos.' }) }
       }
       // Guarda o link pra "Minhas compras" poder mostrar um botão de
-      // continuar pagamento se o pedido ficar pendente
-      await supabaseRequest(`vendas?pedido_id=eq.${pedidoId}`, {
-        method: 'PATCH',
-        prefer: 'return=minimal',
-        body: JSON.stringify({ init_point: linkEstatico })
-      })
+      // continuar pagamento se o pedido ficar pendente. Isso é só um
+      // "extra" — se a coluna ainda não existir no banco (ou qualquer outro
+      // erro), não pode derrubar a compra que já foi registrada.
+      try {
+        await supabaseRequest(`vendas?pedido_id=eq.${pedidoId}`, {
+          method: 'PATCH',
+          prefer: 'return=minimal',
+          body: JSON.stringify({ init_point: linkEstatico })
+        })
+      } catch (err) {
+        console.error('Não foi possível salvar o init_point pra retomada depois:', err.message)
+      }
       return {
         statusCode: 200,
         body: JSON.stringify({ initPoint: linkEstatico, pedidoId, splitAutomatico: false })
@@ -248,12 +254,17 @@ exports.handler = async (event) => {
     }
 
     // Guarda o link pra "Minhas compras" poder mostrar um botão de continuar
-    // pagamento se o pedido ficar pendente (a pessoa fechou a aba, etc)
-    await supabaseRequest(`vendas?pedido_id=eq.${pedidoId}`, {
-      method: 'PATCH',
-      prefer: 'return=minimal',
-      body: JSON.stringify({ init_point: prefData.init_point })
-    })
+    // pagamento se o pedido ficar pendente (a pessoa fechou a aba, etc). Só
+    // um "extra" — não pode derrubar a compra se a coluna ainda não existir.
+    try {
+      await supabaseRequest(`vendas?pedido_id=eq.${pedidoId}`, {
+        method: 'PATCH',
+        prefer: 'return=minimal',
+        body: JSON.stringify({ init_point: prefData.init_point })
+      })
+    } catch (err) {
+      console.error('Não foi possível salvar o init_point pra retomada depois:', err.message)
+    }
 
     return {
       statusCode: 200,

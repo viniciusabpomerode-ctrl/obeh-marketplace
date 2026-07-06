@@ -235,9 +235,22 @@ async function calcularFretesPorLoja(cepDestino, itens) {
   // quanto pro frete grátis por região marcado no produto.
   const regiaoDestino = regiaoPorCep(cepLimpo)
 
-  const produtos = await supabaseRequest(
-    `produtos?id=in.(${ids.join(',')})&select=id,loja_id,peso_kg,altura_cm,largura_cm,comprimento_cm,frete_gratis_regioes,lojas(id,nome_loja,cep_origem,superfrete_token)`
-  )
+  // Se a coluna frete_gratis_regioes ainda não existir no banco (migração
+  // pendente), o PostgREST rejeita a consulta INTEIRA — o que quebraria o
+  // cálculo de frete por completo, não só o frete grátis. Tenta com a coluna
+  // primeiro; se falhar, refaz sem ela (frete grátis só some, o resto do
+  // cálculo de frete continua funcionando normalmente).
+  let produtos
+  try {
+    produtos = await supabaseRequest(
+      `produtos?id=in.(${ids.join(',')})&select=id,loja_id,peso_kg,altura_cm,largura_cm,comprimento_cm,frete_gratis_regioes,lojas(id,nome_loja,cep_origem,superfrete_token)`
+    )
+  } catch (err) {
+    console.error('Falha ao buscar produtos com frete_gratis_regioes (coluna pode não existir ainda), tentando sem ela:', err.message)
+    produtos = await supabaseRequest(
+      `produtos?id=in.(${ids.join(',')})&select=id,loja_id,peso_kg,altura_cm,largura_cm,comprimento_cm,lojas(id,nome_loja,cep_origem,superfrete_token)`
+    )
+  }
 
   const porLoja = {}
   for (const item of itens) {
