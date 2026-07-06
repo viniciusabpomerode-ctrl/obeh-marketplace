@@ -231,8 +231,12 @@ async function calcularFretesPorLoja(cepDestino, itens) {
   const ids = itens.map(i => i.produtoId).filter(Boolean)
   if (ids.length === 0) return []
 
+  // Região do CEP de destino — usada tanto pro frete manual por região
+  // quanto pro frete grátis por região marcado no produto.
+  const regiaoDestino = regiaoPorCep(cepLimpo)
+
   const produtos = await supabaseRequest(
-    `produtos?id=in.(${ids.join(',')})&select=id,loja_id,peso_kg,altura_cm,largura_cm,comprimento_cm,frete_gratis,lojas(id,nome_loja,cep_origem,superfrete_token)`
+    `produtos?id=in.(${ids.join(',')})&select=id,loja_id,peso_kg,altura_cm,largura_cm,comprimento_cm,frete_gratis_regioes,lojas(id,nome_loja,cep_origem,superfrete_token)`
   )
 
   const porLoja = {}
@@ -253,9 +257,10 @@ async function calcularFretesPorLoja(cepDestino, itens) {
         comprimento: 20,
         itensDetalhados: [],
         // Só considera o grupo inteiro "frete grátis" se TODOS os produtos
-        // dessa loja no carrinho tiverem a opção marcada — misturar um
-        // produto com frete grátis e outro sem no mesmo pacote não tem como
-        // dar pra cobrar "meio frete", então nesse caso cobra o frete normal.
+        // dessa loja no carrinho tiverem frete grátis pra REGIÃO do
+        // comprador — misturar um produto com frete grátis (naquela região)
+        // e outro sem no mesmo pacote não tem como dar pra cobrar "meio
+        // frete", então nesse caso cobra o frete normal.
         todosFreteGratis: true
       }
     }
@@ -266,7 +271,8 @@ async function calcularFretesPorLoja(cepDestino, itens) {
     grupo.altura = Math.max(grupo.altura, Number(produto.altura_cm || 10))
     grupo.largura = Math.max(grupo.largura, Number(produto.largura_cm || 15))
     grupo.comprimento = Math.max(grupo.comprimento, Number(produto.comprimento_cm || 20))
-    grupo.todosFreteGratis = grupo.todosFreteGratis && Boolean(produto.frete_gratis)
+    const regioesGratisDoProduto = Array.isArray(produto.frete_gratis_regioes) ? produto.frete_gratis_regioes : []
+    grupo.todosFreteGratis = grupo.todosFreteGratis && regioesGratisDoProduto.includes(regiaoDestino)
     grupo.itensDetalhados.push({
       quantidade,
       peso: Number(produto.peso_kg || 0.3),
