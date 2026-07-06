@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Favoritos — Obeh</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Work+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+  </script>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .favoritos-container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 28px 40px;
+    }
+
+    .favoritos-container h1 {
+      font-size: 32px;
+      margin: 32px 0 24px;
+    }
+
+    .favoritos-vazio {
+      text-align: center;
+      padding: 80px 20px;
+      color: var(--ink-soft);
+    }
+
+    .favoritos-vazio .icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+    }
+
+    .card-unfav {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(255,255,255,0.9);
+      border: none;
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      font-size: 15px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===== HEADER ===== -->
+  <header>
+    <div class="wrap nav">
+      <a href="index.html" class="logo">
+        <img src="https://i.postimg.cc/gjpXKcn5/imagem-2026-07-01-110451621.png" alt="Obeh Logo" style="height:40px;" />
+      </a>
+      <a href="index.html" class="btn btn-ghost" style="padding:6px 16px; font-size:12px;">← Início</a>
+    </div>
+  </header>
+
+  <div class="favoritos-container">
+    <h1>❤️ Favoritos</h1>
+    <div class="grid" id="favoritosGrid">
+      <p style="color:var(--ink-soft); text-align:center; padding:40px; grid-column:1/-1;">Carregando...</p>
+    </div>
+  </div>
+
+  <script src="js/supabase.js"></script>
+  <script>
+    // ============================================
+    // FAVORITOS.JS - PRODUTOS FAVORITADOS PELO USUÁRIO
+    // ============================================
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const usuario = await getCurrentUser()
+      const grid = document.getElementById('favoritosGrid')
+
+      if (!usuario) {
+        grid.innerHTML = `
+          <div class="favoritos-vazio" style="grid-column:1/-1;">
+            <div class="icon">🔒</div>
+            <p style="font-weight:500;">Faça login pra ver seus favoritos</p>
+            <p style="font-size:14px; margin-top:4px;"><a href="login.html?retorno=favoritos.html" style="color:var(--clay);">Entrar na sua conta</a></p>
+          </div>
+        `
+        return
+      }
+
+      await carregarFavoritos(usuario.id)
+    })
+
+    async function carregarFavoritos(userId) {
+      const grid = document.getElementById('favoritosGrid')
+
+      const { data, error } = await supabaseClient
+        .from('favoritos')
+        .select('id, produto_id, produtos(id, nome, preco, preco_antigo, em_promocao, fotos, sob_encomenda, prazo_producao_dias, lojas(nome_loja))')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        grid.innerHTML = `<p style="color:#c94a4a; text-align:center; padding:40px; grid-column:1/-1;">Erro ao carregar favoritos: ${error.message}</p>`
+        return
+      }
+
+      const favoritos = (data || []).filter(f => f.produtos)
+
+      if (favoritos.length === 0) {
+        grid.innerHTML = `
+          <div class="favoritos-vazio" style="grid-column:1/-1;">
+            <div class="icon">❤️</div>
+            <p style="font-size:18px; font-weight:500;">Você ainda não favoritou nada</p>
+            <p style="font-size:14px; margin-top:8px;">Clique no coração de um produto pra guardar aqui.</p>
+            <a href="index.html" class="btn btn-primary" style="margin-top:16px; display:inline-block;">Explorar peças</a>
+          </div>
+        `
+        return
+      }
+
+      grid.innerHTML = favoritos.map(f => {
+        const p = f.produtos
+        return `
+          <div class="card" style="position:relative;" onclick="window.location.href='produto.html?id=${p.id}'">
+            <button class="card-unfav" onclick="event.stopPropagation(); removerFavorito('${f.id}', this)" title="Remover dos favoritos">❤️</button>
+            <div class="card-media" style="background:#E9DFC7;">
+              ${p.fotos && p.fotos.length > 0
+                ? `<img src="${p.fotos[0]}" alt="${p.nome}" loading="lazy" />`
+                : `<span class="placeholder">🧵</span>`
+              }
+            </div>
+            <div class="card-body">
+              <div class="card-title">${p.nome}</div>
+              <div class="card-maker">${p.lojas?.nome_loja || 'Artesão'}</div>
+              ${p.sob_encomenda ? `<div style="font-size:11px; color:var(--olive); font-weight:600; margin-top:2px;">📦 Sob encomenda${p.prazo_producao_dias ? ` — ${p.prazo_producao_dias} dia(s)` : ''}</div>` : ''}
+              <div class="card-foot">
+                <div class="price">
+                  ${p.em_promocao && p.preco_antigo ? `<span style="text-decoration:line-through; color:var(--ink-soft); font-size:12px; margin-right:6px;">R$ ${Number(p.preco_antigo).toFixed(2)}</span>` : ''}
+                  R$ ${Number(p.preco).toFixed(2)}
+                </div>
+              </div>
+            </div>
+          </div>
+        `
+      }).join('')
+    }
+
+    async function removerFavorito(favoritoId, btnEl) {
+      await supabaseClient.from('favoritos').delete().eq('id', favoritoId)
+      const card = btnEl.closest('.card')
+      if (card) card.remove()
+
+      // Se não sobrou nenhum card, recarrega pra mostrar o estado vazio
+      if (document.querySelectorAll('#favoritosGrid .card').length === 0) {
+        const usuario = await getCurrentUser()
+        if (usuario) await carregarFavoritos(usuario.id)
+      }
+    }
+
+    window.removerFavorito = removerFavorito
+
+    console.log('✅ Página de favoritos carregada com sucesso!')
+  </script>
+
+</body>
+</html>

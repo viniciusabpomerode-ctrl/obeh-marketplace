@@ -73,19 +73,21 @@
 
     <!-- ===== TAB: PRODUTOS ===== -->
     <div id="tab-produtos" class="tab-content active">
-      <div id="bulkToolbar" style="display:none; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:14px; padding:12px; border:1px solid var(--line); border-radius:10px;">
-      <span id="bulkCount" style="font-size:13px; font-weight:600;">0 selecionado(s)</span>
-      <button class="btn btn-ghost" style="padding:6px 12px; font-size:12px;" onclick="bulkAtivar()">Ativar</button>
-      <button class="btn btn-ghost" style="padding:6px 12px; font-size:12px;" onclick="bulkDesativar()">Desativar</button>
-      <button class="btn btn-ghost" style="padding:6px 12px; font-size:12px;" onclick="document.getElementById('bulkFotoFile').click()">Trocar foto</button>
-      <input type="file" id="bulkFotoFile" accept="image/*" style="display:none;" onchange="bulkTrocarFoto(this.files[0])" />
-      <button class="btn btn-ghost" style="padding:6px 12px; font-size:12px;" onclick="bulkAtivarPromocao()">Ativar promoção</button>
-      <button class="btn btn-ghost" style="padding:6px 12px; font-size:12px;" onclick="bulkDescontoPix()">Desconto no Pix</button>
-      <button class="btn btn-ghost" style="padding:6px 12px; font-size:12px; color:#c94a4a;" onclick="bulkExcluir()">Excluir</button>
-      <label style="font-size:12px; margin-left:auto; display:flex; align-items:center; gap:6px;">
-        <input type="checkbox" id="selecionarTodos" onchange="toggleSelecionarTodos(this.checked)" /> Selecionar todos
-      </label>
-    </div>
+      <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:14px; padding:12px; border:1px solid var(--line); border-radius:10px;">
+        <label style="font-size:13px; font-weight:600; display:flex; align-items:center; gap:6px;">
+          <input type="checkbox" id="selecionarTodos" onchange="toggleSelecionarTodos(this.checked)" /> Selecionar todos
+        </label>
+        <div id="bulkToolbar" style="display:none; align-items:center; gap:10px; flex-wrap:wrap;">
+          <span id="bulkCount" style="font-size:13px; font-weight:600;">0 selecionado(s)</span>
+          <button class="btn btn-ghost" style="padding:6px 12px; font-size:12px;" onclick="bulkAtivar()">Ativar</button>
+          <button class="btn btn-ghost" style="padding:6px 12px; font-size:12px;" onclick="bulkDesativar()">Desativar</button>
+          <button class="btn btn-ghost" style="padding:6px 12px; font-size:12px;" onclick="document.getElementById('bulkFotoFile').click()">Trocar foto</button>
+          <input type="file" id="bulkFotoFile" accept="image/*" style="display:none;" onchange="bulkTrocarFoto(this.files[0])" />
+          <button class="btn btn-ghost" style="padding:6px 12px; font-size:12px;" onclick="bulkAtivarPromocao()">Ativar promoção</button>
+          <button class="btn btn-ghost" style="padding:6px 12px; font-size:12px;" onclick="bulkDescontoPix()">Desconto no Pix</button>
+          <button class="btn btn-ghost" style="padding:6px 12px; font-size:12px; color:#c94a4a;" onclick="bulkExcluir()">Excluir</button>
+        </div>
+      </div>
     <div class="product-list" id="productList">
         <!-- Injetado via JS -->
       </div>
@@ -354,14 +356,14 @@
     </div>
 
     <div style="margin-top:32px; padding-top:24px; border-top:1px solid var(--line);">
-      <h3 style="font-size:16px; margin-bottom:6px;">🚚 Token do SuperFrete</h3>
-      <p style="font-size:13px; color:var(--muted); margin-bottom:12px;">Com esse token o frete é calculado automaticamente com o preço real dos Correios/transportadoras via SuperFrete. Sem token, usamos uma estimativa aproximada.</p>
-      <div class="form-group" style="margin:0;">
-        <input type="text" id="lojaSuperfreteToken" placeholder="Cole aqui o token gerado no SuperFrete" onchange="salvarSuperfreteToken()" />
-        <small style="color:var(--ink-soft); display:block; margin-top:4px;">
-          Gere o seu em <a href="https://web.superfrete.com/#/integrations" target="_blank" rel="noopener">web.superfrete.com/#/integrations</a>.
-        </small>
-      </div>
+      <h3 style="font-size:16px; margin-bottom:6px;">🚚 SuperFrete</h3>
+      <p style="font-size:13px; color:var(--muted); margin-bottom:12px;">Com o token conectado, o frete é calculado automaticamente com o preço real dos Correios/transportadoras via SuperFrete. Sem token, usamos uma estimativa aproximada.</p>
+      <div id="superfreteConexaoStatus" style="margin-bottom:12px; font-size:14px;">Carregando...</div>
+      <button type="button" class="btn btn-primary" id="superfreteConectarBtn" onclick="conectarSuperfrete()">Conectar SuperFrete</button>
+      <button type="button" class="btn btn-ghost" id="superfreteDesconectarBtn" style="display:none; margin-left:8px;" onclick="desconectarSuperfrete()">Desconectar</button>
+      <small style="color:var(--ink-soft); display:block; margin-top:8px;">
+        Gere o seu em <a href="https://web.superfrete.com/#/integrations" target="_blank" rel="noopener">web.superfrete.com/#/integrations</a>.
+      </small>
       <small id="superfreteStatus" style="display:block; margin-top:6px;"></small>
     </div>
       </div>
@@ -905,6 +907,13 @@
               </div>
             </div>
           `).join('')
+
+      // A lista foi recriada do zero (tudo desmarcado) — reseta o "selecionar
+      // todos" e esconde a barra de ações em massa pra não ficar com contagem
+      // velha ou marcado sem nenhum item realmente selecionado.
+      const selecionarTodosEl = document.getElementById('selecionarTodos')
+      if (selecionarTodosEl) selecionarTodosEl.checked = false
+      atualizarBulkToolbar()
     }
 
     // ===== CARREGAR CATEGORIAS =====
@@ -959,7 +968,7 @@
         document.getElementById('lojaInstagram').value = data.instagram || ''
         document.getElementById('lojaWhatsapp').value = data.whatsapp || ''
       document.getElementById('lojaCepOrigem').value = data.cep_origem || ''
-      document.getElementById('lojaSuperfreteToken').value = data.superfrete_token || ''
+      atualizarStatusSuperfrete(data.superfrete_token)
       document.getElementById('lojaCnpj').value = data.cnpj || ''
         document.getElementById('lojaCorDestaque').value = data.cor_destaque || '#B5502F'
         document.getElementById('lojaCorBorda').value = data.cor_borda_logo || '#B5502F'
@@ -1144,18 +1153,59 @@
       window.location.href = `/.netlify/functions/mp-oauth-start?userId=${currentUserId}`
     }
 
-    async function salvarSuperfreteToken() {
-      const statusEl = document.getElementById('superfreteStatus')
-      if (!lojaData) return
-      const superfrete_token = document.getElementById('lojaSuperfreteToken').value.trim()
+    // Mostra o token mascarado (só os últimos 4 caracteres) — nunca o valor
+    // completo, já que essa é uma credencial sensível da conta do vendedor.
+    function atualizarStatusSuperfrete(token) {
+      const conexaoEl = document.getElementById('superfreteConexaoStatus')
+      const conectarBtn = document.getElementById('superfreteConectarBtn')
+      const desconectarBtn = document.getElementById('superfreteDesconectarBtn')
+      if (token) {
+        const mascarado = token.length > 4 ? `••••••${token.slice(-4)}` : '••••••'
+        conexaoEl.innerHTML = `✅ Conectado — token ${mascarado}`
+        conectarBtn.textContent = 'Trocar token'
+        desconectarBtn.style.display = 'inline-block'
+      } else {
+        conexaoEl.innerHTML = '⚪ Não conectado — o frete vai usar frete manual por região ou uma estimativa aproximada.'
+        conectarBtn.textContent = 'Conectar SuperFrete'
+        desconectarBtn.style.display = 'none'
+      }
+    }
 
-      const { error } = await supabaseClient.from('lojas').update({ superfrete_token }).eq('id', lojaData.id)
+    async function conectarSuperfrete() {
+      if (!lojaData) return
+      const statusEl = document.getElementById('superfreteStatus')
+      const token = prompt('Cole aqui o token gerado em web.superfrete.com/#/integrations:')
+      if (token === null) return
+      const tokenLimpo = token.trim()
+      if (!tokenLimpo) {
+        statusEl.textContent = '❌ Token vazio, nada foi salvo.'
+        return
+      }
+
+      const { error } = await supabaseClient.from('lojas').update({ superfrete_token: tokenLimpo }).eq('id', lojaData.id)
       if (error) {
         statusEl.textContent = '❌ Erro ao salvar: ' + error.message
         return
       }
-      lojaData.superfrete_token = superfrete_token
-      statusEl.textContent = '✅ Token salvo.'
+      lojaData.superfrete_token = tokenLimpo
+      atualizarStatusSuperfrete(tokenLimpo)
+      statusEl.textContent = '✅ Token conectado.'
+      setTimeout(() => { statusEl.textContent = '' }, 2500)
+    }
+
+    async function desconectarSuperfrete() {
+      if (!lojaData) return
+      if (!confirm('Desconectar o SuperFrete? O frete volta a usar frete manual por região ou estimativa aproximada.')) return
+      const statusEl = document.getElementById('superfreteStatus')
+
+      const { error } = await supabaseClient.from('lojas').update({ superfrete_token: null }).eq('id', lojaData.id)
+      if (error) {
+        statusEl.textContent = '❌ Erro ao desconectar: ' + error.message
+        return
+      }
+      lojaData.superfrete_token = null
+      atualizarStatusSuperfrete(null)
+      statusEl.textContent = '✅ Desconectado.'
       setTimeout(() => { statusEl.textContent = '' }, 2500)
     }
 
@@ -2530,6 +2580,8 @@ pasta_id,
     window.switchLojaSubTab = switchLojaSubTab
     window.salvarCategoriasLoja = salvarCategoriasLoja
     window.conectarMercadoPago = conectarMercadoPago
+    window.conectarSuperfrete = conectarSuperfrete
+    window.desconectarSuperfrete = desconectarSuperfrete
     window.salvarApoio = salvarApoio
     window.publicarConteudoApoiadores = publicarConteudoApoiadores
     window.deletarConteudoApoiadores = deletarConteudoApoiadores

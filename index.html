@@ -81,13 +81,25 @@
           <a href="cadastro.html" class="btn btn-primary">Cadastrar</a>
         </div>
 
-        <div id="userLinks" style="display:none; align-items:center; gap:12px;">
+        <div id="userLinks" style="display:none; align-items:center; gap:12px; position:relative;">
           <a href="admin.html" id="adminLink" style="display:none;">🛠️ Admin</a>
-          <a href="perfil.html" style="display:flex; flex-direction:column; align-items:center; gap:2px; text-decoration:none;">
-            <div id="userAvatarCircleNav" style="width:32px; height:32px; border-radius:50%; background:#E9DFC7; display:flex; align-items:center; justify-content:center; font-size:15px; overflow:hidden; border:1px solid var(--line);">🧵</div>
-            <span id="userNomeNav" style="font-size:11px; color:var(--ink-soft); max-width:90px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></span>
-          </a>
-          <a href="#" onclick="logout()" class="btn btn-ghost" style="padding:6px 16px; font-size:12px;">Sair</a>
+          <div style="position:relative;">
+            <button id="userMenuTrigger" onclick="toggleUserMenu(event)" style="display:flex; flex-direction:column; align-items:center; gap:2px; background:none; border:none; cursor:pointer; padding:0; font-family:inherit;">
+              <div id="userAvatarCircleNav" style="width:32px; height:32px; border-radius:50%; background:#E9DFC7; display:flex; align-items:center; justify-content:center; font-size:15px; overflow:hidden; border:1px solid var(--line); position:relative;">
+                🧵
+                <span id="cadastroAvisoIcon" title="Complete seu cadastro" style="display:none; position:absolute; top:-2px; right:-2px; font-size:11px;">⚠️</span>
+              </div>
+              <span id="userNomeNav" style="font-size:11px; color:var(--ink-soft); max-width:90px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></span>
+            </button>
+            <div id="userMenuDropdown" style="display:none; position:absolute; top:calc(100% + 8px); right:0; background:var(--white); border:1px solid var(--line); border-radius:10px; box-shadow:0 8px 24px rgba(43,38,32,0.14); min-width:190px; overflow:hidden; z-index:200;">
+              <a href="dashboard.html" style="display:flex; align-items:center; gap:8px; padding:12px 16px; font-size:14px; font-weight:700; color:var(--clay-dark); text-decoration:none; background:rgba(181,80,47,0.08); border-bottom:1px solid var(--line);">🏪 Minha loja</a>
+              <a href="minhas-compras.html" style="display:flex; align-items:center; gap:8px; padding:11px 16px; font-size:14px; color:var(--ink); text-decoration:none;">📦 Minhas compras</a>
+              <a href="favoritos.html" style="display:flex; align-items:center; gap:8px; padding:11px 16px; font-size:14px; color:var(--ink); text-decoration:none;">❤️ Favoritos</a>
+              <a href="perfil.html" style="display:flex; align-items:center; gap:8px; padding:11px 16px; font-size:14px; color:var(--ink); text-decoration:none;">👤 Cadastro <span id="cadastroAvisoTexto" style="display:none; color:#c94a4a; font-size:12px;">⚠️ incompleto</span></a>
+              <a href="index.html" style="display:flex; align-items:center; gap:8px; padding:11px 16px; font-size:14px; color:var(--ink); text-decoration:none; border-top:1px solid var(--line);">🏠 Início</a>
+              <a href="#" onclick="logout()" style="display:flex; align-items:center; gap:8px; padding:11px 16px; font-size:14px; color:var(--ink-soft); text-decoration:none;">🚪 Sair</a>
+            </div>
+          </div>
         </div>
 
         <button class="cart-btn" id="cartToggle" title="Carrinho">
@@ -430,12 +442,30 @@
           document.getElementById('adminLink').style.display = 'inline'
         }
 
-        const { data: perfil } = await supabaseClient.from('users').select('nome, avatar').eq('id', user.id).maybeSingle()
+        const { data: perfil } = await supabaseClient.from('users').select('nome, avatar, cpf, cep').eq('id', user.id).maybeSingle()
         const nomeEl = document.getElementById('userNomeNav')
         const avatarEl = document.getElementById('userAvatarCircleNav')
         if (nomeEl) nomeEl.textContent = perfil?.nome || user.email
-        if (avatarEl) avatarEl.innerHTML = perfil?.avatar ? `<img src="${perfil.avatar}" alt="Foto de perfil" style="width:100%; height:100%; object-fit:cover;" />` : '🧵'
+        if (avatarEl) avatarEl.innerHTML = (perfil?.avatar ? `<img src="${perfil.avatar}" alt="Foto de perfil" style="width:100%; height:100%; object-fit:cover;" />` : '🧵') + '<span id="cadastroAvisoIcon" title="Complete seu cadastro" style="display:none; position:absolute; top:-2px; right:-2px; font-size:11px;">⚠️</span>'
+
+        // Mostra avisos se o cadastro (CPF/CEP) ainda não foi completado —
+        // some das compras/checkout precisar disso mais tarde e a pessoa não entender por quê.
+        const cadastroIncompleto = !perfil?.cpf || !perfil?.cep
+        const avisoIconEl = document.getElementById('cadastroAvisoIcon')
+        const avisoTextoEl = document.getElementById('cadastroAvisoTexto')
+        if (avisoIconEl) avisoIconEl.style.display = cadastroIncompleto ? 'block' : 'none'
+        if (avisoTextoEl) avisoTextoEl.style.display = cadastroIncompleto ? 'inline' : 'none'
       }
+
+      // Fecha o menu do usuário se clicar fora dele
+      document.addEventListener('click', (e) => {
+        const dropdown = document.getElementById('userMenuDropdown')
+        const trigger = document.getElementById('userMenuTrigger')
+        if (!dropdown || dropdown.style.display === 'none') return
+        if (!dropdown.contains(e.target) && !trigger.contains(e.target)) {
+          dropdown.style.display = 'none'
+        }
+      })
 
       // 2. Carrega dados
       await carregarCategorias()
@@ -849,12 +879,20 @@
       })
     })
 
+    // ===== MENU DO PERFIL (dropdown no cabeçalho) =====
+    function toggleUserMenu(event) {
+      event.stopPropagation()
+      const dropdown = document.getElementById('userMenuDropdown')
+      dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none'
+    }
+
     // ===== FUNÇÕES GLOBAIS EXPORTADAS =====
     window.adicionarAoCarrinhoClique = adicionarAoCarrinhoClique
     window.atualizarQuantidadeCarrinho = atualizarQuantidadeCarrinho
     window.removerItemCarrinho = removerItemCarrinho
     window.buscarProdutos = buscarProdutos
     window.filtrarPorCategoria = filtrarPorCategoria
+    window.toggleUserMenu = toggleUserMenu
 
     console.log('✅ Obeh Marketplace carregado com sucesso!')
     console.log('🔗 Conectado ao Supabase:', supabaseClient)

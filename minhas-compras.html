@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Minhas compras — Obeh</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Work+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+  </script>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .compras-container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 0 28px 40px;
+    }
+
+    .compras-container h1 {
+      font-size: 32px;
+      margin: 32px 0 24px;
+    }
+
+    .pedido-card {
+      background: var(--bg-card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+
+    .pedido-card .pedido-topo {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 14px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .pedido-card .loja-nome {
+      font-weight: 700;
+      font-size: 15px;
+    }
+
+    .pedido-card .data {
+      font-size: 12px;
+      color: var(--ink-soft);
+    }
+
+    .status-badge {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 20px;
+    }
+
+    .status-pendente { background: #fdf2d9; color: #8a6d1f; }
+    .status-pago { background: #e3f3e6; color: #2f7a4d; }
+    .status-recusado, .status-cancelado { background: #fdeaea; color: #c94a4a; }
+
+    .pedido-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 8px 0;
+    }
+
+    .pedido-item .thumb {
+      width: 56px;
+      height: 56px;
+      border-radius: 6px;
+      background: #E9DFC7;
+      overflow: hidden;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .pedido-item .thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .pedido-item .nome {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .pedido-item .qtd {
+      font-size: 12px;
+      color: var(--ink-soft);
+    }
+
+    .pedido-total {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--line);
+      text-align: right;
+      font-weight: 700;
+      font-size: 15px;
+    }
+
+    .compras-vazio {
+      text-align: center;
+      padding: 80px 20px;
+      color: var(--ink-soft);
+    }
+
+    .compras-vazio .icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===== HEADER ===== -->
+  <header>
+    <div class="wrap nav">
+      <a href="index.html" class="logo">
+        <img src="https://i.postimg.cc/gjpXKcn5/imagem-2026-07-01-110451621.png" alt="Obeh Logo" style="height:40px;" />
+      </a>
+      <a href="index.html" class="btn btn-ghost" style="padding:6px 16px; font-size:12px;">← Início</a>
+    </div>
+  </header>
+
+  <div class="compras-container">
+    <h1>📦 Minhas compras</h1>
+    <div id="comprasContent">
+      <p style="color:var(--ink-soft); text-align:center; padding:40px;">Carregando...</p>
+    </div>
+  </div>
+
+  <script src="js/supabase.js"></script>
+  <script>
+    // ============================================
+    // MINHAS-COMPRAS.JS - HISTÓRICO DE COMPRAS DO COMPRADOR
+    // ============================================
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const usuario = await getCurrentUser()
+      const container = document.getElementById('comprasContent')
+
+      if (!usuario) {
+        container.innerHTML = `
+          <div class="compras-vazio">
+            <div class="icon">🔒</div>
+            <p style="font-weight:500;">Faça login pra ver suas compras</p>
+            <p style="font-size:14px; margin-top:4px;"><a href="login.html?retorno=minhas-compras.html" style="color:var(--clay);">Entrar na sua conta</a></p>
+          </div>
+        `
+        return
+      }
+
+      await carregarCompras(usuario.id)
+    })
+
+    const STATUS_LABEL = {
+      pendente: '⏳ Pendente',
+      pago: '✅ Pago',
+      recusado: '❌ Recusado',
+      cancelado: '❌ Cancelado'
+    }
+
+    async function carregarCompras(compradorId) {
+      const container = document.getElementById('comprasContent')
+
+      const { data: vendas, error } = await supabaseClient
+        .from('vendas')
+        .select('*, produtos(nome, fotos, loja_id)')
+        .eq('comprador_id', compradorId)
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        container.innerHTML = `<p style="color:#c94a4a; text-align:center; padding:40px;">Erro ao carregar suas compras: ${error.message}</p>`
+        return
+      }
+
+      if (!vendas || vendas.length === 0) {
+        container.innerHTML = `
+          <div class="compras-vazio">
+            <div class="icon">📦</div>
+            <p style="font-size:18px; font-weight:500;">Você ainda não comprou nada</p>
+            <p style="font-size:14px; margin-top:8px;">Que tal explorar nossas peças incríveis?</p>
+            <a href="index.html" class="btn btn-primary" style="margin-top:16px; display:inline-block;">Explorar peças</a>
+          </div>
+        `
+        return
+      }
+
+      // Busca o nome das lojas envolvidas (produtos.loja_id já veio no select acima)
+      const lojaIds = [...new Set(vendas.map(v => v.produtos?.loja_id).filter(Boolean))]
+      let lojasPorId = {}
+      if (lojaIds.length > 0) {
+        const { data: lojas } = await supabaseClient.from('lojas').select('id, nome_loja').in('id', lojaIds)
+        ;(lojas || []).forEach(l => { lojasPorId[l.id] = l.nome_loja })
+      }
+
+      // Agrupa por pedido_id — cada pedido é uma cobrança feita numa loja
+      const porPedido = {}
+      for (const v of vendas) {
+        const chave = v.pedido_id || v.id
+        if (!porPedido[chave]) {
+          porPedido[chave] = {
+            pedidoId: chave,
+            status: v.status,
+            createdAt: v.created_at,
+            nomeLoja: lojasPorId[v.produtos?.loja_id] || 'Loja',
+            frete: 0,
+            itens: []
+          }
+        }
+        porPedido[chave].frete += Number(v.valor_frete || 0)
+        porPedido[chave].itens.push({
+          nome: v.produtos?.nome || 'Produto',
+          foto: v.produtos?.fotos?.[0] || null,
+          quantidade: v.quantidade,
+          valorTotal: Number(v.valor_total || 0)
+        })
+      }
+
+      const pedidos = Object.values(porPedido).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+
+      container.innerHTML = pedidos.map(p => {
+        const totalProdutos = p.itens.reduce((acc, i) => acc + i.valorTotal, 0)
+        const totalPedido = totalProdutos + p.frete
+        const dataFormatada = new Date(p.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+        const statusClasse = `status-${p.status}`
+
+        return `
+          <div class="pedido-card">
+            <div class="pedido-topo">
+              <div>
+                <div class="loja-nome">🏪 ${p.nomeLoja}</div>
+                <div class="data">${dataFormatada}</div>
+              </div>
+              <span class="status-badge ${statusClasse}">${STATUS_LABEL[p.status] || p.status}</span>
+            </div>
+            ${p.itens.map(i => `
+              <div class="pedido-item">
+                <div class="thumb">${i.foto ? `<img src="${i.foto}" alt="${i.nome}" />` : '🧵'}</div>
+                <div>
+                  <div class="nome">${i.nome}</div>
+                  <div class="qtd">Qtd: ${i.quantidade} · R$ ${i.valorTotal.toFixed(2)}</div>
+                </div>
+              </div>
+            `).join('')}
+            <div class="pedido-total">
+              ${p.frete > 0 ? `Produtos: R$ ${totalProdutos.toFixed(2)} + Frete: R$ ${p.frete.toFixed(2)} = ` : ''}Total: R$ ${totalPedido.toFixed(2)}
+            </div>
+          </div>
+        `
+      }).join('')
+    }
+
+    console.log('✅ Página de compras carregada com sucesso!')
+  </script>
+
+</body>
+</html>

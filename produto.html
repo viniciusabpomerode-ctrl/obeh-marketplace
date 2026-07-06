@@ -78,6 +78,7 @@
       font-size: 16px;
       line-height: 1.7;
       margin: 16px 0;
+      white-space: pre-wrap;
     }
 
     /* Modo acessibilidade: a loja pode ligar isso pra quem tem baixa visão
@@ -479,6 +480,46 @@
 
       renderizarProduto(data)
       carregarProdutosRelacionados(data)
+      atualizarBotaoFavorito()
+    }
+
+    // ===== FAVORITOS =====
+    async function atualizarBotaoFavorito() {
+      const btn = document.getElementById('btnFavoritar')
+      if (!btn || !produtoData) return
+      const usuario = await getCurrentUser()
+      if (!usuario) { btn.textContent = '🤍'; return }
+
+      const { data } = await supabaseClient
+        .from('favoritos')
+        .select('id')
+        .eq('user_id', usuario.id)
+        .eq('produto_id', produtoData.id)
+        .maybeSingle()
+
+      btn.textContent = data ? '❤️' : '🤍'
+    }
+
+    async function toggleFavorito() {
+      if (!produtoData) return
+      const usuario = await getCurrentUser()
+      if (!usuario) {
+        if (confirm('Você precisa estar logado pra favoritar. Ir para o login agora?')) {
+          window.location.href = `login.html?retorno=${encodeURIComponent(window.location.pathname + window.location.search)}`
+        }
+        return
+      }
+
+      const btn = document.getElementById('btnFavoritar')
+      const jaFavoritado = btn.textContent.trim() === '❤️'
+
+      if (jaFavoritado) {
+        await supabaseClient.from('favoritos').delete().eq('user_id', usuario.id).eq('produto_id', produtoData.id)
+        btn.textContent = '🤍'
+      } else {
+        await supabaseClient.from('favoritos').insert({ user_id: usuario.id, produto_id: produtoData.id })
+        btn.textContent = '❤️'
+      }
     }
 
     // ===== PRODUTOS RELACIONADOS =====
@@ -595,6 +636,9 @@
                   </button>
                   <button class="btn btn-primary" onclick="comprarAgora()">
                     ⚡ Comprar agora
+                  </button>
+                  <button class="btn btn-outline" id="btnFavoritar" onclick="toggleFavorito()" title="Favoritar" style="flex:0 0 auto; padding:0 16px;">
+                    🤍
                   </button>
                 </div>
               </div>
@@ -775,6 +819,7 @@
     window.atualizarQuantidadeCarrinho = atualizarQuantidadeCarrinho
     window.removerItemCarrinho = removerItemCarrinho
     window.abrirChat = abrirChat
+    window.toggleFavorito = toggleFavorito
 
     console.log('✅ Página do produto carregada com sucesso!')
   </script>

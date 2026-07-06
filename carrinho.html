@@ -272,14 +272,11 @@
     // Como só a aba ativa fica no DOM, guarda aqui o HTML do resultado do Pix
     // de cada loja pra não sumir se a pessoa trocar de aba e voltar.
     let pixResultadoPorLoja = {}
-
-    function getTotalComDesconto() {
-      return carrinho.reduce((total, item) => {
-        const desconto = descontosPorLoja[item.loja_id] || 0
-        const precoComDesconto = Number(item.preco) * (1 - desconto / 100)
-        return total + precoComDesconto * item.quantidade
-      }, 0)
-    }
+    // Frete calculado por loja (cada loja tem origem/token diferentes, então o
+    // valor é sempre específico daquela loja — nunca compartilhado entre abas).
+    let freteEscolhidoPorLoja = {} // { lojaId: valorNumerico }
+    let freteResultadoHtmlPorLoja = {} // cache do HTML mostrado, como o do Pix
+    let cepSalvo = ''
 
     async function aplicarCupom() {
       const resultadoEl = document.getElementById('cupomResultado')
@@ -364,7 +361,8 @@
         const itensCompletos = grupo.itens.map(i => carrinho.find(c => c.id === i.produtoId)).filter(Boolean)
         const desconto = descontosPorLoja[grupo.lojaId] || 0
         const subtotal = itensCompletos.reduce((acc, item) => acc + Number(item.preco) * (1 - desconto / 100) * item.quantidade, 0)
-        return { ...grupo, itensCompletos, subtotal }
+        const frete = freteEscolhidoPorLoja[grupo.lojaId] || 0
+        return { ...grupo, itensCompletos, subtotal, frete, totalComFrete: subtotal + frete }
       })
 
       // Se a loja ativa não existe mais nesse carrinho (foi finalizada/removida),
@@ -405,12 +403,20 @@
                   <button class="remover" onclick="removerItem('${item.id}')">✕</button>
                 </div>
               `).join('')}
-              <div style="padding:12px 16px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; background:var(--bg-card);">
-                <span style="font-weight:600;">Total desta loja: R$ ${grupoAtivo.subtotal.toFixed(2)}</span>
-                <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                  <button class="btn btn-ghost" style="padding:6px 14px; font-size:13px;" onclick="pagarComPix('${grupoAtivo.lojaId}')">💠 Pix</button>
-                  <button class="btn btn-ghost" style="padding:6px 14px; font-size:13px;" onclick="abrirPagamentoCartao('${grupoAtivo.lojaId}')">💳 Cartão</button>
-                  <button class="btn btn-primary" style="padding:6px 14px; font-size:13px;" onclick="finalizarCompra('${grupoAtivo.lojaId}', this)">Finalizar esta loja</button>
+              <div style="padding:12px 16px; display:flex; flex-direction:column; gap:6px; background:var(--bg-card);">
+                <div style="display:flex; justify-content:space-between; font-size:13px; color:var(--ink-soft);">
+                  <span>Produtos</span><span>R$ ${grupoAtivo.subtotal.toFixed(2)}</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; font-size:13px; color:var(--ink-soft);">
+                  <span>Frete</span><span>${grupoAtivo.frete > 0 ? `R$ ${grupoAtivo.frete.toFixed(2)}` : 'calcule abaixo'}</span>
+                </div>
+                <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; padding-top:6px; border-top:1px solid var(--line);">
+                  <span style="font-weight:600;">Total desta loja: R$ ${grupoAtivo.totalComFrete.toFixed(2)}</span>
+                  <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                    <button class="btn btn-ghost" style="padding:6px 14px; font-size:13px;" onclick="pagarComPix('${grupoAtivo.lojaId}')">💠 Pix</button>
+                    <button class="btn btn-ghost" style="padding:6px 14px; font-size:13px;" onclick="abrirPagamentoCartao('${grupoAtivo.lojaId}')">💳 Cartão</button>
+                    <button class="btn btn-primary" style="padding:6px 14px; font-size:13px;" onclick="finalizarCompra('${grupoAtivo.lojaId}', this)">Finalizar esta loja</button>
+                  </div>
                 </div>
               </div>
               <div id="pixResultado-${grupoAtivo.lojaId}" style="padding:0 16px 16px;">${pixResultadoPorLoja[grupoAtivo.lojaId] || ''}</div>
@@ -418,12 +424,12 @@
             </div>
 
             <div style="border:1px solid var(--line); border-radius:8px; padding:16px; margin-bottom:16px;">
-        <div style="font-weight:500; margin-bottom:8px;">📦 Calcular frete</div>
+        <div style="font-weight:500; margin-bottom:8px;">📦 Calcular frete — ${grupoAtivo.nomeLoja}</div>
         <div style="display:flex; gap:8px; flex-wrap:wrap;">
-          <input type="text" id="freteCep" placeholder="Seu CEP (00000-000)" maxlength="9" style="flex:1; min-width:160px;" />
-          <button class="btn btn-ghost" onclick="calcularFrete()">Calcular</button>
+          <input type="text" id="freteCep" placeholder="Seu CEP (00000-000)" maxlength="9" value="${cepSalvo}" oninput="cepSalvo=this.value" style="flex:1; min-width:160px;" />
+          <button class="btn btn-ghost" onclick="calcularFrete('${grupoAtivo.lojaId}')">Calcular</button>
         </div>
-        <div id="freteResultado" style="margin-top:10px; font-size:14px;"></div>
+        <div id="freteResultado" style="margin-top:10px; font-size:14px;">${freteResultadoHtmlPorLoja[grupoAtivo.lojaId] || ''}</div>
       </div>
 
       <div style="border:1px solid var(--line); border-radius:8px; padding:16px; margin-bottom:16px;">
@@ -438,8 +444,8 @@
       <div class="carrinho-total">
               ${gruposVisuais.length === 1 ? `
               <div>
-                <div class="total-label">Total</div>
-                <div class="total-value">R$ ${getTotalComDesconto().toFixed(2)}</div>
+                <div class="total-label">Total (produtos + frete)</div>
+                <div class="total-value">R$ ${grupoAtivo.totalComFrete.toFixed(2)}</div>
               </div>
               ` : `
               <div style="font-size:13px; color:var(--ink-soft);">Cada loja é cobrada separadamente — troque de aba acima e use "Finalizar esta loja" em cada uma.</div>
@@ -593,6 +599,8 @@
     function removerLojaDoCarrinho(lojaId) {
       carrinho = carrinho.filter(item => (item.loja_id || 'sem-loja') !== lojaId)
       salvarCarrinhoStorage()
+      delete freteEscolhidoPorLoja[lojaId]
+      delete freteResultadoHtmlPorLoja[lojaId]
     }
 
     // ===== PAGAR COM PIX (split automático) =====
@@ -819,11 +827,15 @@
       }
     }
 
-    async function calcularFrete() {
+    // Sempre calcula só pra loja informada (a da aba ativa) — nunca manda o
+    // carrinho inteiro, senão o frete de uma loja aparece misturado com o de
+    // outra quando o carrinho tem produtos de vendedores diferentes.
+    async function calcularFrete(lojaId) {
       const cep = document.getElementById('freteCep').value.replace(/\D/g, '')
       const resultadoEl = document.getElementById('freteResultado')
 
-      if (carrinho.length === 0) {
+      const grupo = agruparCarrinhoPorLoja().find(g => g.lojaId === lojaId)
+      if (!grupo) {
         resultadoEl.textContent = '🛒 Seu carrinho está vazio.'
         return
       }
@@ -841,21 +853,26 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             cepDestino: cep,
-            itens: carrinho.map(item => ({ produtoId: item.id, quantidade: item.quantidade }))
+            itens: grupo.itens
           })
         })
         const data = await res.json()
 
-        if (!res.ok || !data.fretes) {
+        const freteDaLoja = data?.fretes?.find(f => f.lojaId === lojaId)
+        if (!res.ok || !freteDaLoja) {
           resultadoEl.textContent = '❌ Não foi possível calcular o frete agora.'
           return
         }
 
-        resultadoEl.innerHTML = data.fretes.map(f => {
-          const opcoes = f.opcoes.map(o => `${o.nome}: R$ ${Number(o.preco).toFixed(2)}${o.prazoDias ? ` (${o.prazoDias} dias úteis)` : ''}`).join(' · ')
-          const aviso = f.estimativaAproximada ? ' <span style="color:var(--muted);">(estimativa aproximada)</span>' : ''
-          return `<div style="margin-top:6px;"><strong>${f.nomeLoja}:</strong> ${opcoes}${aviso}</div>`
-        }).join('')
+        const maisBarato = Math.min(...freteDaLoja.opcoes.map(o => Number(o.preco) || 0))
+        freteEscolhidoPorLoja[lojaId] = maisBarato
+
+        const opcoes = freteDaLoja.opcoes.map(o => `${o.nome}: R$ ${Number(o.preco).toFixed(2)}${o.prazoDias ? ` (${o.prazoDias} dias úteis)` : ''}`).join(' · ')
+        const aviso = freteDaLoja.estimativaAproximada ? ' <span style="color:var(--muted);">(estimativa aproximada)</span>' : ''
+        freteResultadoHtmlPorLoja[lojaId] = `<div>${opcoes}${aviso}</div><div style="margin-top:4px; color:var(--ink-soft);">✅ R$ ${maisBarato.toFixed(2)} já somado ao total desta loja.</div>`
+
+        // Re-renderiza pra atualizar o "Total desta loja" com o frete somado
+        renderizarCarrinhoCompleto()
       } catch (err) {
         resultadoEl.textContent = '❌ Erro ao calcular o frete. Tente novamente.'
       }
