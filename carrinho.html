@@ -505,7 +505,7 @@
       const usuario = await getCurrentUser()
       if (!usuario) {
         if (confirm('Você precisa estar logado pra finalizar a compra. Ir para o login agora?')) {
-          window.location.href = 'login.html?retorno=carrinho.html'
+          window.location.href = `login.html?retorno=${encodeURIComponent(lojaId ? `carrinho.html?loja=${lojaId}` : 'carrinho.html')}`
         }
         return
       }
@@ -607,7 +607,7 @@
       const usuario = await getCurrentUser()
       if (!usuario) {
         if (confirm('Você precisa estar logado pra pagar com Pix. Ir para o login agora?')) {
-          window.location.href = 'login.html?retorno=carrinho.html'
+          window.location.href = `login.html?retorno=${encodeURIComponent(lojaId ? `carrinho.html?loja=${lojaId}` : 'carrinho.html')}`
         }
         return
       }
@@ -721,7 +721,7 @@
       const usuario = await getCurrentUser()
       if (!usuario) {
         if (confirm('Você precisa estar logado pra pagar com cartão. Ir para o login agora?')) {
-          window.location.href = 'login.html?retorno=carrinho.html'
+          window.location.href = `login.html?retorno=${encodeURIComponent(lojaId ? `carrinho.html?loja=${lojaId}` : 'carrinho.html')}`
         }
         return
       }

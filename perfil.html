@@ -65,6 +65,10 @@
   <div class="perfil-container">
     <h1>👤 Meu perfil</h1>
 
+    <div id="perfilRetornoAviso" style="display:none; background:#fff8e6; border:1px solid #e8d38a; border-radius:8px; padding:12px 16px; margin-bottom:20px; font-size:13px;">
+      📦 Falta só completar seu CPF e endereço pra finalizar sua compra — depois de salvar, você volta pra lá automaticamente.
+    </div>
+
     <div class="perfil-avatar">
       <div class="avatar-circle" id="avatarCircle">🧵</div>
       <div style="margin-top:10px;">
@@ -136,6 +140,7 @@
 
     let currentUser = null
     let avatarUrlAtual = ''
+    const retornoParam = new URLSearchParams(window.location.search).get('retorno')
 
     // ===== INICIALIZAÇÃO =====
     document.addEventListener('DOMContentLoaded', async () => {
@@ -161,6 +166,18 @@
       if (error || !data) {
         alert('Erro ao carregar perfil.')
         return
+      }
+
+      // Veio de um checkout (?retorno=) e já tem CPF/CEP salvos — não precisa
+      // parar aqui, já volta direto pra finalizar a compra.
+      if (retornoParam && data.cpf && data.cep) {
+        window.location.href = retornoParam
+        return
+      }
+
+      if (retornoParam) {
+        const avisoEl = document.getElementById('perfilRetornoAviso')
+        if (avisoEl) avisoEl.style.display = 'block'
       }
 
       document.getElementById('perfilNome').value = data.nome || ''
@@ -241,6 +258,11 @@
 
       if (error) {
         alert('❌ Erro ao salvar perfil: ' + error.message)
+        return
+      }
+
+      if (retornoParam) {
+        window.location.href = retornoParam
         return
       }
 

@@ -47,6 +47,18 @@ function getRetornoUrl() {
   return retorno && retorno.startsWith('/') === false && !retorno.includes('://') ? retorno : 'index.html'
 }
 
+// Se o destino final é o carrinho (voltando pra finalizar uma compra), passa
+// primeiro pelo perfil — ele mesmo decide se pula direto (já tem CPF/CEP) ou
+// mostra o formulário antes de voltar pra compra. Assim quem acabou de criar
+// conta não descobre que falta CPF só na hora de pagar com Pix.
+function getRetornoUrlComCheckPerfil() {
+  const destino = getRetornoUrl()
+  if (destino.includes('carrinho.html')) {
+    return `perfil.html?retorno=${encodeURIComponent(destino)}`
+  }
+  return destino
+}
+
 async function login(email, password) {
   const { data, error } = await supabaseClient.auth.signInWithPassword({
     email,
@@ -59,7 +71,7 @@ async function login(email, password) {
   if (data?.user?.id) {
     await registrarPrimeiroLogin(data.user.id)
   }
-  window.location.href = getRetornoUrl()
+  window.location.href = getRetornoUrlComCheckPerfil()
   return true
 }
 
@@ -68,7 +80,7 @@ async function loginComGoogle() {
   const { data, error } = await supabaseClient.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: window.location.origin + '/' + getRetornoUrl()
+      redirectTo: window.location.origin + '/' + getRetornoUrlComCheckPerfil()
     }
   })
   if (error) {
@@ -83,7 +95,7 @@ async function loginComFacebook() {
   const { data, error } = await supabaseClient.auth.signInWithOAuth({
     provider: 'facebook',
     options: {
-      redirectTo: window.location.origin + '/' + getRetornoUrl()
+      redirectTo: window.location.origin + '/' + getRetornoUrlComCheckPerfil()
     }
   })
   if (error) {
