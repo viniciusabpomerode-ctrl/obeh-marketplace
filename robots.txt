@@ -1,0 +1,15 @@
+User-agent: *
+Allow: /
+
+# Páginas privadas/logadas — sem valor pra busca
+Disallow: /dashboard.html
+Disallow: /admin.html
+Disallow: /carrinho.html
+Disallow: /perfil.html
+Disallow: /minhas-compras.html
+Disallow: /favoritos.html
+Disallow: /chat.html
+Disallow: /login.html
+Disallow: /cadastro.html
+
+Sitemap: https://obeh.com.br/sitemap.xml
