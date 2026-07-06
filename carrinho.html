@@ -352,6 +352,13 @@
     function mostrarLojaCarrinho(lojaId) {
       lojaAtivaId = lojaId
       renderizarCarrinhoCompleto()
+
+      // Se já tem CEP salvo (do perfil ou digitado numa aba anterior) e essa
+      // loja ainda não teve o frete calculado, calcula na hora — sem precisar
+      // clicar em "Calcular" de novo a cada troca de aba.
+      if (cepSalvo && cepSalvo.replace(/\D/g, '').length === 8 && !(lojaId in freteEscolhidoPorLoja)) {
+        calcularFrete(lojaId)
+      }
     }
 
     // ===== RENDERIZAR CARRINHO =====
