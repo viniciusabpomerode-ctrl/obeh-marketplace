@@ -29,8 +29,20 @@ body {
   background: var(--bg);
   color: var(--ink);
   font-family: 'Work Sans', sans-serif;
-  line-height: 1.5;
+  font-size: 17px;
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+}
+
+/* Foco visível para navegação por teclado — importante para acessibilidade */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid var(--clay);
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
 .wrap {
@@ -62,7 +74,7 @@ h1, h2, h3 {
 
 .label {
   font-family: 'Space Mono', monospace;
-  font-size: 11px;
+  font-size: 13px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--clay-dark);
@@ -129,16 +141,19 @@ header {
 .nav-links {
   display: flex;
   align-items: center;
-  gap: 16px;
-  font-size: 14px;
+  gap: 18px;
+  font-size: 16px;
   font-weight: 500;
   flex-wrap: wrap;
 }
 
 .nav-links a {
   position: relative;
-  padding-bottom: 3px;
+  padding: 8px 2px;
   white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
 }
 
 .nav-links a:not(.btn):hover {
@@ -163,9 +178,13 @@ header {
   background: none;
   outline: none;
   font-family: 'Work Sans';
-  font-size: 13px;
+  font-size: 16px;
   width: 100%;
   color: var(--ink);
+}
+
+.nav-search input::placeholder {
+  color: var(--ink-soft);
 }
 
 .nav-search button {
@@ -173,23 +192,37 @@ header {
   border: none;
   cursor: pointer;
   font-size: 16px;
-  padding: 0 4px;
+  padding: 8px 6px;
+  min-width: 44px;
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* ===== BOTÕES ===== */
 .btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  gap: 8px;
   font-family: 'Work Sans';
   font-weight: 600;
-  font-size: 13.5px;
-  padding: 10px 20px;
+  font-size: 16px;
+  padding: 12px 24px;
+  min-height: 48px;
   border-radius: 999px;
   border: 1.5px solid var(--ink);
   cursor: pointer;
   transition: all 0.18s ease;
   white-space: nowrap;
+}
+
+/* Botão de ação principal — grande e impossível de não ver */
+.btn-lg {
+  font-size: 18px;
+  padding: 16px 32px;
+  min-height: 56px;
 }
 
 .btn-primary {
@@ -240,21 +273,30 @@ header {
 .cart-btn {
   position: relative;
   cursor: pointer;
-  padding: 6px;
+  padding: 8px 10px;
+  min-height: 44px;
   display: flex;
   align-items: center;
+  gap: 6px;
   font-size: 22px;
   background: none;
   border: none;
+  font-family: 'Work Sans', sans-serif;
+  color: var(--ink);
+}
+
+.cart-btn .cart-btn-text {
+  font-size: 16px;
+  font-weight: 500;
 }
 
 #cartCount {
   position: absolute;
-  top: -4px;
-  right: -6px;
+  top: -2px;
+  left: 26px;
   background: var(--clay);
   color: white;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   width: 20px;
   height: 20px;
@@ -268,9 +310,21 @@ header {
 .mobile-toggle {
   display: none;
   background: none;
-  border: none;
+  border: 1.5px solid var(--line);
+  border-radius: 8px;
   cursor: pointer;
-  font-size: 24px;
+  font-size: 20px;
+  padding: 8px 14px;
+  min-height: 44px;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Work Sans', sans-serif;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.mobile-toggle .toggle-text {
+  font-size: 15px;
 }
 
 /* ===== HERO ===== */
@@ -328,7 +382,7 @@ header {
 
 .hero-trust div {
   font-family: 'Space Mono', monospace;
-  font-size: 12px;
+  font-size: 13.5px;
   color: var(--ink-soft);
 }
 
@@ -404,8 +458,9 @@ header {
 
 .chip {
   font-family: 'Space Mono', monospace;
-  font-size: 12.5px;
-  padding: 9px 18px;
+  font-size: 14px;
+  padding: 12px 20px;
+  min-height: 44px;
   border: 1px dashed var(--ink-soft);
   border-radius: 999px;
   background: var(--bg-card);
@@ -453,14 +508,14 @@ header {
 
 .section-head p {
   color: var(--ink-soft);
-  font-size: 14.5px;
-  max-width: 360px;
+  font-size: 16px;
+  max-width: 400px;
   margin-top: 6px;
 }
 
 .see-all {
   font-family: 'Space Mono', monospace;
-  font-size: 12px;
+  font-size: 13.5px;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   border-bottom: 1px solid var(--ink);
@@ -539,7 +594,7 @@ header {
 
 .card-cat {
   font-family: 'Space Mono', monospace;
-  font-size: 10.5px;
+  font-size: 12px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--olive);
@@ -548,13 +603,13 @@ header {
 .card-title {
   font-family: 'Fraunces', serif;
   font-weight: 500;
-  font-size: 16.5px;
+  font-size: 18px;
   margin-top: 5px;
-  line-height: 1.25;
+  line-height: 1.3;
 }
 
 .card-maker {
-  font-size: 12.5px;
+  font-size: 14.5px;
   color: var(--ink-soft);
   margin-top: 3px;
 }
@@ -569,12 +624,12 @@ header {
 .price {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: 15px;
+  font-size: 17px;
 }
 
 .card-add {
-  width: 30px;
-  height: 30px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   border: 1.5px solid var(--ink);
   display: flex;
@@ -614,8 +669,8 @@ header {
 }
 
 .steps .intro p {
-  color: #C7BFAE;
-  font-size: 14px;
+  color: #D9D2C2;
+  font-size: 15.5px;
   margin-top: 12px;
 }
 
@@ -634,8 +689,8 @@ header {
 }
 
 .step p {
-  font-size: 13.5px;
-  color: #C7BFAE;
+  font-size: 15px;
+  color: #D9D2C2;
   margin-top: 8px;
 }
 
@@ -721,7 +776,7 @@ header {
 }
 
 .plan-desc {
-  font-size: 13px;
+  font-size: 15px;
   color: var(--ink-soft);
   margin-top: 6px;
   min-height: 36px;
@@ -756,7 +811,7 @@ header {
 .plan-list li {
   display: flex;
   gap: 10px;
-  font-size: 13.5px;
+  font-size: 15px;
   align-items: flex-start;
 }
 
@@ -780,7 +835,7 @@ header {
   background: var(--bg-card);
   border: 1px dashed var(--line);
   border-radius: 6px;
-  font-size: 13px;
+  font-size: 14.5px;
   color: var(--ink-soft);
   max-width: 720px;
   margin-left: auto;
@@ -857,7 +912,7 @@ header {
 }
 
 .cart-item-detail {
-  font-size: 13px;
+  font-size: 14.5px;
   color: var(--ink-soft);
 }
 
@@ -871,10 +926,10 @@ header {
   background: none;
   border: 1px solid var(--line);
   border-radius: 50%;
-  width: 28px;
-  height: 28px;
+  width: 40px;
+  height: 40px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 17px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -939,7 +994,7 @@ header {
 .auth-container .sub {
   text-align: center;
   color: var(--ink-soft);
-  font-size: 14px;
+  font-size: 16px;
   margin-bottom: 28px;
 }
 
@@ -1001,20 +1056,21 @@ header {
 .form-group label {
   display: block;
   font-weight: 600;
-  font-size: 13px;
-  margin-bottom: 4px;
+  font-size: 15px;
+  margin-bottom: 6px;
 }
 
 .form-group input,
 .form-group textarea,
 .form-group select {
   width: 100%;
-  padding: 12px 14px;
+  padding: 14px 16px;
+  min-height: 48px;
   border: 1px solid var(--line);
   border-radius: 6px;
   background: var(--white);
   font-family: 'Work Sans';
-  font-size: 14px;
+  font-size: 16px;
   transition: border 0.2s;
 }
 
@@ -1041,7 +1097,7 @@ header {
 .auth-link {
   text-align: center;
   margin-top: 18px;
-  font-size: 14px;
+  font-size: 15.5px;
   color: var(--ink-soft);
 }
 
@@ -1107,8 +1163,8 @@ header {
 
 .badge {
   font-family: 'Space Mono', monospace;
-  font-size: 10px;
-  padding: 4px 14px;
+  font-size: 12px;
+  padding: 5px 14px;
   border-radius: 999px;
   background: var(--olive);
   color: white;
@@ -1137,14 +1193,15 @@ header {
 }
 
 .tab-btn {
-  padding: 10px 20px;
+  padding: 12px 22px;
+  min-height: 44px;
   border: none;
   border-radius: 6px;
   background: transparent;
   cursor: pointer;
   font-family: 'Work Sans';
   font-weight: 600;
-  font-size: 14px;
+  font-size: 15.5px;
   color: var(--ink-soft);
   transition: all 0.2s;
 }
@@ -1167,14 +1224,15 @@ header {
 }
 
 .subtab-btn {
-  padding: 8px 16px;
+  padding: 10px 18px;
+  min-height: 44px;
   border: none;
   border-radius: 6px;
   background: transparent;
   cursor: pointer;
   font-family: 'Work Sans';
   font-weight: 600;
-  font-size: 13px;
+  font-size: 14.5px;
   color: var(--ink-soft);
   transition: all 0.2s;
 }
@@ -1327,12 +1385,13 @@ header {
 }
 
 .product-item .actions button {
-  padding: 6px 14px;
+  padding: 10px 16px;
+  min-height: 42px;
   border-radius: 4px;
   border: 1px solid var(--line);
   background: var(--white);
   cursor: pointer;
-  font-size: 12px;
+  font-size: 14px;
   transition: all 0.15s ease;
 }
 
@@ -1423,7 +1482,7 @@ header {
 
 .loja-social a {
   color: var(--ink-soft);
-  font-size: 13px;
+  font-size: 14.5px;
   display: flex;
   align-items: center;
   gap: 4px;
@@ -1453,15 +1512,15 @@ footer {
 }
 
 .foot-tag {
-  font-size: 13px;
+  font-size: 15px;
   color: var(--ink-soft);
   margin-top: 10px;
-  max-width: 220px;
+  max-width: 240px;
 }
 
 .foot-col h4 {
   font-family: 'Space Mono', monospace;
-  font-size: 11px;
+  font-size: 12.5px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ink-soft);
@@ -1470,8 +1529,9 @@ footer {
 
 .foot-col a {
   display: block;
-  font-size: 13.5px;
-  margin-bottom: 10px;
+  font-size: 15.5px;
+  margin-bottom: 12px;
+  padding: 2px 0;
   color: var(--ink);
   transition: color 0.15s ease;
 }
@@ -1487,7 +1547,7 @@ footer {
   margin-top: 50px;
   padding-top: 22px;
   border-top: 1px solid var(--line);
-  font-size: 12px;
+  font-size: 14px;
   color: var(--ink-soft);
   flex-wrap: wrap;
   gap: 10px;
@@ -1768,4 +1828,258 @@ body.modo-acessivel #lojaNome,
 body.modo-acessivel #lojaDescricao {
   font-size: 1.15em;
   color: var(--ink);
+}
+
+/* ============================================
+   COMPONENTES DE CONFIANÇA (reutilizáveis)
+   ============================================ */
+
+/* Barra de selos de confiança — usar perto de botões de compra e no checkout */
+.trust-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  align-items: center;
+  justify-content: center;
+  padding: 16px 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.trust-bar .trust-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14.5px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.trust-bar .trust-item .trust-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+/* Indicador de etapas do checkout — "onde estou e o que falta" */
+.steps-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 20px 0 28px;
+}
+
+.steps-indicator .step-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+
+.steps-indicator .step-item .step-circle {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 2px solid var(--line);
+  background: var(--bg-card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.steps-indicator .step-item.active {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.steps-indicator .step-item.active .step-circle {
+  background: var(--clay);
+  border-color: var(--clay);
+  color: var(--white);
+}
+
+.steps-indicator .step-item.done .step-circle {
+  background: var(--olive);
+  border-color: var(--olive);
+  color: var(--white);
+}
+
+.steps-indicator .step-divider {
+  width: 32px;
+  height: 2px;
+  background: var(--line);
+  flex-shrink: 0;
+}
+
+/* Caixa de ajuda com linguagem simpática */
+.help-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 18px 20px;
+  background: var(--bg-card);
+  border: 1px dashed var(--olive);
+  border-radius: 8px;
+  font-size: 15px;
+  color: var(--ink);
+  line-height: 1.55;
+}
+
+.help-box .help-icon {
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.help-box strong {
+  display: block;
+  margin-bottom: 2px;
+}
+
+.help-box a {
+  color: var(--clay);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+/* Nota de segurança — usar junto a formulários de pagamento/dados */
+.secure-note {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14.5px;
+  color: var(--ink-soft);
+  padding: 10px 0;
+}
+
+.secure-note .secure-icon {
+  font-size: 17px;
+  flex-shrink: 0;
+}
+
+/* Bloco "Quem fez esta peça" — humaniza o artesão na página de produto */
+.artisan-box {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  padding: 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  flex-wrap: wrap;
+}
+
+.artisan-box .artisan-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid var(--line);
+  background: #E9DFC7;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+}
+
+.artisan-box .artisan-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.artisan-box .artisan-info {
+  flex: 1;
+  min-width: 180px;
+}
+
+.artisan-box .artisan-info .artisan-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 12.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--olive);
+}
+
+.artisan-box .artisan-info h3 {
+  font-size: 20px;
+  margin-top: 4px;
+}
+
+.artisan-box .artisan-info p {
+  font-size: 14.5px;
+  color: var(--ink-soft);
+  margin-top: 4px;
+}
+
+/* Mensagens de formulário — sempre com texto, nunca só cor */
+.form-msg {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 8px;
+  font-size: 15px;
+  line-height: 1.5;
+  margin: 12px 0;
+}
+
+.form-msg.error {
+  background: #F7E5DE;
+  border: 1px solid var(--clay);
+  color: var(--clay-dark);
+}
+
+.form-msg.success {
+  background: #EBEDE2;
+  border: 1px solid var(--olive);
+  color: #4A4F35;
+}
+
+/* Estado vazio amigável */
+.empty-state {
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--ink-soft);
+}
+
+.empty-state .empty-icon {
+  font-size: 44px;
+  margin-bottom: 12px;
+}
+
+.empty-state h3 {
+  font-size: 22px;
+  color: var(--ink);
+  margin-bottom: 8px;
+}
+
+.empty-state p {
+  font-size: 16px;
+  max-width: 380px;
+  margin: 0 auto 20px;
+}
+
+@media (max-width: 640px) {
+  .steps-indicator .step-divider {
+    width: 16px;
+  }
+
+  .steps-indicator .step-item {
+    font-size: 13.5px;
+  }
+
+  .trust-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
 }

@@ -11,6 +11,34 @@
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://obeh.com.br/" />
   <meta name="theme-color" content="#B5502F" />
+  <link rel="canonical" href="https://obeh.com.br/" />
+
+  <!-- Dados estruturados: Organização + Site com busca -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://obeh.com.br/#organization",
+        "name": "Obeh",
+        "url": "https://obeh.com.br/",
+        "logo": "https://obeh.com.br/favicon.svg",
+        "slogan": "Cada peça carrega a marca de quem fez.",
+        "description": "Marketplace brasileiro de artesanato: compre direto de quem faz, com pagamento direto ao artesão.",
+        "sameAs": ["https://instagram.com/obehartesanatos"]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://obeh.com.br/#website",
+        "url": "https://obeh.com.br/",
+        "name": "Obeh — Marketplace de Artesanato Brasileiro",
+        "publisher": { "@id": "https://obeh.com.br/#organization" },
+        "inLanguage": "pt-BR"
+      }
+    ]
+  }
+  </script>
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -68,12 +96,12 @@
         <span class="logo-wordmark">Obeh</span>
       </a>
 
-      <button class="mobile-toggle" id="mobileToggle" aria-label="Abrir menu">☰</button>
+      <button class="mobile-toggle" id="mobileToggle" aria-label="Abrir menu">☰ <span class="toggle-text">Menu</span></button>
 
-      <nav class="nav-links" id="navLinks">
+      <nav class="nav-links" id="navLinks" aria-label="Navegação principal">
         <div class="nav-search">
-          <input type="text" id="searchInput" placeholder="Buscar peças, artesãos..." />
-          <button onclick="buscarProdutos()">🔍</button>
+          <input type="text" id="searchInput" placeholder="Buscar peças, artesãos..." aria-label="Buscar peças e artesãos" />
+          <button onclick="buscarProdutos()" aria-label="Buscar">🔍</button>
         </div>
 
         <a href="#categorias">Categorias</a>
@@ -96,7 +124,7 @@
                 🧵
                 <span id="cadastroAvisoIcon" title="Complete seu cadastro" style="display:none; position:absolute; top:-2px; right:-2px; font-size:11px;">⚠️</span>
               </div>
-              <span id="userNomeNav" style="font-size:11px; color:var(--ink-soft); max-width:90px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></span>
+              <span id="userNomeNav" style="font-size:13px; color:var(--ink-soft); max-width:110px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Minha conta ▾</span>
             </button>
             <div id="userMenuDropdown" style="display:none; position:absolute; top:calc(100% + 8px); right:0; background:var(--white); border:1px solid var(--line); border-radius:10px; box-shadow:0 8px 24px rgba(43,38,32,0.14); min-width:190px; overflow:hidden; z-index:200;">
               <a href="dashboard.html" style="display:flex; align-items:center; gap:8px; padding:12px 16px; font-size:14px; font-weight:700; color:var(--clay-dark); text-decoration:none; background:rgba(181,80,47,0.08); border-bottom:1px solid var(--line);">🏪 Minha loja</a>
@@ -109,8 +137,8 @@
           </div>
         </div>
 
-        <button class="cart-btn" id="cartToggle" title="Carrinho">
-          🛒
+        <button class="cart-btn" id="cartToggle" title="Carrinho" aria-label="Abrir carrinho">
+          🛒 <span class="cart-btn-text">Carrinho</span>
           <span id="cartCount">0</span>
         </button>
       </nav>
@@ -394,7 +422,8 @@
         <span>Total</span>
         <span>R$ 0,00</span>
       </div>
-      <button class="btn btn-primary" id="checkoutBtn">Finalizar compra</button>
+      <button class="btn btn-primary btn-lg" id="checkoutBtn">Finalizar compra</button>
+      <p class="secure-note" style="justify-content:center;"><span class="secure-icon" aria-hidden="true">🔒</span> Pagamento seguro pelo Mercado Pago</p>
     </div>
   </div>
 
@@ -410,24 +439,25 @@
           <h4>Comprar</h4>
           <a href="#categorias">Categorias</a>
           <a href="#vitrine">Vitrine</a>
-          <a href="#">Como comprar</a>
+          <a href="#como-funciona">Como funciona</a>
+          <a href="lojas.html">Todas as lojas</a>
         </div>
         <div class="foot-col">
           <h4>Vender</h4>
           <a href="cadastro.html">Criar loja</a>
           <a href="#vender">Planos</a>
-          <a href="#">Central do vendedor</a>
+          <a href="dashboard.html">Central do vendedor</a>
         </div>
         <div class="foot-col">
           <h4>Obeh</h4>
-          <a href="#">Sobre</a>
-          <a href="#">Ajuda</a>
-          <a href="#">Contato</a>
+          <a href="https://instagram.com/obehartesanatos" target="_blank" rel="noopener">Instagram @obehartesanatos</a>
           <a href="termos.html">Termos de Uso</a>
+          <a href="termos.html#privacidade">Privacidade</a>
         </div>
       </div>
       <div class="foot-bottom">
         <span>© 2026 Obeh Marketplace. Todos os direitos reservados.</span>
+        <span>🔒 Compra protegida · Pagamento via Mercado Pago</span>
         <span>Feito com 🧵 e aconchego.</span>
       </div>
     </div>
