@@ -381,8 +381,18 @@
         const itensCompletos = grupo.itens.map(i => carrinho.find(c => c.id === i.produtoId)).filter(Boolean)
         const desconto = descontosPorLoja[grupo.lojaId] || 0
         const subtotal = itensCompletos.reduce((acc, item) => acc + Number(item.preco) * (1 - desconto / 100) * item.quantidade, 0)
+        // Alguns produtos têm desconto extra só pra quem paga com Pix — o
+        // valor final no Pix pode sair menor que o "Total desta loja" abaixo
+        // por causa disso, então calcula à parte pra avisar (senão parece
+        // que a soma bateu errado quando na real é o desconto de Pix).
+        const subtotalComPix = itensCompletos.reduce((acc, item) => {
+          const descontoPix = Number(item.desconto_pix_percentual) || 0
+          const precoComDescontos = Number(item.preco) * (1 - desconto / 100) * (1 - descontoPix / 100)
+          return acc + precoComDescontos * item.quantidade
+        }, 0)
+        const temDescontoPix = subtotalComPix < subtotal - 0.001
         const frete = freteEscolhidoPorLoja[grupo.lojaId] || 0
-        return { ...grupo, itensCompletos, subtotal, frete, totalComFrete: subtotal + frete }
+        return { ...grupo, itensCompletos, subtotal, subtotalComPix, temDescontoPix, frete, totalComFrete: subtotal + frete, totalComFreteEPix: subtotalComPix + frete }
       })
 
       // Se a loja ativa não existe mais nesse carrinho (foi finalizada/removida),
@@ -431,7 +441,10 @@
                   <span>Frete</span><span>${grupoAtivo.frete > 0 ? `R$ ${grupoAtivo.frete.toFixed(2)}` : 'calcule abaixo'}</span>
                 </div>
                 <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; padding-top:6px; border-top:1px solid var(--line);">
-                  <span style="font-weight:600;">Total desta loja: R$ ${grupoAtivo.totalComFrete.toFixed(2)}</span>
+                  <div>
+                    <span style="font-weight:600;">Total desta loja: R$ ${grupoAtivo.totalComFrete.toFixed(2)}</span>
+                    ${grupoAtivo.temDescontoPix ? `<div style="font-size:12.5px; color:#2f7a4d; font-weight:600;">💠 R$ ${grupoAtivo.totalComFreteEPix.toFixed(2)} pagando com Pix</div>` : ''}
+                  </div>
                   <div style="display:flex; gap:8px; flex-wrap:wrap;">
                     <button class="btn btn-ghost" style="padding:6px 14px; font-size:13px;" onclick="pagarComPix('${grupoAtivo.lojaId}')">💠 Pix</button>
                     <button class="btn btn-ghost" style="padding:6px 14px; font-size:13px;" onclick="abrirPagamentoCartao('${grupoAtivo.lojaId}')">💳 Cartão</button>
@@ -466,6 +479,7 @@
               <div>
                 <div class="total-label">Total (produtos + frete)</div>
                 <div class="total-value">R$ ${grupoAtivo.totalComFrete.toFixed(2)}</div>
+                ${grupoAtivo.temDescontoPix ? `<div style="font-size:12.5px; color:#2f7a4d; font-weight:600; margin-top:2px;">💠 R$ ${grupoAtivo.totalComFreteEPix.toFixed(2)} pagando com Pix</div>` : ''}
               </div>
               ` : `
               <div style="font-size:13px; color:var(--ink-soft);">Cada loja é cobrada separadamente — troque de aba acima e use "Finalizar esta loja" em cada uma.</div>

@@ -754,7 +754,8 @@
         preco: produtoData.preco,
         fotos: produtoData.fotos,
         loja_id: produtoData.loja_id,
-        loja_nome: lojaData?.nome_loja || 'Loja'
+        loja_nome: lojaData?.nome_loja || 'Loja',
+        desconto_pix_percentual: produtoData.desconto_pix_percentual || null
       })
 
       renderizarCarrinho()

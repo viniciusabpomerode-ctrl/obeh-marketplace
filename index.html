@@ -709,7 +709,8 @@
         fotos: produto.fotos,
         loja_id: produto.loja_id,
         loja_nome: produto.lojas?.nome_loja || 'Loja',
-        mp_link: produto.lojas?.mercado_pago_link || ''
+        mp_link: produto.lojas?.mercado_pago_link || '',
+        desconto_pix_percentual: produto.desconto_pix_percentual || null
       })
 
       renderizarCarrinho()

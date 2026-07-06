@@ -167,6 +167,10 @@
       cancelado: '❌ Cancelado'
     }
 
+    // Guarda os pedidos já agrupados pra "Tentar comprar novamente" poder
+    // reconstruir os itens sem precisar serializar tudo num onclick inline.
+    let pedidosPorId = {}
+
     async function carregarCompras(compradorId) {
       const container = document.getElementById('comprasContent')
 
@@ -214,6 +218,7 @@
             status: v.status,
             createdAt: v.created_at,
             nomeLoja: lojasPorId[v.produtos?.loja_id] || 'Loja',
+            lojaId: v.produtos?.loja_id || null,
             frete: 0,
             itens: [],
             initPoint: v.init_point || null,
@@ -223,6 +228,7 @@
         }
         porPedido[chave].frete += Number(v.valor_frete || 0)
         porPedido[chave].itens.push({
+          produtoId: v.produto_id,
           nome: v.produtos?.nome || 'Produto',
           foto: v.produtos?.fotos?.[0] || null,
           quantidade: v.quantidade,
@@ -231,6 +237,7 @@
       }
 
       const pedidos = Object.values(porPedido).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      pedidosPorId = porPedido
 
       container.innerHTML = pedidos.map(p => {
         const totalProdutos = p.itens.reduce((acc, i) => acc + i.valorTotal, 0)
@@ -293,12 +300,59 @@
         `
       }
 
+      // Pagamento por cartão direto (Card Brick) não tem link nem QR code
+      // pra retomar — o cartão já foi processado (aprovado, recusado ou em
+      // análise). Se ainda está pendente, a única forma de "finalizar" é
+      // tentar a compra de novo (o comprador pode ter fechado a aba antes do
+      // cartão ser confirmado, ou o pagamento pode ter sido recusado sem
+      // atualizar o status certinho).
       return `
-        <div style="margin-top:14px; padding-top:14px; border-top:1px solid var(--line); text-align:center; font-size:13px; color:var(--ink-soft);">
-          Pagamento em análise — aguarde a confirmação, sem precisar fazer nada.
+        <div style="margin-top:14px; padding-top:14px; border-top:1px solid var(--line); text-align:center;">
+          <p style="font-size:13px; color:var(--ink-soft); margin-bottom:10px;">Não identificamos a confirmação desse pagamento.</p>
+          <button class="btn btn-primary" onclick="tentarComprarNovamente('${p.pedidoId}')">🔄 Tentar comprar novamente</button>
         </div>
       `
     }
+
+    // Recoloca os itens desse pedido no carrinho (preço/estoque são
+    // conferidos de novo na hora de pagar, então não tem risco de cobrar
+    // errado usando o preço antigo aqui) e manda pro carrinho pra refazer o
+    // pagamento do zero.
+    function tentarComprarNovamente(pedidoId) {
+      const pedido = pedidosPorId[pedidoId]
+      if (!pedido) return
+
+      const itensParaCarrinho = pedido.itens
+        .filter(i => i.produtoId)
+        .map(i => ({
+          id: i.produtoId,
+          nome: i.nome,
+          preco: i.quantidade > 0 ? i.valorTotal / i.quantidade : i.valorTotal,
+          quantidade: i.quantidade,
+          fotos: i.foto ? [i.foto] : [],
+          loja_id: pedido.lojaId,
+          loja_nome: pedido.nomeLoja
+        }))
+
+      if (itensParaCarrinho.length === 0) {
+        alert('❌ Não foi possível identificar os produtos desse pedido pra recomprar.')
+        return
+      }
+
+      const carrinhoAtual = JSON.parse(localStorage.getItem('obeh_carrinho') || '[]')
+      for (const item of itensParaCarrinho) {
+        const existente = carrinhoAtual.find(c => c.id === item.id)
+        if (existente) {
+          existente.quantidade += item.quantidade
+        } else {
+          carrinhoAtual.push(item)
+        }
+      }
+      localStorage.setItem('obeh_carrinho', JSON.stringify(carrinhoAtual))
+      window.location.href = `carrinho.html?loja=${pedido.lojaId}`
+    }
+
+    window.tentarComprarNovamente = tentarComprarNovamente
 
     async function verificarPagamentoAgora(pedidoId, btnEl) {
       const statusEl = document.getElementById(`verificarStatus-${pedidoId}`)

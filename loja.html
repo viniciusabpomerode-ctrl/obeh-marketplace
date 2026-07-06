@@ -838,7 +838,8 @@ function buscarProdutosDaLoja(termo) {
         preco: produto.preco,
         fotos: produto.fotos,
         loja_id: produto.loja_id,
-        loja_nome: lojaData?.nome_loja || 'Loja'
+        loja_nome: lojaData?.nome_loja || 'Loja',
+        desconto_pix_percentual: produto.desconto_pix_percentual || null
       })
 
       renderizarCarrinho()
