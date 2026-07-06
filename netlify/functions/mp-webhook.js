@@ -162,6 +162,43 @@ exports.handler = async (event) => {
       body: JSON.stringify({ status: novoStatus })
     })
 
+    // Baixa de estoque quando o pagamento é aprovado. Idempotente: usa a
+    // coluna "estoque_baixado" pra nunca baixar duas vezes (webhook pode
+    // ser chamado múltiplas vezes pro mesmo pagamento). Isolado em
+    // try/catch: se a migração da coluna ainda não rodou, o fluxo
+    // principal (status da venda) não é afetado.
+    if (novoStatus === 'pago') {
+      try {
+        const vendasRes = await supabaseRequest(
+          `vendas?or=(pedido_id.eq.${referencia},id.eq.${referencia})&estoque_baixado=is.false&select=id,produto_id,quantidade`,
+          { prefer: 'return=representation' }
+        )
+        const vendasPagas = await vendasRes.json()
+        for (const v of vendasPagas) {
+          if (!v.produto_id) continue
+          try {
+            const prodRes = await supabaseRequest(`produtos?id=eq.${v.produto_id}&select=estoque`, { prefer: 'return=representation' })
+            const prods = await prodRes.json()
+            const estoqueAtual = Number(prods[0]?.estoque ?? 0)
+            const novoEstoque = Math.max(0, estoqueAtual - (Number(v.quantidade) || 1))
+            await supabaseRequest(`produtos?id=eq.${v.produto_id}`, {
+              method: 'PATCH',
+              body: JSON.stringify(novoEstoque === 0 ? { estoque: 0, status: 'pausado' } : { estoque: novoEstoque })
+            })
+            await supabaseRequest(`vendas?id=eq.${v.id}`, {
+              method: 'PATCH',
+              body: JSON.stringify({ estoque_baixado: true })
+            })
+          } catch (errItem) {
+            console.error('mp-webhook: falha ao baixar estoque do produto', v.produto_id, errItem)
+          }
+        }
+      } catch (errEstoque) {
+        // Coluna estoque_baixado pode não existir ainda (migração pendente) — não quebra o webhook.
+        console.error('mp-webhook: baixa de estoque pulada (migração pendente?):', errEstoque.message)
+      }
+    }
+
     return { statusCode: 200, body: 'ok' }
   } catch (err) {
     console.error('Erro no webhook do Mercado Pago:', err)

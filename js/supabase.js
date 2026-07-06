@@ -9,6 +9,23 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey)
 
 // ============================================
+// SEGURANÇA — ESCAPE DE HTML
+// Todo texto vindo do banco (nome de produto, loja, descrição, mensagem)
+// que for injetado via innerHTML DEVE passar por esc() — sem isso um
+// vendedor/usuário malicioso consegue injetar <script> na página (XSS).
+// ============================================
+function esc(texto) {
+  if (texto === null || texto === undefined) return ''
+  return String(texto)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;')
+}
+window.esc = esc
+
+// ============================================
 // FUNÇÕES DE AUTENTICAÇÃO
 // ============================================
 
@@ -44,7 +61,13 @@ async function registrarPrimeiroLogin(userId) {
 // manda isso na URL como "?retorno=carrinho.html".
 function getRetornoUrl() {
   const retorno = new URLSearchParams(window.location.search).get('retorno')
-  return retorno && retorno.startsWith('/') === false && !retorno.includes('://') ? retorno : 'index.html'
+  // Só aceita caminhos relativos pra páginas .html do próprio site — bloqueia
+  // "javascript:", "//evil.com", "https://..." e qualquer outro esquema
+  // (proteção contra open redirect / XSS via parâmetro de retorno).
+  const seguro = retorno &&
+    /^[a-z0-9-]+\.html(\?[^#]*)?$/i.test(retorno) &&
+    !retorno.includes('://') && !retorno.startsWith('/')
+  return seguro ? retorno : 'index.html'
 }
 
 // Se o destino final é o carrinho (voltando pra finalizar uma compra), passa

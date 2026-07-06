@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
   <title>Curso — Obeh</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Work+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
@@ -224,7 +225,7 @@
             <div class="curso-header">
               <h1>${c.titulo}</h1>
               <div class="curso-loja">por ${c.lojas?.nome_loja || 'Artesão'}</div>
-              <div class="curso-preco">R$ ${Number(c.preco).toFixed(2)}</div>
+              <div class="curso-preco">R$ ${Number(c.preco).toFixed(2).replace('.', ',')}</div>
               ${c.descricao ? `<p class="curso-desc">${c.descricao}</p>` : ''}
             </div>
 

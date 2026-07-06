@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
   <title>Loja — Obeh</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Work+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
@@ -440,7 +441,7 @@ async function carregarApoioPublico(id) {
   const section = document.getElementById('lojaApoioSection')
   if (!section) return
   document.getElementById('lojaApoioDescricao').textContent = data.apoio_descricao || ''
-  document.getElementById('lojaApoioValor').textContent = `R$ ${Number(data.apoio_valor_mensal).toFixed(2)}/mês`
+  document.getElementById('lojaApoioValor').textContent = `R$ ${Number(data.apoio_valor_mensal).toFixed(2).replace('.', ',')}/mês`
   section.style.display = 'block'
   await carregarConteudoExclusivo(id)
   await carregarBeneficiosApoio(id)
@@ -594,6 +595,7 @@ async function carregarLoja(id) {
 
       // Nome
       document.getElementById('lojaNome').textContent = data.nome_loja || 'Loja sem nome'
+      document.title = `${data.nome_loja || 'Loja'} — Artesanato | Obeh`
 
       // Descrição
       document.getElementById('lojaDescricao').textContent = data.descricao || ''
@@ -645,12 +647,12 @@ function renderPrecoCard(p) {
   if (p.em_promocao && p.preco_antigo) {
     return `
       <div class="price">
-        <span style="text-decoration:line-through; color:var(--ink-soft); font-size:12px; margin-right:6px;">R$ ${Number(p.preco_antigo).toFixed(2)}</span>
-        R$ ${Number(p.preco).toFixed(2)}
+        <span style="text-decoration:line-through; color:var(--ink-soft); font-size:12px; margin-right:6px;">R$ ${Number(p.preco_antigo).toFixed(2).replace('.', ',')}</span>
+        R$ ${Number(p.preco).toFixed(2).replace('.', ',')}
       </div>
     `
   }
-  return `<div class="price">R$ ${Number(p.preco).toFixed(2)}</div>`
+  return `<div class="price">R$ ${Number(p.preco).toFixed(2).replace('.', ',')}</div>`
 }
 
 function renderProdutosLoja(lista) {
@@ -785,7 +787,7 @@ function buscarProdutosDaLoja(termo) {
             <div class="cart-item">
               <div class="cart-item-info">
                 <div class="cart-item-name">${item.nome}</div>
-                <div class="cart-item-detail">R$ ${Number(item.preco).toFixed(2)} x ${item.quantidade}</div>
+                <div class="cart-item-detail">R$ ${Number(item.preco).toFixed(2).replace('.', ',')} x ${item.quantidade}</div>
               </div>
               <div class="cart-item-actions">
                 <button onclick="atualizarQuantidadeCarrinho('${item.id}', -1)">−</button>
@@ -797,7 +799,7 @@ function buscarProdutosDaLoja(termo) {
           `).join('')
 
       const totalValue = getTotalCarrinho()
-      total.textContent = `R$ ${totalValue.toFixed(2)}`
+      total.textContent = `R$ ${totalValue.toFixed(2).replace('.', ',')}`
     }
 
     // ===== CARREGAR CURSOS DA LOJA =====
@@ -821,7 +823,7 @@ function buscarProdutosDaLoja(termo) {
                 <div class="card-cat">Curso</div>
                 <div class="card-title">${c.titulo}</div>
                 <div class="card-foot">
-                  <div class="price">R$ ${Number(c.preco).toFixed(2)}</div>
+                  <div class="price">R$ ${Number(c.preco).toFixed(2).replace('.', ',')}</div>
                 </div>
               </div>
             </div>

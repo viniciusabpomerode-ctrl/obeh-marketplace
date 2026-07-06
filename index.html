@@ -3,7 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Obeh — Marketplace de Artesanato</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <title>Obeh — Marketplace de Artesanato Brasileiro | Compre Direto do Artesão</title>
+  <meta name="description" content="Compre artesanato brasileiro direto de quem faz: cerâmica, tecelagem, madeira, couro e mais. Pagamento direto ao artesão, taxas justas e frete pra todo o Brasil." />
+  <meta property="og:title" content="Obeh — Marketplace de Artesanato Brasileiro" />
+  <meta property="og:description" content="Cada peça carrega a marca de quem fez. Compre direto do artesão, sem intermediário no dinheiro." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://obeh.com.br/" />
+  <meta name="theme-color" content="#B5502F" />
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -531,12 +538,12 @@
       if (p.em_promocao && p.preco_antigo) {
         return `
           <div class="price">
-            <span style="text-decoration:line-through; color:var(--ink-soft); font-size:12px; margin-right:6px;">R$ ${Number(p.preco_antigo).toFixed(2)}</span>
-            R$ ${Number(p.preco).toFixed(2)}
+            <span style="text-decoration:line-through; color:var(--ink-soft); font-size:12px; margin-right:6px;">R$ ${Number(p.preco_antigo).toFixed(2).replace('.', ',')}</span>
+            R$ ${Number(p.preco).toFixed(2).replace('.', ',')}
           </div>
         `
       }
-      return `<div class="price">R$ ${Number(p.preco).toFixed(2)}</div>`
+      return `<div class="price">R$ ${Number(p.preco).toFixed(2).replace('.', ',')}</div>`
     }
 
     // Gerador pseudo-aleatório determinístico (mulberry32) — com a mesma
@@ -683,7 +690,7 @@
               <div class="cart-item">
                 <div class="cart-item-info">
                   <div class="cart-item-name">${item.nome}</div>
-                  <div class="cart-item-detail">R$ ${Number(item.preco).toFixed(2)} x ${item.quantidade}</div>
+                  <div class="cart-item-detail">R$ ${Number(item.preco).toFixed(2).replace('.', ',')} x ${item.quantidade}</div>
                 </div>
                 <div class="cart-item-actions">
                   <button onclick="atualizarQuantidadeCarrinho('${item.id}', -1)">−</button>
@@ -695,7 +702,7 @@
             `).join('')
 
       const totalValue = getTotalCarrinho()
-      total.textContent = `R$ ${totalValue.toFixed(2)}`
+      total.textContent = `R$ ${totalValue.toFixed(2).replace('.', ',')}`
     }
 
     function adicionarAoCarrinhoClique(produtoId) {

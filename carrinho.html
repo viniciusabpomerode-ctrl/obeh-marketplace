@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
   <title>Carrinho — Obeh</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Work+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
@@ -423,7 +424,7 @@
                   </div>
                   <div class="info">
                     <div class="nome">${item.nome}</div>
-                    <div class="preco">R$ ${Number(item.preco).toFixed(2)}</div>
+                    <div class="preco">R$ ${Number(item.preco).toFixed(2).replace('.', ',')}</div>
                   </div>
                   <div class="quantidade">
                     <button onclick="alterarQuantidade('${item.id}', -1)">−</button>
@@ -435,15 +436,15 @@
               `).join('')}
               <div style="padding:12px 16px; display:flex; flex-direction:column; gap:6px; background:var(--bg-card);">
                 <div style="display:flex; justify-content:space-between; font-size:13px; color:var(--ink-soft);">
-                  <span>Produtos</span><span>R$ ${grupoAtivo.subtotal.toFixed(2)}</span>
+                  <span>Produtos</span><span>R$ ${grupoAtivo.subtotal.toFixed(2).replace('.', ',')}</span>
                 </div>
                 <div style="display:flex; justify-content:space-between; font-size:13px; color:var(--ink-soft);">
-                  <span>Frete</span><span>${grupoAtivo.frete > 0 ? `R$ ${grupoAtivo.frete.toFixed(2)}` : 'calcule abaixo'}</span>
+                  <span>Frete</span><span>${grupoAtivo.frete > 0 ? `R$ ${grupoAtivo.frete.toFixed(2).replace('.', ',')}` : 'calcule abaixo'}</span>
                 </div>
                 <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; padding-top:6px; border-top:1px solid var(--line);">
                   <div>
-                    <span style="font-weight:600;">Total desta loja: R$ ${grupoAtivo.totalComFrete.toFixed(2)}</span>
-                    ${grupoAtivo.temDescontoPix ? `<div style="font-size:12.5px; color:#2f7a4d; font-weight:600;">💠 R$ ${grupoAtivo.totalComFreteEPix.toFixed(2)} pagando com Pix</div>` : ''}
+                    <span style="font-weight:600;">Total desta loja: R$ ${grupoAtivo.totalComFrete.toFixed(2).replace('.', ',')}</span>
+                    ${grupoAtivo.temDescontoPix ? `<div style="font-size:12.5px; color:#2f7a4d; font-weight:600;">💠 R$ ${grupoAtivo.totalComFreteEPix.toFixed(2).replace('.', ',')} pagando com Pix</div>` : ''}
                   </div>
                   <div style="display:flex; gap:8px; flex-wrap:wrap;">
                     <button class="btn btn-ghost" style="padding:6px 14px; font-size:13px;" onclick="pagarComPix('${grupoAtivo.lojaId}')">💠 Pix</button>
@@ -478,8 +479,8 @@
               ${gruposVisuais.length === 1 ? `
               <div>
                 <div class="total-label">Total (produtos + frete)</div>
-                <div class="total-value">R$ ${grupoAtivo.totalComFrete.toFixed(2)}</div>
-                ${grupoAtivo.temDescontoPix ? `<div style="font-size:12.5px; color:#2f7a4d; font-weight:600; margin-top:2px;">💠 R$ ${grupoAtivo.totalComFreteEPix.toFixed(2)} pagando com Pix</div>` : ''}
+                <div class="total-value">R$ ${grupoAtivo.totalComFrete.toFixed(2).replace('.', ',')}</div>
+                ${grupoAtivo.temDescontoPix ? `<div style="font-size:12.5px; color:#2f7a4d; font-weight:600; margin-top:2px;">💠 R$ ${grupoAtivo.totalComFreteEPix.toFixed(2).replace('.', ',')} pagando com Pix</div>` : ''}
               </div>
               ` : `
               <div style="font-size:13px; color:var(--ink-soft);">Cada loja é cobrada separadamente — troque de aba acima e use "Finalizar esta loja" em cada uma.</div>
@@ -697,7 +698,7 @@
         if (!alvoEl) return
         alvoEl.innerHTML = `
           <div style="border:1px solid var(--line); border-radius:8px; padding:16px; margin-top:8px; text-align:center;">
-            <p style="font-size:13px; color:var(--ink-soft); margin-bottom:10px;">Total: R$ ${Number(r.valorTotal).toFixed(2)}</p>
+            <p style="font-size:13px; color:var(--ink-soft); margin-bottom:10px;">Total: R$ ${Number(r.valorTotal).toFixed(2).replace('.', ',')}</p>
             <img src="data:image/png;base64,${r.qrCodeBase64}" alt="QR Code Pix" style="width:200px; height:200px; margin:0 auto 10px;" />
             <textarea readonly style="width:100%; font-size:11px; padding:8px; border:1px solid var(--line); border-radius:6px; resize:none; height:60px;">${r.qrCode}</textarea>
             <button class="btn btn-ghost" style="margin-top:8px;" onclick="navigator.clipboard.writeText('${r.qrCode}'); this.textContent='Copiado!'">Copiar código</button>
@@ -842,7 +843,7 @@
         }
 
         if (data.status === 'approved') {
-          resultadoEl.innerHTML = `<div style="border:1px solid var(--line); border-radius:8px; padding:16px; text-align:center;"><p style="font-weight:600; color:#2f7a4d;">✅ Pagamento aprovado!</p><p style="font-size:13px; color:var(--ink-soft); margin-top:4px;">Total: R$ ${Number(data.valorTotal).toFixed(2)}</p></div>`
+          resultadoEl.innerHTML = `<div style="border:1px solid var(--line); border-radius:8px; padding:16px; text-align:center;"><p style="font-weight:600; color:#2f7a4d;">✅ Pagamento aprovado!</p><p style="font-size:13px; color:var(--ink-soft); margin-top:4px;">Total: R$ ${Number(data.valorTotal).toFixed(2).replace('.', ',')}</p></div>`
           // Só tira do modelo de dados agora — não re-renderiza a lista ainda,
           // senão o bloco desta loja (com a mensagem de sucesso) some na hora
           removerLojaDoCarrinho(grupo.lojaId)
@@ -901,9 +902,9 @@
         const maisBarato = Math.min(...freteDaLoja.opcoes.map(o => Number(o.preco) || 0))
         freteEscolhidoPorLoja[lojaId] = maisBarato
 
-        const opcoes = freteDaLoja.opcoes.map(o => `${o.nome}: R$ ${Number(o.preco).toFixed(2)}${o.prazoDias ? ` (${o.prazoDias} dias úteis)` : ''}`).join(' · ')
+        const opcoes = freteDaLoja.opcoes.map(o => `${o.nome}: R$ ${Number(o.preco).toFixed(2).replace('.', ',')}${o.prazoDias ? ` (${o.prazoDias} dias úteis)` : ''}`).join(' · ')
         const aviso = freteDaLoja.estimativaAproximada ? ' <span style="color:var(--muted);">(estimativa aproximada)</span>' : ''
-        freteResultadoHtmlPorLoja[lojaId] = `<div>${opcoes}${aviso}</div><div style="margin-top:4px; color:var(--ink-soft);">✅ R$ ${maisBarato.toFixed(2)} já somado ao total desta loja.</div>`
+        freteResultadoHtmlPorLoja[lojaId] = `<div>${opcoes}${aviso}</div><div style="margin-top:4px; color:var(--ink-soft);">✅ R$ ${maisBarato.toFixed(2).replace('.', ',')} já somado ao total desta loja.</div>`
 
         // Re-renderiza pra atualizar o "Total desta loja" com o frete somado
         renderizarCarrinhoCompleto()

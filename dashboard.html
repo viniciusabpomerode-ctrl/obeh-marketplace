@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
   <title>Dashboard — Obeh</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Work+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
@@ -955,7 +956,7 @@
                 <div>
                   <strong>${p.nome}</strong>
                   <div style="font-size:12px; color:var(--ink-soft);">
-                    R$ ${Number(p.preco).toFixed(2)} • ${p.categorias?.nome || 'Sem categoria'} • 
+                    R$ ${Number(p.preco).toFixed(2).replace('.', ',')} • ${p.categorias?.nome || 'Sem categoria'} • 
                     <span style="color:${p.status === 'ativo' ? 'var(--olive)' : 'var(--clay)'}">
                       ${p.status === 'ativo' ? '✓ Ativo' : 'Rascunho'}
                     </span>
@@ -1148,7 +1149,7 @@
       }
       lista.innerHTML = data.map(f => `
         <div style="display:flex; align-items:center; gap:10px; justify-content:space-between; padding:8px 12px; border:1px solid var(--line); border-radius:8px; margin-bottom:6px; font-size:13px;">
-          <span><strong>${f.regiao}</strong> — ${f.quantidade_min} a ${f.quantidade_max} item(ns): ${f.frete_gratis ? 'grátis' : 'R$ ' + Number(f.preco).toFixed(2)}</span>
+          <span><strong>${f.regiao}</strong> — ${f.quantidade_min} a ${f.quantidade_max} item(ns): ${f.frete_gratis ? 'grátis' : 'R$ ' + Number(f.preco).toFixed(2).replace('.', ',')}</span>
           <button type="button" class="btn btn-ghost" style="padding:4px 10px; font-size:12px;" onclick="deletarFreteRegiao('${f.id}')">Excluir</button>
         </div>
       `).join('')
@@ -1633,7 +1634,7 @@
       lista.innerHTML = data.map(a => `
         <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--line); padding:8px 0; font-size:13px;">
           <span>${a.users?.nome || a.users?.email || 'Apoiador'}</span>
-          <span>R$ ${Number(a.valor_mensal || 0).toFixed(2)}/mês ${statusEmoji[a.status] || ''} ${a.status}</span>
+          <span>R$ ${Number(a.valor_mensal || 0).toFixed(2).replace('.', ',')}/mês ${statusEmoji[a.status] || ''} ${a.status}</span>
         </div>
       `).join('')
     }
@@ -2327,7 +2328,7 @@ pasta_id,
                 <div>
                   <strong>${c.titulo}</strong>
                   <div style="font-size:12px; color:var(--ink-soft);">
-                    R$ ${Number(c.preco).toFixed(2)} • 
+                    R$ ${Number(c.preco).toFixed(2).replace('.', ',')} • 
                     <span style="color:${c.status === 'ativo' ? 'var(--olive)' : 'var(--clay)'}">
                       ${c.status === 'ativo' ? '✓ Ativo' : 'Rascunho'}
                     </span>
