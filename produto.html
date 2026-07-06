@@ -216,9 +216,13 @@
   </header>
 
   <div class="produto-container">
+    <div id="produtoBreadcrumb" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; font-size:12.5px; color:var(--ink-soft); margin-bottom:16px; padding-bottom:10px; border-bottom:1px solid var(--line);"></div>
+
     <div class="produto-grid" id="produtoContent">
       <!-- Injetado via JS -->
     </div>
+
+    <div id="produtoVendedorCard" style="margin-top:24px; background:var(--bg-card); border:1px solid var(--line); border-radius:12px; padding:16px; display:flex; align-items:center; gap:14px; flex-wrap:wrap;"></div>
 
     <div id="avaliacoesSection" style="margin-top:16px; border-top:1px solid var(--line); padding-top:24px;">
       <h2 style="font-size:20px; margin-bottom:12px;">⭐ Avaliações</h2>
@@ -440,7 +444,9 @@
               user_id,
               mercado_pago_link,
               modo_acessivel,
-              css_personalizado
+              css_personalizado_produto,
+              nota_media,
+              total_avaliacoes
             ),
             categorias (nome)
           `)
@@ -462,9 +468,12 @@
       lojaData = data.lojas
 
       document.body.classList.toggle('modo-acessivel', Boolean(lojaData?.modo_acessivel))
-      if (lojaData?.css_personalizado) {
+      // Página de produto usa o padrão do Obeh por padrão — só aplica CSS
+      // personalizado se o vendedor especificamente customizou ELA (categoria
+      // separada da personalização da loja, no assistente de IA do painel).
+      if (lojaData?.css_personalizado_produto) {
         const styleEl = document.createElement('style')
-        styleEl.textContent = lojaData.css_personalizado
+        styleEl.textContent = lojaData.css_personalizado_produto
         document.head.appendChild(styleEl)
       }
 
@@ -530,6 +539,16 @@
 
       const fotos = p.fotos || []
       const imagemPrincipal = fotos.length > 0 ? fotos[0] : null
+      const nomeLoja = lojaData?.nome_loja || 'Artesão'
+
+      // Breadcrumb + selos de confiança
+      document.getElementById('produtoBreadcrumb').innerHTML = `
+        <span><a href="index.html" style="color:inherit;">Início</a> &gt; ${p.categorias?.nome ? `${p.categorias.nome} &gt; ` : ''}${p.nome}</span>
+        <span style="display:flex; gap:14px; flex-wrap:wrap;">
+          <span>🔒 Compra segura</span>
+          <span>🚚 Envio direto do artesão</span>
+        </span>
+      `
 
       container.innerHTML = `
             <!-- Galeria -->
@@ -556,48 +575,63 @@
               <div class="categoria-tag">${p.categorias?.nome || 'Artesanato'}</div>
               <h1>${p.nome}</h1>
               <div class="loja-link" onclick="window.location.href='loja.html?id=${lojaData?.id}'">
-                🏪 ${lojaData?.nome_loja || 'Artesão'}
+                🏪 ${nomeLoja}${lojaData?.nota_media ? ` · ⭐ ${Number(lojaData.nota_media).toFixed(1)}` : ''}
               </div>
-              ${p.em_promocao ? '<span style="display:inline-block; background:var(--clay); color:#fff; font-size:12px; font-weight:700; padding:3px 12px; border-radius:999px; margin-bottom:6px;">🔥 Promoção</span>' : ''}
-              <div class="price-large">
-                ${p.em_promocao && p.preco_antigo ? `<span style="text-decoration:line-through; color:var(--ink-soft); font-size:16px; margin-right:10px;">R$ ${Number(p.preco_antigo).toFixed(2)}</span>` : ''}
-                R$ ${Number(p.preco).toFixed(2)}
-              </div>
-              ${p.desconto_pix_percentual ? `
-                <p style="font-size:13px; color:#2f7a4d; font-weight:600; margin:-8px 0 12px;">
-                  💠 R$ ${(Number(p.preco) * (1 - Number(p.desconto_pix_percentual) / 100)).toFixed(2)} pagando com Pix (${p.desconto_pix_percentual}% de desconto)
-                </p>
-              ` : ''}
-              <div class="descricao">${p.descricao || 'Sem descrição detalhada.'}</div>
-              ${p.sob_encomenda ? `
-                <div style="background:rgba(0,0,0,0.03); border:1px solid var(--line); border-radius:8px; padding:10px 14px; font-size:13px; margin-bottom:16px;">
-                  📦 <strong>Sob encomenda</strong>${p.prazo_producao_dias ? ` — prazo de produção de ${p.prazo_producao_dias} dia(s) antes do envio.` : ''}
-                </div>
-              ` : ''}
 
-              <div class="produto-actions">
-                <button class="btn btn-outline" onclick="comprarAgora()">
-                  ⚡ Comprar agora
-                </button>
-                <button class="btn btn-primary" onclick="adicionarAoCarrinhoClique()">
-                  🛒 Adicionar ao carrinho
-                </button>
-                <button class="btn btn-chat" onclick="abrirChat()">
-                  💬 Conversar com artesão
-                </button>
+              <div style="background:var(--bg-card); border:1px solid var(--line); border-radius:12px; padding:18px; margin:14px 0;">
+                ${p.em_promocao ? '<span style="display:inline-block; background:var(--clay); color:#fff; font-size:12px; font-weight:700; padding:3px 12px; border-radius:999px; margin-bottom:8px;">🔥 Promoção</span>' : ''}
+                <div class="price-large">
+                  ${p.em_promocao && p.preco_antigo ? `<span style="text-decoration:line-through; color:var(--ink-soft); font-size:16px; margin-right:10px;">R$ ${Number(p.preco_antigo).toFixed(2)}</span>` : ''}
+                  R$ ${Number(p.preco).toFixed(2)}
+                </div>
+                ${p.desconto_pix_percentual ? `
+                  <p style="font-size:13px; color:#2f7a4d; font-weight:600; margin:4px 0 14px;">
+                    💠 R$ ${(Number(p.preco) * (1 - Number(p.desconto_pix_percentual) / 100)).toFixed(2)} pagando com Pix (${p.desconto_pix_percentual}% de desconto)
+                  </p>
+                ` : '<div style="margin-bottom:10px;"></div>'}
+                <div class="produto-actions" style="margin-top:0;">
+                  <button class="btn btn-outline" onclick="adicionarAoCarrinhoClique()">
+                    🛒 Adicionar ao carrinho
+                  </button>
+                  <button class="btn btn-primary" onclick="comprarAgora()">
+                    ⚡ Comprar agora
+                  </button>
+                </div>
               </div>
+
+              <div style="display:flex; gap:16px; flex-wrap:wrap; font-size:12.5px; color:var(--ink-soft); margin-bottom:16px;">
+                <span>${p.status === 'ativo' ? '✅ Estoque disponível' : '❌ Indisponível'}</span>
+                ${p.sob_encomenda
+                  ? `<span>📦 Sob encomenda${p.prazo_producao_dias ? ` — envio em até ${p.prazo_producao_dias} dia(s)` : ''}</span>`
+                  : '<span>📦 Pronta entrega</span>'
+                }
+              </div>
+
+              <div class="descricao">${p.descricao || 'Sem descrição detalhada.'}</div>
 
               <div class="produto-extra">
                 <h3>📦 Detalhes do produto</h3>
                 <div class="detalhes">
                   <span><strong>Estoque:</strong> ${p.estoque || 1} unidades</span>
                   <span><strong>Categoria:</strong> ${p.categorias?.nome || 'Não definida'}</span>
-                  <span><strong>Status:</strong> ${p.status === 'ativo' ? '✅ Disponível' : '❌ Indisponível'}</span>
                   <span><strong>Publicado em:</strong> ${new Date(p.created_at).toLocaleDateString('pt-BR')}</span>
                 </div>
               </div>
             </div>
           `
+
+      // Cartão do vendedor
+      document.getElementById('produtoVendedorCard').innerHTML = `
+        <div style="width:48px; height:48px; border-radius:50%; background:#E9DFC7; flex-shrink:0; overflow:hidden;">
+          ${lojaData?.logo ? `<img src="${lojaData.logo}" alt="${nomeLoja}" style="width:100%; height:100%; object-fit:cover;" />` : ''}
+        </div>
+        <div style="flex:1; min-width:160px;">
+          <div style="font-weight:500; font-size:14px;">${nomeLoja}</div>
+          <div style="font-size:12.5px; color:var(--ink-soft);">${lojaData?.nota_media ? `⭐ ${Number(lojaData.nota_media).toFixed(1)} · ${lojaData.total_avaliacoes || 0} avaliações` : 'Ainda sem avaliações'}</div>
+        </div>
+        <button class="btn btn-ghost" style="padding:8px 16px; font-size:12px;" onclick="abrirChat()">💬 Conversar</button>
+        <button class="btn btn-ghost" style="padding:8px 16px; font-size:12px;" onclick="window.location.href='loja.html?id=${lojaData?.id}'">Ver loja</button>
+      `
     }
 
     // ===== TROCAR IMAGEM =====

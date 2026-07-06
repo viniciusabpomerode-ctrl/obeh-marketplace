@@ -315,6 +315,22 @@
         <div id="cssIaStatus" style="font-size:12px; color:var(--ink-soft); margin-top:6px;"></div>
         <button type="button" id="cssIaAplicarBtn" class="btn btn-primary" style="margin-top:10px; display:none;" onclick="aplicarCssGerado()">Usar este CSS na loja</button>
       </div>
+
+      <div class="form-group">
+        <label>CSS personalizado da página de produto (avançado, opcional)</label>
+        <textarea id="lojaCssPersonalizadoProduto" rows="5" placeholder=".produto-info { } .price-large { }" style="font-family:monospace; font-size:13px;"></textarea>
+        <small style="color:var(--ink-soft); display:block; margin-top:4px;">Categoria separada da personalização da loja — só afeta a página de cada produto seu. Por padrão (em branco), o produto usa o visual padrão do Obeh.</small>
+      </div>
+      <div class="form-group" style="background:rgba(0,0,0,0.03); border:1px solid var(--line); border-radius:12px; padding:14px;">
+        <label>✨ Assistente de CSS da página de produto (IA, grátis) <span style="font-weight:400; font-size:12px; color:var(--ink-soft);">— cor de fundo, cor da letra, flocos caindo, etc.</span></label>
+        <div id="cssIaChatLogProduto" style="max-height:220px; overflow-y:auto; display:flex; flex-direction:column; gap:8px; margin:10px 0;"></div>
+        <div style="display:flex; gap:8px;">
+          <input id="cssIaInputProduto" type="text" placeholder="Ex: fundo bege escuro, letra maior e mais escura" style="flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault(); enviarMensagemCssIaProduto()}" />
+          <button type="button" class="btn btn-secondary" onclick="enviarMensagemCssIaProduto()">Enviar</button>
+        </div>
+        <div id="cssIaStatusProduto" style="font-size:12px; color:var(--ink-soft); margin-top:6px;"></div>
+        <button type="button" id="cssIaAplicarBtnProduto" class="btn btn-primary" style="margin-top:10px; display:none;" onclick="aplicarCssGeradoProduto()">Usar este CSS na página de produto</button>
+      </div>
 <button type="submit" class="btn btn-primary">Salvar loja</button>
         </form>
       </div>
@@ -948,6 +964,7 @@
         document.getElementById('lojaCorDestaque').value = data.cor_destaque || '#B5502F'
         document.getElementById('lojaCorBorda').value = data.cor_borda_logo || '#B5502F'
         document.getElementById('lojaCssPersonalizado').value = data.css_personalizado || ''
+        document.getElementById('lojaCssPersonalizadoProduto').value = data.css_personalizado_produto || ''
         document.getElementById('lojaModoAcessivel').checked = Boolean(data.modo_acessivel)
         await carregarAdvertencias(data.id)
 
@@ -1824,6 +1841,7 @@ pasta_id,
       cor_destaque: document.getElementById('lojaCorDestaque').value,
       cor_borda_logo: document.getElementById('lojaCorBorda').value,
       css_personalizado: document.getElementById('lojaCssPersonalizado').value,
+      css_personalizado_produto: document.getElementById('lojaCssPersonalizadoProduto').value,
       modo_acessivel: document.getElementById('lojaModoAcessivel').checked
         }
 
@@ -2527,6 +2545,68 @@ pasta_id,
 
     window.enviarMensagemCssIa = enviarMensagemCssIa
     window.aplicarCssGerado = aplicarCssGerado
+
+    // ===== ASSISTENTE DE CSS DA PÁGINA DE PRODUTO (IA) — categoria separada =====
+    let cssIaHistoricoProduto = []
+    let cssIaUltimoCssProduto = ''
+
+    function renderCssIaChatProduto() {
+      const log = document.getElementById('cssIaChatLogProduto')
+      if (!log) return
+      log.innerHTML = cssIaHistoricoProduto.map((m) => {
+        const isUser = m.role === 'user'
+        let texto = String(m.content || '')
+        texto = texto.replace(/```css[\s\S]*?```/i, '(código CSS gerado — veja o botão abaixo)')
+        texto = texto.replace(/</g, '&lt;')
+        const alinhamento = isUser ? 'flex-end' : 'flex-start'
+        const fundo = isUser ? 'var(--clay)' : 'rgba(0,0,0,0.06)'
+        const cor = isUser ? '#fff' : 'inherit'
+        return '<div style="align-self:' + alinhamento + '; background:' + fundo + '; color:' + cor + '; padding:8px 12px; border-radius:10px; max-width:85%; font-size:13px; white-space:pre-wrap;">' + texto + '</div>'
+      }).join('')
+      log.scrollTop = log.scrollHeight
+    }
+
+    async function enviarMensagemCssIaProduto() {
+      const input = document.getElementById('cssIaInputProduto')
+      const texto = input.value.trim()
+      if (!texto) return
+      cssIaHistoricoProduto.push({ role: 'user', content: texto })
+      renderCssIaChatProduto()
+      input.value = ''
+      const status = document.getElementById('cssIaStatusProduto')
+      status.textContent = 'Gerando...'
+
+      try {
+        const resp = await fetch('/.netlify/functions/gerar-css-ia', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mensagens: cssIaHistoricoProduto, contexto: 'produto' })
+        })
+        const data = await resp.json()
+        if (!resp.ok) {
+          status.textContent = data.error || 'Erro ao gerar CSS.'
+          return
+        }
+        cssIaHistoricoProduto.push({ role: 'assistant', content: data.resposta })
+        renderCssIaChatProduto()
+        status.textContent = ''
+        if (data.css) {
+          cssIaUltimoCssProduto = data.css
+          document.getElementById('cssIaAplicarBtnProduto').style.display = 'inline-block'
+        }
+      } catch (err) {
+        status.textContent = 'Erro de conexão: ' + err.message
+      }
+    }
+
+    function aplicarCssGeradoProduto() {
+      if (!cssIaUltimoCssProduto) return
+      document.getElementById('lojaCssPersonalizadoProduto').value = cssIaUltimoCssProduto
+      document.getElementById('cssIaStatusProduto').textContent = 'CSS aplicado no campo acima! Clique em "Salvar loja" para publicar.'
+    }
+
+    window.enviarMensagemCssIaProduto = enviarMensagemCssIaProduto
+    window.aplicarCssGeradoProduto = aplicarCssGeradoProduto
     window.handleProductSubmit = handleProductSubmit
     window.handleProdFotosChange = handleProdFotosChange
     window.removeProdFoto = removeProdFoto

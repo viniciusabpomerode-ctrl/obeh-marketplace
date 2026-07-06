@@ -6,7 +6,7 @@
 
 const GROQ_API_KEY = process.env.GROQ_API_KEY
 
-const GLOSSARIO_SELETORES = [
+const GLOSSARIO_SELETORES_LOJA = [
   { seletor: 'body', descricao: 'o fundo geral de toda a página da loja' },
   { seletor: '.loja-header-public', descricao: 'o cabeçalho/topo da loja, onde ficam a logo, o banner e o nome da loja' },
   { seletor: '.loja-avatar-public img', descricao: 'a logo/foto de perfil circular da loja' },
@@ -25,18 +25,32 @@ const GLOSSARIO_SELETORES = [
   { seletor: '.empty-products', descricao: 'a mensagem exibida quando a loja ainda não tem nenhum produto publicado' }
 ]
 
-const SELETORES_PERMITIDOS = GLOSSARIO_SELETORES.map((g) => g.seletor)
+const GLOSSARIO_SELETORES_PRODUTO = [
+  { seletor: 'body', descricao: 'o fundo geral da página de UM produto específico' },
+  { seletor: '.produto-container', descricao: 'o container/moldura geral que envolve toda a página do produto' },
+  { seletor: '.produto-gallery .main-image', descricao: 'a moldura da foto principal do produto' },
+  { seletor: '.produto-info h1', descricao: 'o nome do produto, em destaque' },
+  { seletor: '.produto-info .categoria-tag', descricao: 'a etiqueta pequena com a categoria do produto' },
+  { seletor: '.produto-info .price-large', descricao: 'o preço grande do produto' },
+  { seletor: '.produto-info .descricao', descricao: 'o texto de descrição do produto' },
+  { seletor: '.produto-actions .btn-primary', descricao: 'o botão de "Adicionar ao carrinho"' },
+  { seletor: '.produto-actions .btn-outline', descricao: 'o botão de "Comprar agora"' },
+  { seletor: '.produto-extra', descricao: 'o bloco de detalhes extras do produto (estoque, categoria, status)' }
+]
 
-function montarGlossarioTexto() {
-  return GLOSSARIO_SELETORES.map((g) => g.seletor + ' → ' + g.descricao).join('; ')
+function montarGlossarioTexto(glossario) {
+  return glossario.map((g) => g.seletor + ' → ' + g.descricao).join('; ')
 }
 
-function montarSystemPrompt() {
-  return 'Você é um assistente que cria CSS personalizado para a página pública de uma loja de artesanato do marketplace Obeh. ' +
+function montarSystemPrompt(contexto) {
+  const ehProduto = contexto === 'produto'
+  const glossario = ehProduto ? GLOSSARIO_SELETORES_PRODUTO : GLOSSARIO_SELETORES_LOJA
+  const alvo = ehProduto ? 'a página de UM produto específico (não mexe na vitrine geral da loja, só na página de detalhe do produto)' : 'a página pública de uma loja de artesanato'
+
+  return 'Você é um assistente que cria CSS personalizado para ' + alvo + ' do marketplace Obeh. ' +
     'Converse em português, de forma breve, simpática e direta. ' +
     'Sempre que gerar código, coloque o CSS completo (todas as regras juntas, incluindo as de mensagens anteriores que ainda devem valer) dentro de um bloco de código markdown com \'css no início, assim: ```css ... ```. ' +
-    'Guia dos elementos que existem na página (use SOMENTE estes seletores, escritos exatamente assim, e escolha o certo com base na descrição em português — não invente outros seletores): ' + montarGlossarioTexto() + '. ' +
-    'Se o vendedor usar palavras como "cabeçalho", "topo" ou "logo", relacione com os seletores do cabeçalho/logo acima. Se usar "pasta", "categoria" ou "pastinha", relacione com os seletores de pasta acima. Se usar "cartão", "produto" ou "vitrine", relacione com os seletores de card/grid acima. ' +
+    'Guia dos elementos que existem na página (use SOMENTE estes seletores, escritos exatamente assim, e escolha o certo com base na descrição em português — não invente outros seletores): ' + montarGlossarioTexto(glossario) + '. ' +
     'Nunca use JavaScript, apenas CSS puro. Não inclua as tags <style> ou <script>, apenas as regras CSS. ' +
     'Se o pedido do vendedor for vago (tipo só uma cor ou um clima), use sua criatividade dentro de um estilo artesanal/rústico/acolhedor. ' +
     'Se o vendedor pedir um ajuste depois de já ter gerado um CSS, gere a versão COMPLETA e atualizada (não só o trecho novo).'
@@ -73,7 +87,7 @@ exports.handler = async (event) => {
 
   const payload = {
     model: 'llama-3.3-70b-versatile',
-    messages: [{ role: 'system', content: montarSystemPrompt() }, ...mensagensLimitadas],
+    messages: [{ role: 'system', content: montarSystemPrompt(body.contexto) }, ...mensagensLimitadas],
     temperature: 0.7,
     max_tokens: 1500
   }
