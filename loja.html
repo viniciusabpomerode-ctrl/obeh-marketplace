@@ -271,7 +271,10 @@
   <div id="lojaPastasLista" style="display:flex; gap:14px; overflow-x:auto; padding-bottom:6px;"></div>
 </div>
 <!-- ===== PRODUTOS ===== -->
-    <h2 style="font-size:22px; margin-bottom:16px;">🧶 Produtos da loja</h2>
+    <h2 style="font-size:22px; margin-bottom:12px;">🧶 Produtos da loja</h2>
+    <div style="margin-bottom:16px; max-width:340px;">
+      <input type="text" id="lojaBuscaInput" placeholder="Buscar produtos desta loja..." oninput="buscarProdutosDaLoja(this.value)" style="width:100%;" />
+    </div>
     <div class="loja-produtos-grid" id="lojaProdutos">
       <!-- Injetado via JS -->
     </div>
@@ -452,7 +455,10 @@ async function carregarConteudoExclusivo(id) {
   section.style.display = 'block'
   document.getElementById('lojaConteudoExclusivoLista').innerHTML = data.map((c, i) => `
     <div class="beneficio-item" id="conteudo-${i}" onclick="toggleConteudoExclusivo(${i})">
-      <div class="beneficio-titulo"><span>🔒 ${c.titulo}</span><span>▾</span></div>
+      <div class="beneficio-titulo" style="display:flex; align-items:center; gap:10px;">
+        ${c.foto_url ? `<img src="${c.foto_url}" alt="" style="width:40px; height:40px; border-radius:6px; object-fit:cover; flex-shrink:0;" />` : ''}
+        <span style="flex:1;">🔒 ${c.titulo}</span><span>▾</span>
+      </div>
       <div class="beneficio-corpo">
         ${c.corpo ? `<p>${c.corpo}</p>` : ''}
         ${c.link ? `<a href="${c.link}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Acessar conteúdo</a>` : ''}
@@ -603,7 +609,7 @@ function renderProdutosLoja(lista) {
       container.innerHTML = ordenada.map(p => `
             <div class="card" onclick="window.location.href='produto.html?id=${p.id}'">
               <div class="card-media" style="background:#E9DFC7;">
-                ${p.em_promocao ? '<span class="card-badge" style="position:absolute; top:10px; left:10px; background:var(--clay); color:#fff; font-size:11px; font-weight:700; padding:3px 10px; border-radius:999px;">🔥 Promoção</span>' : (p.sob_encomenda ? '<span class="card-badge" style="position:absolute; top:10px; left:10px; background:var(--olive); color:#fff; font-size:11px; font-weight:700; padding:3px 10px; border-radius:999px;">📦 Sob encomenda</span>' : '')}
+                ${p.em_promocao ? '<span class="card-badge" style="position:absolute; top:10px; left:10px; background:var(--clay); color:#fff; font-size:11px; font-weight:700; padding:3px 10px; border-radius:999px;">🔥 Promoção</span>' : ''}
                 ${p.fotos && p.fotos.length > 0
                   ? `<img src="${p.fotos[0]}" alt="${p.nome}" loading="lazy" />`
                   : `<span class="placeholder">🧵</span>`
@@ -613,6 +619,7 @@ function renderProdutosLoja(lista) {
                 <div class="card-cat">${p.categorias?.nome || 'Artesanato'}</div>
                 <div class="card-title">${p.nome}</div>
                 <div class="card-maker">${lojaData?.nome_loja || 'Artesão'}</div>
+                ${p.sob_encomenda ? `<div style="font-size:11px; color:var(--olive); font-weight:600; margin-top:2px;">📦 Sob encomenda${p.prazo_producao_dias ? ` — ${p.prazo_producao_dias} dia(s)` : ''}</div>` : ''}
                 <div class="card-foot">
                   ${renderPrecoCard(p)}
                   <button class="card-add" onclick="event.stopPropagation(); adicionarAoCarrinhoClique('${p.id}')">
@@ -661,6 +668,16 @@ function filtrarPorPasta(pastaId) {
   })
   const lista = pastaId ? produtosLoja.filter(p => p.pasta_id === pastaId) : produtosLoja
   renderProdutosLoja(lista)
+}
+
+function buscarProdutosDaLoja(termo) {
+  const termoLimpo = termo.trim().toLowerCase()
+  if (!termoLimpo) {
+    renderProdutosLoja(produtosLoja)
+    return
+  }
+  const encontrados = produtosLoja.filter(p => (p.nome || '').toLowerCase().includes(termoLimpo))
+  renderProdutosLoja(encontrados)
 }
 // ===== CARRINHO =====
     function carregarCarrinho() {

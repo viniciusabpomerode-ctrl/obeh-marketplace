@@ -14,8 +14,9 @@ const BUCKET_NAME = process.env.R2_BUCKET_NAME
 const PUBLIC_URL = process.env.R2_PUBLIC_URL // ex: https://pub-xxxxxxxx.r2.dev (sem barra no final)
 
 const MAX_BYTES = 500 * 1024 // 500KB por imagem (também validado no cliente)
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
-const ALLOWED_FOLDERS = ['produtos', 'lojas', 'cursos', 'pastas', 'apoio']
+const MAX_BYTES_PDF = 15 * 1024 * 1024 // 15MB pra PDF de curso (apostilas etc.)
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf']
+const ALLOWED_FOLDERS = ['produtos', 'lojas', 'cursos', 'pastas', 'apoio', 'conteudo-apoiadores', 'perfis']
 
 function sanitizeFilename(name) {
   const clean = (name || 'imagem').toLowerCase().replace(/[^a-z0-9.\-]/g, '-')
@@ -44,7 +45,7 @@ exports.handler = async (event) => {
   const { filename, contentType, folder } = body
 
   if (!contentType || !ALLOWED_TYPES.includes(contentType)) {
-    return { statusCode: 400, body: JSON.stringify({ error: 'Tipo de imagem não permitido. Use JPEG, PNG, WEBP ou GIF.' }) }
+    return { statusCode: 400, body: JSON.stringify({ error: 'Tipo de arquivo não permitido. Use JPEG, PNG, WEBP, GIF ou PDF.' }) }
   }
 
   const safeFolder = ALLOWED_FOLDERS.includes(folder) ? folder : 'produtos'
@@ -71,7 +72,7 @@ exports.handler = async (event) => {
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ uploadUrl, publicUrl, maxBytes: MAX_BYTES })
+      body: JSON.stringify({ uploadUrl, publicUrl, maxBytes: contentType === 'application/pdf' ? MAX_BYTES_PDF : MAX_BYTES })
     }
   } catch (err) {
     return { statusCode: 500, body: JSON.stringify({ error: 'Erro ao gerar URL de upload: ' + err.message }) }

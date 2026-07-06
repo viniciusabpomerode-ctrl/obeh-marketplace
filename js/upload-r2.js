@@ -123,6 +123,50 @@ async function uploadImagemR2(file, folder = 'produtos') {
   return publicUrl
 }
 
+// Upload de PDF (apostilas de curso etc.) — sem compressão, limite de 15MB.
+const PDF_MAX_BYTES = 15 * 1024 * 1024
+
+async function uploadPdfR2(file, folder = 'cursos') {
+  if (!file) throw new Error('Nenhum arquivo selecionado.')
+
+  if (file.type !== 'application/pdf') {
+    throw new Error(`"${file.name}" não é um PDF.`)
+  }
+
+  if (file.size > PDF_MAX_BYTES) {
+    throw new Error(`"${file.name}" tem ${(file.size / 1024 / 1024).toFixed(1)}MB — o limite é 15MB.`)
+  }
+
+  const presignRes = await fetch('/.netlify/functions/r2-presign', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ filename: file.name, contentType: file.type, folder })
+  })
+
+  if (!presignRes.ok) {
+    let msg = 'Não foi possível preparar o upload do PDF.'
+    try {
+      const errBody = await presignRes.json()
+      if (errBody?.error) msg = errBody.error
+    } catch (e) {}
+    throw new Error(msg)
+  }
+
+  const { uploadUrl, publicUrl } = await presignRes.json()
+
+  const putRes = await fetch(uploadUrl, {
+    method: 'PUT',
+    headers: { 'Content-Type': file.type },
+    body: file
+  })
+
+  if (!putRes.ok) {
+    throw new Error(`Falha ao enviar "${file.name}" para o armazenamento.`)
+  }
+
+  return publicUrl
+}
+
 // Apaga uma ou mais imagens do R2 (sem travar a ação principal se falhar —
 // é só limpeza, nunca deve impedir excluir/trocar algo por causa disso).
 async function deletarImagensR2(urls) {
@@ -141,5 +185,6 @@ async function deletarImagensR2(urls) {
 }
 
 window.uploadImagemR2 = uploadImagemR2
+window.uploadPdfR2 = uploadPdfR2
 window.deletarImagensR2 = deletarImagensR2
 window.R2_MAX_BYTES = R2_MAX_BYTES

@@ -19,9 +19,12 @@
         <img src="https://i.postimg.cc/gjpXKcn5/imagem-2026-07-01-110451621.png" alt="Obeh Logo" style="height:40px;" />
       </a>
       <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
-        <span id="userEmail" style="font-size:13px; color:var(--ink-soft);"></span>
+        <a href="index.html" class="btn btn-ghost" style="padding:6px 16px; font-size:12px;">← Início</a>
+        <a href="perfil.html" style="display:flex; flex-direction:column; align-items:center; gap:2px; text-decoration:none;">
+          <div id="userAvatarCircle" style="width:34px; height:34px; border-radius:50%; background:#E9DFC7; display:flex; align-items:center; justify-content:center; font-size:16px; overflow:hidden; border:1px solid var(--line);">🧵</div>
+          <span id="userNome" style="font-size:11px; color:var(--ink-soft); max-width:90px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></span>
+        </a>
         <a href="loja.html" class="btn btn-primary" style="padding:6px 16px; font-size:12px;">Ver minha loja</a>
-        <a href="perfil.html" class="btn btn-ghost" style="padding:6px 16px; font-size:12px;">👤 Meu perfil</a>
         <a href="#" onclick="logout()" class="btn btn-ghost" style="padding:6px 16px; font-size:12px;">Sair</a>
       </div>
     </div>
@@ -76,6 +79,8 @@
       <button class="btn btn-ghost" style="padding:6px 12px; font-size:12px;" onclick="bulkDesativar()">Desativar</button>
       <button class="btn btn-ghost" style="padding:6px 12px; font-size:12px;" onclick="document.getElementById('bulkFotoFile').click()">Trocar foto</button>
       <input type="file" id="bulkFotoFile" accept="image/*" style="display:none;" onchange="bulkTrocarFoto(this.files[0])" />
+      <button class="btn btn-ghost" style="padding:6px 12px; font-size:12px;" onclick="bulkAtivarPromocao()">Ativar promoção</button>
+      <button class="btn btn-ghost" style="padding:6px 12px; font-size:12px;" onclick="bulkDescontoPix()">Desconto no Pix</button>
       <button class="btn btn-ghost" style="padding:6px 12px; font-size:12px; color:#c94a4a;" onclick="bulkExcluir()">Excluir</button>
       <label style="font-size:12px; margin-left:auto; display:flex; align-items:center; gap:6px;">
         <input type="checkbox" id="selecionarTodos" onchange="toggleSelecionarTodos(this.checked)" /> Selecionar todos
@@ -123,11 +128,24 @@
           </div>
           <div class="form-group">
             <label>Peso e dimensões (pra calcular frete)</label>
+            <small style="color:var(--ink-soft); display:block; margin-bottom:6px;">Meça a <strong>caixa ou embalagem fechada</strong> que vai pro correio, não só o produto — é isso que a transportadora usa pra calcular o preço. Os valores abaixo são só um exemplo, ajuste pro seu produto real.</small>
             <div style="display:flex; gap:8px; flex-wrap:wrap;">
-              <input type="number" id="prodPeso" placeholder="Peso (kg)" value="0.3" min="0.01" step="0.01" style="flex:1; min-width:90px;" />
-              <input type="number" id="prodAltura" placeholder="Altura (cm)" value="10" min="1" style="flex:1; min-width:90px;" />
-              <input type="number" id="prodLargura" placeholder="Largura (cm)" value="15" min="1" style="flex:1; min-width:90px;" />
-              <input type="number" id="prodComprimento" placeholder="Comprimento (cm)" value="20" min="1" style="flex:1; min-width:90px;" />
+              <div style="flex:1; min-width:90px;">
+                <label style="font-size:11px; color:var(--ink-soft); display:block; margin-bottom:2px;">Peso (kg)</label>
+                <input type="number" id="prodPeso" value="0.3" min="0.01" step="0.01" style="width:100%;" />
+              </div>
+              <div style="flex:1; min-width:90px;">
+                <label style="font-size:11px; color:var(--ink-soft); display:block; margin-bottom:2px;">Altura (cm)</label>
+                <input type="number" id="prodAltura" value="10" min="1" style="width:100%;" />
+              </div>
+              <div style="flex:1; min-width:90px;">
+                <label style="font-size:11px; color:var(--ink-soft); display:block; margin-bottom:2px;">Largura (cm)</label>
+                <input type="number" id="prodLargura" value="15" min="1" style="width:100%;" />
+              </div>
+              <div style="flex:1; min-width:90px;">
+                <label style="font-size:11px; color:var(--ink-soft); display:block; margin-bottom:2px;">Comprimento (cm)</label>
+                <input type="number" id="prodComprimento" value="20" min="1" style="width:100%;" />
+              </div>
             </div>
           </div>
                 <div class="form-group">
@@ -153,8 +171,8 @@
         </div>
         <div class="toggle-row">
           <div class="toggle-label">
-            <strong>⭐ Dar destaque</strong>
-            <p>Prioriza este produto na vitrine da loja.</p>
+            <strong>⭐ Impulsionar (destaque)</strong>
+            <p>Prioriza este produto na vitrine da loja e nas buscas. Tem uma taxa de <strong>18%</strong> sobre as vendas <strong>só deste produto</strong> — vale independente do seu plano, e não muda a taxa dos seus outros produtos.</p>
           </div>
           <label class="toggle-switch">
             <input type="checkbox" id="prodDestaque" />
@@ -468,6 +486,10 @@
         <div class="form-group">
           <input type="text" id="conteudoLink" placeholder="Link (opcional, ex: vídeo, arquivo)" />
         </div>
+        <div class="form-group">
+          <label>Foto de capa (opcional)</label>
+          <input type="file" id="conteudoFotoFile" accept="image/*" />
+        </div>
         <button type="button" class="btn btn-ghost" onclick="publicarConteudoApoiadores()">Publicar</button>
         <small id="conteudoStatus" style="display:block; margin-top:6px;"></small>
         <div id="conteudoLista" style="margin-top:14px;"></div>
@@ -559,8 +581,9 @@
             </div>
           </div>
           <div class="form-group">
-            <label>PDF do curso (URL, opcional)</label>
-            <input type="text" id="cursoPdf" placeholder="https://link-do-pdf.pdf" />
+            <label>PDF do curso (arquivo ou URL — apostila, material de apoio etc.)</label>
+            <input type="file" id="cursoPdfFile" accept="application/pdf" />
+            <input type="text" id="cursoPdf" placeholder="https://link-do-pdf.pdf" style="margin-top:8px;" />
           </div>
           <button type="submit" class="btn btn-primary">Salvar curso</button>
         </form>
@@ -655,7 +678,6 @@
 
       currentUser = user
       currentUserId = user.id
-      document.getElementById('userEmail').textContent = user.email
 
       // Mostra o resultado da conexão com o Mercado Pago (se voltou do OAuth)
       const paramsMp = new URLSearchParams(window.location.search)
@@ -719,12 +741,17 @@
 
     // ===== CARREGAR DADOS DO USUÁRIO =====
     async function carregarDadosUsuario() {
-      // Busca plano do usuário
+      // Busca plano e dados de exibição (nome/foto) do usuário
       const { data, error } = await supabaseClient
         .from('users')
-        .select('plano')
+        .select('plano, nome, avatar')
         .eq('id', currentUserId)
         .maybeSingle()
+
+      const nomeEl = document.getElementById('userNome')
+      const avatarEl = document.getElementById('userAvatarCircle')
+      if (nomeEl) nomeEl.textContent = data?.nome || currentUser?.email || ''
+      if (avatarEl) avatarEl.innerHTML = data?.avatar ? `<img src="${data.avatar}" alt="Foto de perfil" style="width:100%; height:100%; object-fit:cover;" />` : '🧵'
 
       const isUserAdmin = (currentUser?.email || '').toLowerCase() === ADMIN_EMAIL
       let plano = 'free'
@@ -1316,12 +1343,15 @@
       }
 
       lista.innerHTML = data.map(c => `
-        <div style="border:1px solid var(--line); border-radius:8px; padding:10px; margin-bottom:8px;">
-          <div style="font-weight:500;">${c.titulo}</div>
-          ${c.corpo ? `<div style="font-size:13px; margin-top:4px;">${c.corpo}</div>` : ''}
-          ${c.link ? `<a href="${c.link}" target="_blank" rel="noopener" style="font-size:13px;">${c.link}</a>` : ''}
-          <div style="margin-top:6px;">
-            <button class="btn btn-ghost" style="font-size:12px; padding:4px 10px;" onclick="deletarConteudoApoiadores('${c.id}')">Excluir</button>
+        <div style="border:1px solid var(--line); border-radius:8px; padding:10px; margin-bottom:8px; display:flex; gap:10px;">
+          ${c.foto_url ? `<img src="${c.foto_url}" alt="" style="width:56px; height:56px; border-radius:6px; object-fit:cover; flex-shrink:0;" />` : ''}
+          <div style="flex:1; min-width:0;">
+            <div style="font-weight:500;">${c.titulo}</div>
+            ${c.corpo ? `<div style="font-size:13px; margin-top:4px;">${c.corpo}</div>` : ''}
+            ${c.link ? `<a href="${c.link}" target="_blank" rel="noopener" style="font-size:13px;">${c.link}</a>` : ''}
+            <div style="margin-top:6px;">
+              <button class="btn btn-ghost" style="font-size:12px; padding:4px 10px;" onclick="deletarConteudoApoiadores('${c.id}')">Excluir</button>
+            </div>
           </div>
         </div>
       `).join('')
@@ -1332,15 +1362,27 @@
       const titulo = document.getElementById('conteudoTitulo').value.trim()
       const corpo = document.getElementById('conteudoCorpo').value.trim()
       const link = document.getElementById('conteudoLink').value.trim()
+      const fotoFile = document.getElementById('conteudoFotoFile').files[0]
 
       if (!titulo) {
         statusEl.innerHTML = '❌ Dê um título pro post.'
         return
       }
 
+      let foto_url = null
+      if (fotoFile) {
+        statusEl.innerHTML = 'Enviando foto...'
+        try {
+          foto_url = await uploadImagemR2(fotoFile, 'conteudo-apoiadores')
+        } catch (err) {
+          statusEl.innerHTML = '❌ ' + err.message
+          return
+        }
+      }
+
       const { error } = await supabaseClient
         .from('conteudo_apoiadores')
-        .insert({ loja_id: lojaData.id, titulo, corpo, link: link || null })
+        .insert({ loja_id: lojaData.id, titulo, corpo, link: link || null, foto_url })
 
       if (error) {
         statusEl.innerHTML = '❌ Não foi possível publicar. Tente novamente.'
@@ -1350,6 +1392,7 @@
       document.getElementById('conteudoTitulo').value = ''
       document.getElementById('conteudoCorpo').value = ''
       document.getElementById('conteudoLink').value = ''
+      document.getElementById('conteudoFotoFile').value = ''
       statusEl.innerHTML = '<span style="color:#2f8f4e;">✅ Publicado!</span>'
       await carregarConteudoApoiadores()
     }
@@ -1935,7 +1978,6 @@ pasta_id,
 
       const titulo = document.getElementById('cursoTitulo').value.trim()
       const descricao = document.getElementById('cursoDescricao').value.trim()
-      const pdf_url = document.getElementById('cursoPdf').value.trim()
       const preco = parseFloat(document.getElementById('cursoPreco').value) || 0
 
       if (!titulo) {
@@ -1956,6 +1998,15 @@ pasta_id,
         capa_url = capaFile ? await uploadImagemR2(capaFile, 'cursos') : document.getElementById('cursoCapa').value.trim()
       } catch (error) {
         alert('❌ ' + (error.message || 'Erro ao enviar a imagem de capa.'))
+        return
+      }
+
+      let pdf_url
+      try {
+        const pdfFile = document.getElementById('cursoPdfFile').files[0]
+        pdf_url = pdfFile ? await uploadPdfR2(pdfFile, 'cursos') : document.getElementById('cursoPdf').value.trim()
+      } catch (error) {
+        alert('❌ ' + (error.message || 'Erro ao enviar o PDF.'))
         return
       }
 
@@ -2241,6 +2292,40 @@ pasta_id,
       await carregarProdutos()
     }
 
+    async function bulkAtivarPromocao() {
+      const ids = getSelecionadosIds()
+      if (ids.length === 0) return
+      const pctTexto = prompt('Qual o percentual de desconto pra aplicar em todos os selecionados? (ex: 10)')
+      const pct = parseFloat(pctTexto)
+      if (!pctTexto || isNaN(pct) || pct <= 0 || pct >= 100) {
+        alert('❌ Informe um percentual válido entre 1 e 99.')
+        return
+      }
+      for (const id of ids) {
+        const produto = produtosCache.find(p => p.id === id)
+        if (!produto) continue
+        const precoAtual = Number(produto.preco)
+        const novoPreco = Math.round(precoAtual * (1 - pct / 100) * 100) / 100
+        await atualizarProduto(id, { em_promocao: true, preco_antigo: precoAtual, preco: novoPreco })
+      }
+      await carregarProdutos()
+    }
+
+    async function bulkDescontoPix() {
+      const ids = getSelecionadosIds()
+      if (ids.length === 0) return
+      const pctTexto = prompt('Qual o percentual de desconto no Pix pra aplicar em todos os selecionados? (ex: 5, ou 0 pra remover)')
+      const pct = parseFloat(pctTexto)
+      if (pctTexto === null || isNaN(pct) || pct < 0 || pct >= 100) {
+        alert('❌ Informe um percentual válido entre 0 e 99.')
+        return
+      }
+      for (const id of ids) {
+        await atualizarProduto(id, { desconto_pix_percentual: pct || null })
+      }
+      await carregarProdutos()
+    }
+
     async function bulkExcluir() {
       const ids = getSelecionadosIds()
       if (ids.length === 0) return
@@ -2343,6 +2428,8 @@ pasta_id,
     window.enviarSuporte = enviarSuporte
     window.bulkAtivar = bulkAtivar
     window.bulkDesativar = bulkDesativar
+    window.bulkAtivarPromocao = bulkAtivarPromocao
+    window.bulkDescontoPix = bulkDescontoPix
     window.bulkTrocarFoto = bulkTrocarFoto
     window.bulkExcluir = bulkExcluir
     window.toggleSelecionarTodos = toggleSelecionarTodos

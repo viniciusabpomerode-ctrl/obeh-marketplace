@@ -21,6 +21,10 @@ const SUPABASE_URL = 'https://pzvqtpestzrmipcyqbsp.supabase.co'
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
 const SITE_URL = process.env.SITE_URL || 'https://obeh.com.br'
 
+// Taxa fixa pra produto impulsionado (destaque=true), vale pra qualquer
+// plano e só incide sobre as vendas daquele produto específico.
+const TAXA_PRODUTO_IMPULSIONADO = 18
+
 async function supabaseRequest(path, options = {}) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
     method: options.method || 'GET',
@@ -89,7 +93,7 @@ exports.handler = async (event) => {
     // 1. Busca todos os produtos do grupo (todos devem ser da mesma loja)
     const ids = itens.map(i => i.produtoId).filter(Boolean)
     const produtoRes = await supabaseRequest(
-      `produtos?id=in.(${ids.join(',')})&select=id,nome,preco,loja_id,user_id,lojas(id,nome_loja,user_id)`
+      `produtos?id=in.(${ids.join(',')})&select=id,nome,preco,loja_id,user_id,destaque,lojas(id,nome_loja,user_id)`
     )
     const produtos = await produtoRes.json()
 
@@ -140,7 +144,8 @@ exports.handler = async (event) => {
     const valorTotal = Math.round((valorProdutos + valorFrete) * 100) / 100
 
     // 4. Busca o plano do vendedor pra saber a taxa da Obeh — incide só sobre
-    // os produtos, nunca sobre o frete
+    // os produtos, nunca sobre o frete. Produto impulsionado (destaque) paga
+    // sempre 18%, não importa o plano.
     const usuarioRes = await supabaseRequest(`users?id=eq.${vendedorId}&select=id,plano`)
     const usuarios = await usuarioRes.json()
     const planoSlug = usuarios[0]?.plano || 'free'
@@ -148,7 +153,10 @@ exports.handler = async (event) => {
     const planoRes = await supabaseRequest(`planos?slug=eq.${planoSlug}&select=taxa_percentual`)
     const planos = await planoRes.json()
     const taxaPercentual = Number(planos[0]?.taxa_percentual ?? 5)
-    const valorTaxa = Math.round(valorProdutos * (taxaPercentual / 100) * 100) / 100
+    const valorTaxa = Math.round(itensPagamento.reduce((acc, ip) => {
+      const taxaItem = ip.produto.destaque ? TAXA_PRODUTO_IMPULSIONADO : taxaPercentual
+      return acc + ip.subtotal * (taxaItem / 100)
+    }, 0) * 100) / 100
 
     // 5. Cartão exige que o vendedor tenha conectado o Mercado Pago (mesma
     // regra do Pix — sem fallback de link estático)

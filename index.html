@@ -523,7 +523,7 @@
       grid.innerHTML = produtosFiltrados.map(p => `
               <div class="card" onclick="window.location.href='produto.html?id=${p.id}'">
                 <div class="card-media" style="background:${p.fotos && p.fotos.length > 0 ? '#E9DFC7' : '#E9DFC7'}">
-                  ${p.em_promocao ? '<span class="card-badge" style="position:absolute; top:10px; left:10px; background:var(--clay); color:#fff; font-size:11px; font-weight:700; padding:3px 10px; border-radius:999px;">🔥 Promoção</span>' : (p.sob_encomenda ? '<span class="card-badge" style="position:absolute; top:10px; left:10px; background:var(--olive); color:#fff; font-size:11px; font-weight:700; padding:3px 10px; border-radius:999px;">📦 Sob encomenda</span>' : '')}
+                  ${p.em_promocao ? '<span class="card-badge" style="position:absolute; top:10px; left:10px; background:var(--clay); color:#fff; font-size:11px; font-weight:700; padding:3px 10px; border-radius:999px;">🔥 Promoção</span>' : ''}
                   ${p.fotos && p.fotos.length > 0
                     ? `<img src="${p.fotos[0]}" alt="${p.nome}" loading="lazy" />`
                     : `<span class="placeholder">🧵</span>`
@@ -533,6 +533,7 @@
                   <div class="card-cat">${p.categorias?.nome || 'Artesanato'}</div>
                   <div class="card-title">${p.nome}</div>
                   <div class="card-maker">${p.lojas?.nome_loja || 'Artesão'}</div>
+                  ${p.sob_encomenda ? `<div style="font-size:11px; color:var(--olive); font-weight:600; margin-top:2px;">📦 Sob encomenda${p.prazo_producao_dias ? ` — ${p.prazo_producao_dias} dia(s)` : ''}</div>` : ''}
                   <div class="card-foot">
                     ${renderPrecoCard(p)}
                     <button class="card-add" onclick="event.stopPropagation(); adicionarAoCarrinhoClique('${p.id}')">
@@ -720,7 +721,7 @@
       grid.innerHTML = ordenarPorDestaque(produtosFiltrados).map(p => `
               <div class="card" onclick="window.location.href='produto.html?id=${p.id}'">
                 <div class="card-media" style="background:${p.fotos && p.fotos.length > 0 ? '#E9DFC7' : '#E9DFC7'}">
-                  ${p.em_promocao ? '<span class="card-badge" style="position:absolute; top:10px; left:10px; background:var(--clay); color:#fff; font-size:11px; font-weight:700; padding:3px 10px; border-radius:999px;">🔥 Promoção</span>' : (p.sob_encomenda ? '<span class="card-badge" style="position:absolute; top:10px; left:10px; background:var(--olive); color:#fff; font-size:11px; font-weight:700; padding:3px 10px; border-radius:999px;">📦 Sob encomenda</span>' : '')}
+                  ${p.em_promocao ? '<span class="card-badge" style="position:absolute; top:10px; left:10px; background:var(--clay); color:#fff; font-size:11px; font-weight:700; padding:3px 10px; border-radius:999px;">🔥 Promoção</span>' : ''}
                   ${p.fotos && p.fotos.length > 0
                     ? `<img src="${p.fotos[0]}" alt="${p.nome}" loading="lazy" />`
                     : `<span class="placeholder">🧵</span>`
@@ -730,6 +731,7 @@
                   <div class="card-cat">${p.categorias?.nome || 'Artesanato'}</div>
                   <div class="card-title">${p.nome}</div>
                   <div class="card-maker">${p.lojas?.nome_loja || 'Artesão'}</div>
+                  ${p.sob_encomenda ? `<div style="font-size:11px; color:var(--olive); font-weight:600; margin-top:2px;">📦 Sob encomenda${p.prazo_producao_dias ? ` — ${p.prazo_producao_dias} dia(s)` : ''}</div>` : ''}
                   <div class="card-foot">
                     ${renderPrecoCard(p)}
                     <button class="card-add" onclick="event.stopPropagation(); adicionarAoCarrinhoClique('${p.id}')">

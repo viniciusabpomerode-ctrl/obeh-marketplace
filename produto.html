@@ -212,6 +212,16 @@
 
       <div id="avaliacoesLista"></div>
     </div>
+
+    <div id="relacionadosMesmaLojaSection" style="display:none; margin-top:32px; border-top:1px solid var(--line); padding-top:24px;">
+      <h2 style="font-size:20px; margin-bottom:16px;">🏪 Mais desta loja</h2>
+      <div class="produto-grid" id="relacionadosMesmaLoja" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(160px, 1fr)); gap:16px;"></div>
+    </div>
+
+    <div id="relacionadosDestaqueSection" style="display:none; margin-top:32px; border-top:1px solid var(--line); padding-top:24px;">
+      <h2 style="font-size:20px; margin-bottom:16px;">✨ Produtos em destaque</h2>
+      <div class="produto-grid" id="relacionadosDestaque" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(160px, 1fr)); gap:16px;"></div>
+    </div>
   </div>
 
   <!-- ===== CARRINHO MODAL ===== -->
@@ -428,6 +438,59 @@
       lojaData = data.lojas
 
       renderizarProduto(data)
+      carregarProdutosRelacionados(data)
+    }
+
+    // ===== PRODUTOS RELACIONADOS =====
+    function renderizarCardsRelacionados(lista) {
+      return lista.map(p => `
+        <div class="card" onclick="window.location.href='produto.html?id=${p.id}'">
+          <div class="card-media" style="background:#E9DFC7;">
+            ${p.fotos && p.fotos.length > 0
+              ? `<img src="${p.fotos[0]}" alt="${p.nome}" loading="lazy" />`
+              : `<span class="placeholder">🧵</span>`
+            }
+          </div>
+          <div class="card-body">
+            <div class="card-title">${p.nome}</div>
+            <div class="card-maker">${p.lojas?.nome_loja || ''}</div>
+            <div class="price">R$ ${Number(p.preco).toFixed(2)}</div>
+          </div>
+        </div>
+      `).join('')
+    }
+
+    async function carregarProdutosRelacionados(p) {
+      // Mais produtos da mesma loja
+      const { data: mesmaLoja } = await supabaseClient
+        .from('produtos')
+        .select('id, nome, preco, fotos')
+        .eq('loja_id', p.loja_id)
+        .eq('status', 'ativo')
+        .neq('id', p.id)
+        .limit(6)
+
+      if (mesmaLoja && mesmaLoja.length > 0) {
+        document.getElementById('relacionadosMesmaLojaSection').style.display = 'block'
+        document.getElementById('relacionadosMesmaLoja').innerHTML = renderizarCardsRelacionados(mesmaLoja)
+      }
+
+      // Produtos em destaque de qualquer loja (exclui os já mostrados acima e o atual)
+      const { data: destaque } = await supabaseClient
+        .from('produtos')
+        .select('id, nome, preco, fotos, lojas(nome_loja)')
+        .eq('destaque', true)
+        .eq('status', 'ativo')
+        .neq('id', p.id)
+        .limit(6)
+
+      const idsMesmaLoja = new Set((mesmaLoja || []).map(x => x.id))
+      const destaqueFiltrado = (destaque || []).filter(x => !idsMesmaLoja.has(x.id))
+
+      if (destaqueFiltrado.length > 0) {
+        document.getElementById('relacionadosDestaqueSection').style.display = 'block'
+        document.getElementById('relacionadosDestaque').innerHTML = renderizarCardsRelacionados(destaqueFiltrado)
+      }
     }
 
     // ===== RENDERIZAR PRODUTO =====

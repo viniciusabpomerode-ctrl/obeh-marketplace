@@ -313,7 +313,7 @@
               <div style="border:1px solid var(--line); border-radius:8px; margin-bottom:16px; overflow:hidden;">
                 <div style="background:var(--bg-card); padding:10px 16px; font-weight:600; display:flex; justify-content:space-between; align-items:center;">
                   <span>🏪 ${grupo.nomeLoja}</span>
-                  <span style="font-weight:400; font-size:13px; color:var(--ink-soft);">Subtotal: R$ ${grupo.subtotal.toFixed(2)}</span>
+                  <span style="font-weight:400; font-size:13px; color:var(--ink-soft);">${grupo.itensCompletos.length} item(ns)</span>
                 </div>
                 ${grupo.itensCompletos.map(item => `
                   <div class="carrinho-item" style="border:none; border-radius:0; border-top:1px solid var(--line); margin-bottom:0;">
@@ -335,6 +335,16 @@
                     <button class="remover" onclick="removerItem('${item.id}')">✕</button>
                   </div>
                 `).join('')}
+                <div style="border-top:1px solid var(--line); padding:12px 16px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; background:var(--bg-card);">
+                  <span style="font-weight:600;">Total desta loja: R$ ${grupo.subtotal.toFixed(2)}</span>
+                  <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                    <button class="btn btn-ghost" style="padding:6px 14px; font-size:13px;" onclick="pagarComPix('${grupo.lojaId}')">💠 Pix</button>
+                    <button class="btn btn-ghost" style="padding:6px 14px; font-size:13px;" onclick="abrirPagamentoCartao('${grupo.lojaId}')">💳 Cartão</button>
+                    <button class="btn btn-primary" style="padding:6px 14px; font-size:13px;" onclick="finalizarCompra('${grupo.lojaId}', this)">Finalizar esta loja</button>
+                  </div>
+                </div>
+                <div id="pixResultado-${grupo.lojaId}" style="padding:0 16px 16px;"></div>
+                <div id="cartaoResultado-${grupo.lojaId}" style="padding:0 16px 16px;"></div>
               </div>
             `).join('')}
 
@@ -356,25 +366,19 @@
         <div id="cupomResultado" style="margin-top:10px; font-size:14px;"></div>
       </div>
 
-      ${gruposVisuais.length > 1 ? `
-      <div style="background:#fff8e6; border:1px solid #e8d38a; border-radius:8px; padding:12px 16px; margin-bottom:16px; font-size:13px;">
-        ⚠️ Seu carrinho tem produtos de <strong>${gruposVisuais.length} lojas diferentes</strong>. Cada loja é uma cobrança separada — o valor abaixo é só a soma de referência, você vai pagar uma de cada vez.
-      </div>` : ''}
-
       <div class="carrinho-total">
+              ${gruposVisuais.length === 1 ? `
               <div>
-                <div class="total-label">${gruposVisuais.length > 1 ? 'Total geral (referência)' : 'Total'}</div>
+                <div class="total-label">Total</div>
                 <div class="total-value">R$ ${getTotalComDesconto().toFixed(2)}</div>
               </div>
+              ` : `
+              <div style="font-size:13px; color:var(--ink-soft);">Cada loja acima é cobrada separadamente — use o botão "Finalizar esta loja" de cada uma.</div>
+              `}
               <div style="display:flex; gap:12px; flex-wrap:wrap;">
                 <button class="btn btn-ghost" onclick="limparCarrinho()">Limpar carrinho</button>
-                <button class="btn btn-ghost" onclick="pagarComPix()">💠 Pagar com Pix</button>
-                ${gruposVisuais.length === 1 ? `<button class="btn btn-ghost" onclick="abrirPagamentoCartao()">💳 Pagar com cartão</button>` : ''}
-                <button class="btn btn-primary" onclick="finalizarCompra()">Finalizar compra</button>
               </div>
             </div>
-            <div id="pixResultado" style="margin-top:16px;"></div>
-            <div id="cartaoResultado" style="margin-top:16px;"></div>
           `
     }
 
@@ -420,7 +424,10 @@
       return cep.length === 8 ? cep : undefined
     }
 
-    async function finalizarCompra() {
+    // lojaId opcional: quando vem de um botão "Finalizar esta loja", processa
+    // só aquele grupo. Sem lojaId, processa todas as lojas do carrinho (cada
+    // uma ainda vira uma cobrança separada, uma por vez).
+    async function finalizarCompra(lojaId, btnEl) {
       if (carrinho.length === 0) {
         alert('🛒 Seu carrinho está vazio!')
         return
@@ -439,18 +446,18 @@
         return
       }
 
-      const quantidade = getQuantidadeCarrinho()
+      const grupos = agruparCarrinhoPorLoja().filter(g => !lojaId || g.lojaId === lojaId)
+      const quantidade = grupos.reduce((acc, g) => acc + g.itens.reduce((a, i) => a + i.quantidade, 0), 0)
       if (!confirm(`🛍️ Confirmar compra de ${quantidade} item(s)?`)) {
         return
       }
 
-      const btnFinalizar = document.querySelector('.carrinho-total .btn-primary')
+      const btnFinalizar = btnEl || document.querySelector('.carrinho-total .btn-primary')
       if (btnFinalizar) {
         btnFinalizar.disabled = true
         btnFinalizar.textContent = 'Processando...'
       }
 
-      const grupos = agruparCarrinhoPorLoja()
       const resultados = []
       const erros = []
 
@@ -466,7 +473,7 @@
             erros.push(grupo.nomeLoja)
             continue
           }
-          resultados.push({ nome: grupo.nomeLoja, initPoint: data.initPoint })
+          resultados.push({ nome: grupo.nomeLoja, lojaId: grupo.lojaId, initPoint: data.initPoint })
         } catch (err) {
           erros.push(grupo.nomeLoja)
         }
@@ -474,7 +481,7 @@
 
       if (btnFinalizar) {
         btnFinalizar.disabled = false
-        btnFinalizar.textContent = 'Finalizar compra'
+        btnFinalizar.textContent = lojaId ? 'Finalizar esta loja' : 'Finalizar compra'
       }
 
       if (resultados.length === 0) {
@@ -482,10 +489,10 @@
         return
       }
 
-      carrinho = []
+      resultados.forEach(r => removerLojaDoCarrinho(r.lojaId))
       renderizarCarrinhoCompleto()
       atualizarCarrinhoUI()
-      document.getElementById('cartCount').textContent = 0
+      document.getElementById('cartCount').textContent = getQuantidadeCarrinho()
 
       if (erros.length > 0) {
         alert(`⚠️ Não foi possível iniciar o pagamento de: ${erros.join(', ')}. As outras lojas seguem normalmente pro pagamento.`)
@@ -496,8 +503,9 @@
         return
       }
 
-      // Carrinho com produtos de lojas diferentes: o Mercado Pago processa um
-      // pagamento por vez pra cada loja, então mostra um link pra cada uma.
+      // Múltiplas lojas processadas de uma vez (botão "Finalizar compra"
+      // geral): o Mercado Pago processa um pagamento por vez pra cada loja,
+      // então mostra um link pra cada uma.
       const container = document.getElementById('carrinhoContent')
       container.innerHTML = `
         <div class="carrinho-vazio">
@@ -510,8 +518,18 @@
       `
     }
 
+    // Remove do carrinho só os itens de uma loja (usado depois que o
+    // pagamento daquela loja foi iniciado com sucesso — as outras lojas do
+    // carrinho continuam intactas)
+    function removerLojaDoCarrinho(lojaId) {
+      carrinho = carrinho.filter(item => (item.loja_id || 'sem-loja') !== lojaId)
+      salvarCarrinhoStorage()
+    }
+
     // ===== PAGAR COM PIX (split automático) =====
-    async function pagarComPix() {
+    // lojaId opcional: sem ele, gera Pix pra todas as lojas do carrinho de
+    // uma vez (um QR code por loja); com lojaId, só daquela loja.
+    async function pagarComPix(lojaId) {
       if (carrinho.length === 0) {
         alert('🛒 Seu carrinho está vazio!')
         return
@@ -530,10 +548,10 @@
         return
       }
 
-      const resultadoEl = document.getElementById('pixResultado')
-      resultadoEl.innerHTML = '<p style="color:var(--ink-soft); font-size:14px;">Gerando Pix...</p>'
+      const grupos = agruparCarrinhoPorLoja().filter(g => !lojaId || g.lojaId === lojaId)
+      const resultadoEl = lojaId ? document.getElementById(`pixResultado-${lojaId}`) : document.getElementById('pixResultado-geral')
+      if (resultadoEl) resultadoEl.innerHTML = '<p style="color:var(--ink-soft); font-size:14px;">Gerando Pix...</p>'
 
-      const grupos = agruparCarrinhoPorLoja()
       const resultados = []
       const erros = []
 
@@ -549,35 +567,42 @@
             erros.push(`${grupo.nomeLoja}: ${data.error || 'erro desconhecido'}`)
             continue
           }
-          resultados.push({ nome: grupo.nomeLoja, pedidoId: data.pedidoId, qrCode: data.qrCode, qrCodeBase64: data.qrCodeBase64, valorTotal: data.valorTotal })
+          resultados.push({ nome: grupo.nomeLoja, lojaId: grupo.lojaId, pedidoId: data.pedidoId, qrCode: data.qrCode, qrCodeBase64: data.qrCodeBase64, valorTotal: data.valorTotal })
         } catch (err) {
           erros.push(`${grupo.nomeLoja}: erro de conexão`)
         }
       }
 
       if (resultados.length === 0) {
-        resultadoEl.innerHTML = `<p style="color:#c94a4a; font-size:14px;">❌ Não foi possível gerar o Pix.${erros.length ? '<br>' + erros.join('<br>') : ''}</p>`
+        if (resultadoEl) resultadoEl.innerHTML = `<p style="color:#c94a4a; font-size:14px;">❌ Não foi possível gerar o Pix.${erros.length ? '<br>' + erros.join('<br>') : ''}</p>`
         return
       }
 
-      resultadoEl.innerHTML = `
-        ${erros.length > 0 ? `<p style="color:#c94a4a; font-size:13px; margin-bottom:12px;">⚠️ ${erros.join(', ')}</p>` : ''}
-        ${resultados.map((r, i) => `
-          <div style="border:1px solid var(--line); border-radius:8px; padding:16px; margin-bottom:12px; text-align:center;">
-            <p style="font-weight:600; margin-bottom:4px;">${r.nome}</p>
+      // Cada resultado é mostrado no bloco da própria loja (ou, quando gerado
+      // pra várias lojas de uma vez, empilhado no bloco da primeira só pra
+      // não perder o link — o normal é usar o botão de cada loja).
+      resultados.forEach(r => {
+        const alvoEl = document.getElementById(`pixResultado-${r.lojaId}`) || resultadoEl
+        if (!alvoEl) return
+        alvoEl.innerHTML = `
+          <div style="border:1px solid var(--line); border-radius:8px; padding:16px; margin-top:8px; text-align:center;">
             <p style="font-size:13px; color:var(--ink-soft); margin-bottom:10px;">Total: R$ ${Number(r.valorTotal).toFixed(2)}</p>
             <img src="data:image/png;base64,${r.qrCodeBase64}" alt="QR Code Pix" style="width:200px; height:200px; margin:0 auto 10px;" />
             <textarea readonly style="width:100%; font-size:11px; padding:8px; border:1px solid var(--line); border-radius:6px; resize:none; height:60px;">${r.qrCode}</textarea>
             <button class="btn btn-ghost" style="margin-top:8px;" onclick="navigator.clipboard.writeText('${r.qrCode}'); this.textContent='Copiado!'">Copiar código</button>
             <p id="pixStatus-${r.pedidoId}" style="margin-top:10px; font-size:13px; color:var(--ink-soft);">⏳ Aguardando pagamento...</p>
           </div>
-        `).join('')}
-      `
+        `
+      })
 
-      resultados.forEach(r => monitorarPagamentoPix(r.pedidoId))
+      if (erros.length > 0 && resultadoEl) {
+        resultadoEl.insertAdjacentHTML('afterbegin', `<p style="color:#c94a4a; font-size:13px; margin-bottom:8px;">⚠️ ${erros.join(', ')}</p>`)
+      }
+
+      resultados.forEach(r => monitorarPagamentoPix(r.pedidoId, r.lojaId))
     }
 
-    async function monitorarPagamentoPix(pedidoId, tentativas = 0) {
+    async function monitorarPagamentoPix(pedidoId, lojaId, tentativas = 0) {
       if (!pedidoId || tentativas > 60) return // ~5 minutos (60 x 5s)
 
       const { data } = await supabaseClient.from('vendas').select('status').eq('pedido_id', pedidoId).limit(1).maybeSingle()
@@ -587,9 +612,9 @@
       if (data?.status === 'pago') {
         statusEl.textContent = '✅ Pagamento confirmado!'
         statusEl.style.color = '#2f7a4d'
-        carrinho = []
+        if (lojaId) removerLojaDoCarrinho(lojaId)
         atualizarCarrinhoUI()
-        document.getElementById('cartCount').textContent = 0
+        document.getElementById('cartCount').textContent = getQuantidadeCarrinho()
         return
       }
 
@@ -599,13 +624,13 @@
         return
       }
 
-      setTimeout(() => monitorarPagamentoPix(pedidoId, tentativas + 1), 5000)
+      setTimeout(() => monitorarPagamentoPix(pedidoId, lojaId, tentativas + 1), 5000)
     }
 
     // ===== PAGAR COM CARTÃO (Card Payment Brick — só carrinho de uma loja) =====
     let cardBrickController = null
 
-    async function abrirPagamentoCartao() {
+    async function abrirPagamentoCartao(lojaId) {
       if (carrinho.length === 0) {
         alert('🛒 Seu carrinho está vazio!')
         return
@@ -619,19 +644,15 @@
         return
       }
 
-      const grupos = agruparCarrinhoPorLoja()
-      if (grupos.length !== 1) {
-        alert('⚠️ Pagamento com cartão só está disponível quando todos os produtos são da mesma loja. Separe a compra ou use Pix/Finalizar compra.')
-        return
-      }
-      const grupo = grupos[0]
+      const grupo = agruparCarrinhoPorLoja().find(g => g.lojaId === lojaId)
+      if (!grupo) return
 
       const cepDestino = getCepDestinoInformado()
       if (!cepDestino && !confirm('⚠️ Você não informou o CEP pra calcular o frete — a compra vai seguir sem cobrar frete. Continuar assim mesmo?')) {
         return
       }
 
-      const resultadoEl = document.getElementById('cartaoResultado')
+      const resultadoEl = document.getElementById(`cartaoResultado-${lojaId}`)
       resultadoEl.innerHTML = '<p style="color:var(--ink-soft); font-size:14px;">Carregando formulário de pagamento...</p>'
 
       try {
@@ -646,10 +667,10 @@
         const itensCompletos = grupo.itens.map(i => carrinho.find(c => c.id === i.produtoId)).filter(Boolean)
         const valorAproximado = itensCompletos.reduce((acc, item) => acc + Number(item.preco) * (1 - desconto / 100) * item.quantidade, 0)
 
+        const containerId = `cardPaymentBrick_container_${lojaId}`
         resultadoEl.innerHTML = `
-          <div style="border:1px solid var(--line); border-radius:8px; padding:16px;">
-            <p style="font-weight:600; margin-bottom:12px;">💳 Pagamento com cartão — ${grupo.nomeLoja}</p>
-            <div id="cardPaymentBrick_container"></div>
+          <div style="border:1px solid var(--line); border-radius:8px; padding:16px; margin-top:8px;">
+            <div id="${containerId}"></div>
           </div>
         `
 
@@ -659,14 +680,14 @@
         }
 
         const mp = new MercadoPago(chaveData.publicKey, { locale: 'pt-BR' })
-        cardBrickController = await mp.bricks().create('cardPayment', 'cardPaymentBrick_container', {
+        cardBrickController = await mp.bricks().create('cardPayment', containerId, {
           initialization: { amount: Math.round(valorAproximado * 100) / 100 },
           callbacks: {
             onReady: () => {},
             onSubmit: (cardFormData) => processarPagamentoCartao(grupo, cepDestino, cardFormData),
             onError: (error) => {
               console.error('Erro no formulário de cartão:', error)
-              document.getElementById('cartaoResultado').insertAdjacentHTML('beforeend', '<p style="color:#c94a4a; font-size:13px; margin-top:8px;">❌ Erro no formulário de cartão. Confira os dados e tente novamente.</p>')
+              resultadoEl.insertAdjacentHTML('beforeend', '<p style="color:#c94a4a; font-size:13px; margin-top:8px;">❌ Erro no formulário de cartão. Confira os dados e tente novamente.</p>')
             }
           }
         })
@@ -681,7 +702,7 @@
     // a Obeh nunca vê o número do cartão).
     async function processarPagamentoCartao(grupo, cepDestino, cardFormData) {
       const usuario = await getCurrentUser()
-      const resultadoEl = document.getElementById('cartaoResultado')
+      const resultadoEl = document.getElementById(`cartaoResultado-${grupo.lojaId}`)
 
       try {
         const res = await fetch('/.netlify/functions/mp-criar-pagamento-cartao', {
@@ -698,14 +719,16 @@
 
         if (data.status === 'approved') {
           resultadoEl.innerHTML = `<div style="border:1px solid var(--line); border-radius:8px; padding:16px; text-align:center;"><p style="font-weight:600; color:#2f7a4d;">✅ Pagamento aprovado!</p><p style="font-size:13px; color:var(--ink-soft); margin-top:4px;">Total: R$ ${Number(data.valorTotal).toFixed(2)}</p></div>`
-          carrinho = []
+          // Só tira do modelo de dados agora — não re-renderiza a lista ainda,
+          // senão o bloco desta loja (com a mensagem de sucesso) some na hora
+          removerLojaDoCarrinho(grupo.lojaId)
           atualizarCarrinhoUI()
-          document.getElementById('cartCount').textContent = 0
+          document.getElementById('cartCount').textContent = getQuantidadeCarrinho()
         } else if (data.status === 'in_process' || data.status === 'pending') {
           resultadoEl.innerHTML = `<div style="border:1px solid var(--line); border-radius:8px; padding:16px; text-align:center;"><p style="font-weight:600;">⏳ Pagamento em análise</p><p style="font-size:13px; color:var(--ink-soft); margin-top:4px;">Você vai receber a confirmação em breve.</p></div>`
-          carrinho = []
+          removerLojaDoCarrinho(grupo.lojaId)
           atualizarCarrinhoUI()
-          document.getElementById('cartCount').textContent = 0
+          document.getElementById('cartCount').textContent = getQuantidadeCarrinho()
         } else {
           resultadoEl.innerHTML = `<div style="border:1px solid var(--line); border-radius:8px; padding:16px; text-align:center;"><p style="font-weight:600; color:#c94a4a;">❌ Pagamento recusado</p><p style="font-size:13px; color:var(--ink-soft); margin-top:4px;">${data.statusDetail || 'Tente outro cartão.'}</p></div>`
         }
