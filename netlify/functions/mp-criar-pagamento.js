@@ -23,6 +23,7 @@
 const SUPABASE_URL = 'https://pzvqtpestzrmipcyqbsp.supabase.co'
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
 const SITE_URL = process.env.SITE_URL || 'https://obeh.com.br'
+const { calcularFretesPorLoja } = require('./lib/frete')
 
 // Taxa fixa pra produto impulsionado (destaque=true), vale pra qualquer
 // plano e só incide sobre as vendas daquele produto específico.
@@ -47,21 +48,16 @@ async function supabaseRequest(path, options = {}) {
   return res
 }
 
-// Busca o frete mais barato disponível pra esse grupo de itens, reaproveitando
-// a mesma priorização usada em calcular-frete.js (SuperFrete > Correios >
-// manual por região > estimativa). Se não der pra calcular, segue sem cobrar
-// frete a não travar a compra por causa disso.
+// Busca o frete mais barato disponível pra esse grupo de itens, chamando a
+// mesma função usada pelo endpoint público calcular-frete.js diretamente
+// (sem HTTP no meio) — assim o valor cobrado aqui é sempre igual ao valor
+// mostrado no carrinho. Se não der pra calcular, segue sem cobrar frete a
+// não travar a compra por causa disso.
 async function buscarFreteMaisBarato(cepDestino, itens) {
   if (!cepDestino) return 0
   try {
-    const res = await fetch(`${SITE_URL}/.netlify/functions/calcular-frete`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ cepDestino, itens })
-    })
-    if (!res.ok) return 0
-    const data = await res.json()
-    const opcoes = data?.fretes?.[0]?.opcoes || []
+    const fretes = await calcularFretesPorLoja(cepDestino, itens)
+    const opcoes = fretes?.[0]?.opcoes || []
     if (opcoes.length === 0) return 0
     return Math.min(...opcoes.map(o => Number(o.preco) || 0))
   } catch (err) {

@@ -328,12 +328,25 @@
     // ===== INICIALIZAÇÃO =====
     let lojaAtivaId = new URLSearchParams(window.location.search).get('loja') || null
 
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
       renderizarCarrinhoCompleto()
       atualizarCarrinhoUI()
 
       // Atualiza contador do header
       document.getElementById('cartCount').textContent = getQuantidadeCarrinho()
+
+      // Se a pessoa já tem CEP cadastrado no perfil, usa ele direto — sem
+      // precisar digitar de novo toda vez que for comprar — e já calcula o
+      // frete da loja ativa automaticamente.
+      const usuario = await getCurrentUser()
+      if (usuario) {
+        const { data: perfil } = await supabaseClient.from('users').select('cep').eq('id', usuario.id).maybeSingle()
+        if (perfil?.cep) {
+          cepSalvo = perfil.cep
+          renderizarCarrinhoCompleto()
+          if (lojaAtivaId) calcularFrete(lojaAtivaId)
+        }
+      }
     })
 
     function mostrarLojaCarrinho(lojaId) {

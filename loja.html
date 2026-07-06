@@ -286,6 +286,15 @@
         <!-- Injetado via JS -->
       </div>
     </div>
+
+    <!-- ===== AVALIAÇÕES IMPORTADAS (separadas das avaliações feitas na Obeh) ===== -->
+    <div id="lojaAvaliacoesImportadasSection" style="display:none; margin-top:40px;">
+      <h2 style="font-size:22px; margin-bottom:6px;">⭐ Avaliações de antes da Obeh</h2>
+      <p style="font-size:13px; color:var(--ink-soft); margin-bottom:16px;">Avaliações trazidas da loja de origem do artesão, de antes de vender na Obeh — não são de compras feitas por aqui.</p>
+      <div id="lojaAvaliacoesImportadasLista" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:14px;">
+        <!-- Injetado via JS -->
+      </div>
+    </div>
   </div>
 
   <!-- ===== CARRINHO MODAL ===== -->
@@ -389,11 +398,36 @@
     await carregarPastasLoja(lojaId)
       await carregarProdutosLoja(lojaId)
       await carregarCursosLoja(lojaId)
+      await carregarAvaliacoesImportadas(lojaId)
       carregarCarrinho()
 
       // Atualiza contador do carrinho
       atualizarCarrinhoUI()
     })
+
+    // ===== AVALIAÇÕES IMPORTADAS (separadas das avaliações da Obeh) =====
+    async function carregarAvaliacoesImportadas(lojaId) {
+      const { data, error } = await supabaseClient
+        .from('avaliacoes_importadas')
+        .select('*')
+        .eq('loja_id', lojaId)
+        .order('created_at', { ascending: false })
+
+      const section = document.getElementById('lojaAvaliacoesImportadasSection')
+      if (error || !data || data.length === 0 || !section) return
+
+      section.style.display = 'block'
+      document.getElementById('lojaAvaliacoesImportadasLista').innerHTML = data.map(a => `
+        <div style="background:var(--bg-card); border:1px solid var(--line); border-radius:10px; padding:16px;">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+            <strong style="font-size:14px;">${a.nome_autor}</strong>
+            ${a.origem_elo7 ? '<span style="font-size:11px; background:rgba(0,0,0,0.06); padding:2px 8px; border-radius:20px; margin-left:8px;" title="Avaliação importada da loja no Elo7">Elo7</span>' : ''}
+          </div>
+          ${a.nota ? `<div style="color:#d9a441; font-size:13px; margin-bottom:6px;">${'★'.repeat(a.nota)}${'☆'.repeat(5 - a.nota)}</div>` : ''}
+          <p style="font-size:13.5px; color:var(--ink); line-height:1.5;">${a.texto}</p>
+        </div>
+      `).join('')
+    }
 
     // ===== APOIE E TENHA BENEFÍCIOS =====
 async function carregarApoioPublico(id) {

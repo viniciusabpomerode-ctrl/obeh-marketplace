@@ -191,6 +191,49 @@ async function extrairDetalhesProduto(produtoUrl) {
   }
 }
 
+// Extrai os cartões de avaliação da página pública "/loja/<slug>/avaliacoes".
+// Confirmado no HTML real: cada avaliação é um .store-rating-card com nome
+// do autor, texto e a nota como barra de largura em % (100% = 5 estrelas).
+// Muitas dessas avaliações já são identificadas ali mesmo como importadas do
+// Elo7 (.store-rating-elo7-tag) — mantemos essa origem visível ao importar,
+// nunca escondemos de onde veio.
+function extrairAvaliacoesDoHtml($) {
+  const avaliacoes = []
+  $('.store-rating-card').each((_, el) => {
+    const card = $(el)
+    const nomeAutor = card.find('.store-rating-card__name').first().text().trim()
+    const texto = card.find('.store-rating-card__text').first().text().trim()
+    if (!nomeAutor || !texto) return
+
+    const estiloNota = card.find('.ratings').first().attr('style') || ''
+    const matchNota = estiloNota.match(/width:\s*(\d+(?:\.\d+)?)%/)
+    const nota = matchNota ? Math.max(1, Math.min(5, Math.round((Number(matchNota[1]) / 100) * 5))) : null
+
+    const origemElo7 = card.find('.store-rating-elo7-tag').length > 0
+
+    avaliacoes.push({ nomeAutor, texto, nota, origemElo7 })
+  })
+  return avaliacoes
+}
+
+async function extrairAvaliacoesDaLoja(lojaSlugOuUrl, aoBuscarPagina) {
+  const slug = extrairSlugLojaDaUrl(lojaSlugOuUrl)
+  const urlBase = `${BASE_URL}/loja/${slug}/avaliacoes`
+
+  const primeira$ = await buscarHtml(urlBase)
+  const ultimaPagina = extrairUltimaPagina(primeira$)
+  let avaliacoes = extrairAvaliacoesDoHtml(primeira$)
+
+  for (let pagina = 2; pagina <= ultimaPagina; pagina++) {
+    if (aoBuscarPagina) await aoBuscarPagina(pagina, ultimaPagina)
+    await esperar(300 + Math.random() * 500) // pausa educada entre páginas
+    const $ = await buscarHtml(`${urlBase}?page=${pagina}`)
+    avaliacoes = avaliacoes.concat(extrairAvaliacoesDoHtml($))
+  }
+
+  return avaliacoes
+}
+
 function esperar(ms) {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
@@ -202,6 +245,7 @@ module.exports = {
   extrairNomeLoja,
   extrairProdutosDaLoja,
   extrairDetalhesProduto,
+  extrairAvaliacoesDaLoja,
   parsePrecoBRL,
   extrairDiasProducao
 }

@@ -563,6 +563,29 @@
       <button type="button" class="btn btn-primary" id="importarLojaBtn" onclick="importarLojaDeOrigem()">Importar produtos</button>
       <div id="importarStatus" style="font-size:13px; margin-top:10px;"></div>
       <div id="importarResumo" style="margin-top:16px;"></div>
+
+      <div style="margin-top:32px; padding-top:24px; border-top:1px solid var(--line);">
+        <h3 style="font-size:16px; margin-bottom:6px;">⭐ Importar avaliações da loja de origem</h3>
+        <p style="font-size:13px; color:var(--ink-soft); margin-bottom:16px;">
+          Separado da importação de produtos: traz as avaliações públicas que sua loja já recebeu no site de origem (nome de quem avaliou, texto e nota). Elas aparecem na sua página aqui sempre marcadas como importadas — nunca se misturam com a nota das compras feitas dentro da Obeh.
+        </p>
+
+        <div style="background:rgba(0,0,0,0.03); border:1px solid var(--line); border-radius:10px; padding:14px; margin-bottom:14px; font-size:12.5px; color:var(--ink-soft); line-height:1.6;">
+          <strong style="color:var(--ink); display:block; margin-bottom:6px;">Termo de autorização — avaliações</strong>
+          <ul style="padding-left:18px; margin-top:6px;">
+            <li>A loja informada (mesmo link acima) é sua, e você autoriza o Obeh a extrair as avaliações <strong>públicas</strong> exibidas nela pra mostrar na sua página aqui, sempre identificadas como importadas.</li>
+            <li>Se a origem já identifica a avaliação como vinda de outra plataforma (ex: Elo7), essa atribuição é mantida — não é apresentada como se fosse uma compra feita na Obeh.</li>
+          </ul>
+        </div>
+
+        <label style="display:flex; align-items:flex-start; gap:8px; margin-bottom:16px; font-size:13px;">
+          <input type="checkbox" id="importarAvaliacoesAceiteTermos" style="margin-top:3px;" />
+          <span>Li e autorizo a importação das avaliações públicas da minha loja, conforme descrito acima.</span>
+        </label>
+
+        <button type="button" class="btn btn-primary" id="importarAvaliacoesBtn" onclick="importarAvaliacoesDeOrigem()">Importar avaliações</button>
+        <div id="importarAvaliacoesStatus" style="font-size:13px; margin-top:10px;"></div>
+      </div>
     </div>
       </div>
 
@@ -1347,6 +1370,49 @@
         btn.disabled = false
         btn.textContent = 'Importar produtos'
       }
+    }
+
+    // ===== IMPORTAR AVALIAÇÕES DA LOJA DE ORIGEM (separado de produtos) =====
+    async function importarAvaliacoesDeOrigem() {
+      const statusEl = document.getElementById('importarAvaliacoesStatus')
+      const urlLoja = document.getElementById('importarUrlLoja').value.trim()
+      const aceite = document.getElementById('importarAvaliacoesAceiteTermos').checked
+
+      if (!urlLoja) {
+        statusEl.textContent = '❌ Cole o link da sua loja de origem (campo acima).'
+        return
+      }
+      if (!aceite) {
+        statusEl.textContent = '❌ Você precisa aceitar o termo de autorização de avaliações pra importar.'
+        return
+      }
+
+      const btn = document.getElementById('importarAvaliacoesBtn')
+      btn.disabled = true
+      btn.textContent = 'Importando...'
+      statusEl.textContent = 'Buscando avaliações...'
+
+      try {
+        const res = await fetch('/.netlify/functions/importar-avaliacoes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: currentUserId, urlLoja, aceiteTermos: aceite })
+        })
+        const data = await res.json()
+
+        if (!res.ok) {
+          statusEl.textContent = '❌ ' + (data.error || 'Não foi possível importar as avaliações.')
+        } else if (data.novas === 0) {
+          statusEl.textContent = data.mensagem || 'Nenhuma avaliação nova encontrada.'
+        } else {
+          statusEl.textContent = `✅ ${data.novas} avaliação(ões) nova(s) importada(s) de um total de ${data.total} encontradas na loja de origem.`
+        }
+      } catch (err) {
+        statusEl.textContent = '❌ Erro ao importar avaliações: ' + err.message
+      }
+
+      btn.disabled = false
+      btn.textContent = 'Importar avaliações'
     }
 
     async function acompanharImportacao(importacaoId, tentativas = 0) {
