@@ -216,6 +216,16 @@
     </div>
   </section>
 
+  <!-- ===== FAIXA DE CONFIANÇA (prova social / segurança) ===== -->
+  <div style="background:var(--ink, #2B2620); color:#F7F2E7;">
+    <div class="wrap" style="display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:10px 36px; padding:14px 28px; font-size:14px;">
+      <div style="display:flex; align-items:center; gap:8px;"><span aria-hidden="true">🔒</span> Compra protegida</div>
+      <div style="display:flex; align-items:center; gap:8px;"><span aria-hidden="true">⚡</span> Pix e cartão em até 12x</div>
+      <div style="display:flex; align-items:center; gap:8px;"><span aria-hidden="true">🤝</span> Dinheiro direto pro artesão</div>
+      <div style="display:flex; align-items:center; gap:8px;"><span aria-hidden="true">📦</span> Envio pra todo o Brasil</div>
+    </div>
+  </div>
+
   <!-- ===== CATEGORIAS ===== -->
   <div style="border-top:1px solid var(--line); border-bottom:1px solid var(--line);">
     <div class="cat-strip" id="categorias" style="border-top:none; border-bottom:none;">
@@ -602,13 +612,13 @@
                   ${p.em_promocao ? '<span class="card-badge" style="position:absolute; top:10px; left:10px; background:var(--clay); color:#fff; font-size:11px; font-weight:700; padding:3px 10px; border-radius:999px;">🔥 Promoção</span>' : ''}
                   <button class="card-fav" data-produto-id="${p.id}" onclick="event.stopPropagation(); toggleFavoritoCard('${p.id}', this)" title="Favoritar">🤍</button>
                   ${p.fotos && p.fotos.length > 0
-                    ? `<img src="${p.fotos[0]}" alt="${p.nome}" loading="lazy" />`
+                    ? `<img src="${p.fotos[0]}" alt="${esc(p.nome)}" loading="lazy" />`
                     : `<span class="placeholder">🧵</span>`
                   }
                 </div>
                 <div class="card-body">
                   <div class="card-cat">${p.categorias?.nome || 'Artesanato'}</div>
-                  <div class="card-title">${p.nome}</div>
+                  <div class="card-title">${esc(p.nome)}</div>
                   <div class="card-maker">${p.lojas?.nome_loja || 'Artesão'}</div>
                   ${p.sob_encomenda ? `<div style="font-size:11px; color:var(--olive); font-weight:600; margin-top:2px;">📦 Sob encomenda${p.prazo_producao_dias ? ` — ${p.prazo_producao_dias} dia(s)` : ''}</div>` : ''}
                   <div class="card-foot">
@@ -804,13 +814,13 @@
                   ${p.em_promocao ? '<span class="card-badge" style="position:absolute; top:10px; left:10px; background:var(--clay); color:#fff; font-size:11px; font-weight:700; padding:3px 10px; border-radius:999px;">🔥 Promoção</span>' : ''}
                   <button class="card-fav" data-produto-id="${p.id}" onclick="event.stopPropagation(); toggleFavoritoCard('${p.id}', this)" title="Favoritar">🤍</button>
                   ${p.fotos && p.fotos.length > 0
-                    ? `<img src="${p.fotos[0]}" alt="${p.nome}" loading="lazy" />`
+                    ? `<img src="${p.fotos[0]}" alt="${esc(p.nome)}" loading="lazy" />`
                     : `<span class="placeholder">🧵</span>`
                   }
                 </div>
                 <div class="card-body">
                   <div class="card-cat">${p.categorias?.nome || 'Artesanato'}</div>
-                  <div class="card-title">${p.nome}</div>
+                  <div class="card-title">${esc(p.nome)}</div>
                   <div class="card-maker">${p.lojas?.nome_loja || 'Artesão'}</div>
                   ${p.sob_encomenda ? `<div style="font-size:11px; color:var(--olive); font-weight:600; margin-top:2px;">📦 Sob encomenda${p.prazo_producao_dias ? ` — ${p.prazo_producao_dias} dia(s)` : ''}</div>` : ''}
                   <div class="card-foot">

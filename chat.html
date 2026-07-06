@@ -313,7 +313,7 @@
 
       const avatarEl = document.getElementById('chatAvatar')
       if (data.avatar) {
-        avatarEl.innerHTML = `<img src="${data.avatar}" alt="${data.nome}" />`
+        avatarEl.innerHTML = `<img src="${esc(data.avatar)}" alt="${esc(data.nome)}" />`
       } else {
         avatarEl.textContent = '🧵'
       }
@@ -353,7 +353,7 @@
 
         return `
               <div class="mensagem ${isEnviada ? 'enviada' : 'recebida'}">
-                ${m.conteudo}
+                ${esc(m.conteudo)}
                 <span class="hora">${hora}</span>
               </div>
             `

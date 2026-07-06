@@ -390,7 +390,7 @@
       }
       area.innerHTML = data.map(p => `
         <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--line); font-size:13px;">
-          <span>${p.nome} — R$ ${Number(p.preco).toFixed(2).replace('.', ',')} · Estoque: ${p.estoque} ${p.status === 'pausado' ? '(pausado)' : ''}</span>
+          <span>${esc(p.nome)} — R$ ${Number(p.preco).toFixed(2).replace('.', ',')} · Estoque: ${p.estoque} ${p.status === 'pausado' ? '(pausado)' : ''}</span>
           <button class="btn-recusar" style="padding:4px 10px; font-size:12px;" onclick="excluirProdutoAdmin('${p.id}','${lojaId}')">Excluir</button>
         </div>
       `).join('')

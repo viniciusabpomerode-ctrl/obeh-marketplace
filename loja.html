@@ -676,13 +676,13 @@ function renderProdutosLoja(lista) {
                 ${p.em_promocao ? '<span class="card-badge" style="position:absolute; top:10px; left:10px; background:var(--clay); color:#fff; font-size:11px; font-weight:700; padding:3px 10px; border-radius:999px;">🔥 Promoção</span>' : ''}
                 <button class="card-fav" data-produto-id="${p.id}" onclick="event.stopPropagation(); toggleFavoritoCard('${p.id}', this)" title="Favoritar">🤍</button>
                 ${p.fotos && p.fotos.length > 0
-                  ? `<img src="${p.fotos[0]}" alt="${p.nome}" loading="lazy" />`
+                  ? `<img src="${p.fotos[0]}" alt="${esc(p.nome)}" loading="lazy" />`
                   : `<span class="placeholder">🧵</span>`
                 }
               </div>
               <div class="card-body">
                 <div class="card-cat">${p.categorias?.nome || 'Artesanato'}</div>
-                <div class="card-title">${p.nome}</div>
+                <div class="card-title">${esc(p.nome)}</div>
                 <div class="card-maker">${lojaData?.nome_loja || 'Artesão'}</div>
                 ${p.sob_encomenda ? `<div style="font-size:11px; color:var(--olive); font-weight:600; margin-top:2px;">📦 Sob encomenda${p.prazo_producao_dias ? ` — ${p.prazo_producao_dias} dia(s)` : ''}</div>` : ''}
                 <div class="card-foot">
@@ -722,9 +722,9 @@ async function carregarPastasLoja(id) {
   ` + data.map(p => `
     <div class="pasta-tile" data-pasta-id="${p.id}" onclick="filtrarPorPasta('${p.id}')">
       <div class="pasta-tile-img">
-        ${p.imagem ? `<img src="${p.imagem}" alt="${p.nome}" style="width:100%; height:100%; object-fit:cover;" />` : '<div style="display:flex; align-items:center; justify-content:center; height:100%; font-size:22px;">🗂️</div>'}
+        ${p.imagem ? `<img src="${p.imagem}" alt="${esc(p.nome)}" style="width:100%; height:100%; object-fit:cover;" />` : '<div style="display:flex; align-items:center; justify-content:center; height:100%; font-size:22px;">🗂️</div>'}
       </div>
-      <div class="pasta-tile-nome">${p.nome}</div>
+      <div class="pasta-tile-nome">${esc(p.nome)}</div>
     </div>
   `).join('')
 }

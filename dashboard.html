@@ -951,10 +951,10 @@
       <input type="checkbox" class="produto-check" value="${p.id}" onchange="atualizarBulkToolbar()" style="margin-right:10px;" />
               <div class="info">
                 <div class="thumb">
-                  ${p.fotos && p.fotos.length > 0 ? `<img src="${p.fotos[0]}" alt="${p.nome}" />` : '🧶'}
+                  ${p.fotos && p.fotos.length > 0 ? `<img src="${p.fotos[0]}" alt="${esc(p.nome)}" />` : '🧶'}
                 </div>
                 <div>
-                  <strong>${p.nome}</strong>
+                  <strong>${esc(p.nome)}</strong>
                   <div style="font-size:12px; color:var(--ink-soft);">
                     R$ ${Number(p.preco).toFixed(2).replace('.', ',')} • ${p.categorias?.nome || 'Sem categoria'} • 
                     <span style="color:${p.status === 'ativo' ? 'var(--olive)' : 'var(--clay)'}">
@@ -1655,9 +1655,9 @@ async function carregarPastas() {
   container.innerHTML = data.map(p => `
     <div style="border:1px solid var(--line); border-radius:8px; overflow:hidden; text-align:center;">
       <div style="height:70px; background:var(--sand,#f0ece4); display:flex; align-items:center; justify-content:center; overflow:hidden; font-size:24px;">
-        ${p.imagem ? `<img src="${p.imagem}" alt="${p.nome}" style="width:100%; height:100%; object-fit:cover;" />` : '🗂️'}
+        ${p.imagem ? `<img src="${p.imagem}" alt="${esc(p.nome)}" style="width:100%; height:100%; object-fit:cover;" />` : '🗂️'}
       </div>
-      <div style="padding:6px; font-size:12px; font-weight:500;">${p.nome}</div>
+      <div style="padding:6px; font-size:12px; font-weight:500;">${esc(p.nome)}</div>
       <button onclick="removerPasta('${p.id}')" style="width:100%; border:none; border-top:1px solid var(--line); background:none; color:var(--ink-soft); font-size:11px; padding:4px; cursor:pointer;">Remover</button>
     </div>
   `).join('')
@@ -1711,7 +1711,7 @@ async function carregarPastasSelectProduto() {
     .eq('loja_id', lojaData.id)
     .order('nome', { ascending: true })
   const atual = select.value
-  select.innerHTML = '<option value="">Sem pasta</option>' + (data || []).map(p => `<option value="${p.id}">${p.nome}</option>`).join('')
+  select.innerHTML = '<option value="">Sem pasta</option>' + (data || []).map(p => `<option value="${p.id}">${esc(p.nome)}</option>`).join('')
   select.value = atual
 }
 // ===== CRUD PRODUTOS =====
