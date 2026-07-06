@@ -510,6 +510,28 @@ header {
   opacity: 0.5;
 }
 
+.card-fav {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,0.9);
+  font-size: 15px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  box-shadow: 0 2px 6px rgba(43,38,32,0.12);
+}
+
+.card-fav:hover {
+  transform: scale(1.08);
+}
+
 .card-body {
   padding: 16px 16px 18px;
   border-top: 1px dashed var(--line);

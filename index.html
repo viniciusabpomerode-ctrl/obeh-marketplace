@@ -593,6 +593,7 @@
               <div class="card" onclick="window.location.href='produto.html?id=${p.id}'">
                 <div class="card-media" style="background:${p.fotos && p.fotos.length > 0 ? '#E9DFC7' : '#E9DFC7'}">
                   ${p.em_promocao ? '<span class="card-badge" style="position:absolute; top:10px; left:10px; background:var(--clay); color:#fff; font-size:11px; font-weight:700; padding:3px 10px; border-radius:999px;">🔥 Promoção</span>' : ''}
+                  <button class="card-fav" data-produto-id="${p.id}" onclick="event.stopPropagation(); toggleFavoritoCard('${p.id}', this)" title="Favoritar">🤍</button>
                   ${p.fotos && p.fotos.length > 0
                     ? `<img src="${p.fotos[0]}" alt="${p.nome}" loading="lazy" />`
                     : `<span class="placeholder">🧵</span>`
@@ -612,6 +613,8 @@
                 </div>
               </div>
             `).join('')
+
+      marcarFavoritosNaGrade(produtosFiltrados.map(p => p.id))
     }
 
     // ===== CARREGAR ESTATÍSTICAS =====
@@ -791,6 +794,7 @@
               <div class="card" onclick="window.location.href='produto.html?id=${p.id}'">
                 <div class="card-media" style="background:${p.fotos && p.fotos.length > 0 ? '#E9DFC7' : '#E9DFC7'}">
                   ${p.em_promocao ? '<span class="card-badge" style="position:absolute; top:10px; left:10px; background:var(--clay); color:#fff; font-size:11px; font-weight:700; padding:3px 10px; border-radius:999px;">🔥 Promoção</span>' : ''}
+                  <button class="card-fav" data-produto-id="${p.id}" onclick="event.stopPropagation(); toggleFavoritoCard('${p.id}', this)" title="Favoritar">🤍</button>
                   ${p.fotos && p.fotos.length > 0
                     ? `<img src="${p.fotos[0]}" alt="${p.nome}" loading="lazy" />`
                     : `<span class="placeholder">🧵</span>`
@@ -810,6 +814,8 @@
                 </div>
               </div>
             `).join('')
+
+      marcarFavoritosNaGrade(produtosFiltrados.map(p => p.id))
     }
 
     // Enter para buscar

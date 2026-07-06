@@ -711,6 +711,56 @@ async function enviarMensagem(destinatarioId, conteudo, produtoId) {
 }
 
 // ============================================
+// FAVORITOS (usado nos cards de produto — index.html, loja.html, favoritos.html)
+// ============================================
+
+// Busca de uma vez só quais produtos (de uma lista de ids visíveis na tela)
+// o usuário logado já favoritou — evita 1 consulta por card.
+async function buscarFavoritosDoUsuario(produtoIds) {
+  const usuario = await getCurrentUser()
+  if (!usuario || !produtoIds || produtoIds.length === 0) return new Set()
+
+  const { data } = await supabaseClient
+    .from('favoritos')
+    .select('produto_id')
+    .eq('user_id', usuario.id)
+    .in('produto_id', produtoIds)
+
+  return new Set((data || []).map(f => f.produto_id))
+}
+
+// Marca (❤️) os corações dos cards já favoritados. Chamar depois de
+// renderizar uma grade de produtos, passando os ids que apareceram nela.
+async function marcarFavoritosNaGrade(produtoIds) {
+  const favoritados = await buscarFavoritosDoUsuario(produtoIds)
+  favoritados.forEach(id => {
+    document.querySelectorAll(`.card-fav[data-produto-id="${id}"]`).forEach(btn => {
+      btn.textContent = '❤️'
+    })
+  })
+}
+
+// Handler de clique do coração num card de produto (grade/vitrine)
+async function toggleFavoritoCard(produtoId, btnEl) {
+  const usuario = await getCurrentUser()
+  if (!usuario) {
+    if (confirm('Você precisa estar logado pra favoritar. Ir para o login agora?')) {
+      window.location.href = `login.html?retorno=${encodeURIComponent(window.location.pathname + window.location.search)}`
+    }
+    return
+  }
+
+  const jaFavoritado = btnEl.textContent.trim() === '❤️'
+  if (jaFavoritado) {
+    await supabaseClient.from('favoritos').delete().eq('user_id', usuario.id).eq('produto_id', produtoId)
+    btnEl.textContent = '🤍'
+  } else {
+    await supabaseClient.from('favoritos').insert({ user_id: usuario.id, produto_id: produtoId })
+    btnEl.textContent = '❤️'
+  }
+}
+
+// ============================================
 // EXPORTAÇÃO DAS FUNÇÕES (para uso global)
 // ============================================
 
@@ -722,6 +772,8 @@ window.cadastrarUsuario = cadastrarUsuario
 window.logout = logout
 window.getCurrentUser = getCurrentUser
 window.verificarUsuarioLogado = verificarUsuarioLogado
+window.toggleFavoritoCard = toggleFavoritoCard
+window.marcarFavoritosNaGrade = marcarFavoritosNaGrade
 window.registrarPrimeiroLogin = registrarPrimeiroLogin
 window.getProducts = getProducts
 window.getUserProducts = getUserProducts

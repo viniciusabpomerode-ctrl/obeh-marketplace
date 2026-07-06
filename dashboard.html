@@ -84,7 +84,10 @@
           <button class="btn btn-ghost" style="padding:6px 12px; font-size:12px;" onclick="document.getElementById('bulkFotoFile').click()">Trocar foto</button>
           <input type="file" id="bulkFotoFile" accept="image/*" style="display:none;" onchange="bulkTrocarFoto(this.files[0])" />
           <button class="btn btn-ghost" style="padding:6px 12px; font-size:12px;" onclick="bulkAtivarPromocao()">Ativar promoção</button>
+          <button class="btn btn-ghost" style="padding:6px 12px; font-size:12px;" onclick="bulkDesativarPromocao()">Desativar promoção</button>
           <button class="btn btn-ghost" style="padding:6px 12px; font-size:12px;" onclick="bulkDescontoPix()">Desconto no Pix</button>
+          <button class="btn btn-ghost" style="padding:6px 12px; font-size:12px;" onclick="bulkDesativarDescontoPix()">Desativar desc. Pix</button>
+          <button class="btn btn-ghost" style="padding:6px 12px; font-size:12px;" onclick="bulkDefinirPesoMedidas()">Peso/medidas padrão</button>
           <button class="btn btn-ghost" style="padding:6px 12px; font-size:12px; color:#c94a4a;" onclick="bulkExcluir()">Excluir</button>
         </div>
       </div>
@@ -96,7 +99,7 @@
     <!-- ===== TAB: NOVO PRODUTO ===== -->
     <div id="tab-novo" class="tab-content">
       <div class="product-form">
-        <h3 style="margin-bottom:16px;">Cadastrar novo produto</h3>
+        <h3 style="margin-bottom:16px;" id="prodFormTitulo">Cadastrar novo produto</h3>
         <form id="productForm" onsubmit="handleProductSubmit(event)">
           <div class="form-row">
             <div class="form-group">
@@ -210,7 +213,8 @@
           <input type="number" id="prodDescontoPix" min="1" max="100" step="1" placeholder="Ex: 10" />
         </div>
       </div>
-<button type="submit" class="btn btn-primary">Salvar produto</button>
+<button type="submit" class="btn btn-primary" id="prodSalvarBtn">Salvar produto</button>
+        <button type="button" class="btn btn-ghost" id="prodCancelarEdicaoBtn" style="display:none;" onclick="cancelarEdicaoProduto()">Cancelar edição</button>
         </form>
       </div>
     </div>
@@ -1770,6 +1774,23 @@ async function carregarPastasSelectProduto() {
         return
       }
 
+      // Editando um produto existente: atualiza em vez de criar (não conta
+      // no limite de produtos do plano, já que não é um produto novo)
+      if (editandoProdutoId) {
+        const atualizacoes = {
+          nome, preco, descricao, fotos, estoque,
+          peso_kg, altura_cm, largura_cm, comprimento_cm, pasta_id,
+          categoria_id, em_promocao, preco_antigo, destaque,
+          sob_encomenda, prazo_producao_dias, desconto_pix_percentual
+        }
+        const result = await atualizarProduto(editandoProdutoId, atualizacoes)
+        if (result) {
+          cancelarEdicaoProduto()
+          await carregarProdutos()
+        }
+        return
+      }
+
       // Verifica o limite de produtos do plano do vendedor (planos.limite_produtos; null = ilimitado)
       const limiteAtingido = await verificarLimiteProdutos(currentUserId)
       if (limiteAtingido) {
@@ -2008,8 +2029,65 @@ pasta_id,
     }
 
     // ===== EDIT =====
+    // Estado do produto sendo editado — null quando o formulário está em
+    // modo "novo produto". handleProductSubmit() usa isso pra decidir entre
+    // criar um produto novo ou atualizar o existente.
+    let editandoProdutoId = null
+
     function editarProduto(id) {
-      alert('📝 Função de edição em desenvolvimento. Por enquanto, delete e recrie.')
+      const produto = produtosCache.find(p => p.id === id)
+      if (!produto) return
+
+      editandoProdutoId = id
+      switchTab('novo')
+
+      document.getElementById('prodFormTitulo').textContent = `Editando: ${produto.nome}`
+      document.getElementById('prodSalvarBtn').textContent = 'Salvar alterações'
+      document.getElementById('prodCancelarEdicaoBtn').style.display = 'inline-block'
+
+      document.getElementById('prodNome').value = produto.nome || ''
+      document.getElementById('prodPreco').value = produto.preco || ''
+      document.getElementById('prodCategoria').value = produto.categoria_id || ''
+      document.getElementById('prodDescricao').value = produto.descricao || ''
+      document.getElementById('prodEstoque').value = produto.estoque || 1
+      document.getElementById('prodPeso').value = produto.peso_kg || 0.3
+      document.getElementById('prodAltura').value = produto.altura_cm || 10
+      document.getElementById('prodLargura').value = produto.largura_cm || 15
+      document.getElementById('prodComprimento').value = produto.comprimento_cm || 20
+      if (document.getElementById('prodPasta')) document.getElementById('prodPasta').value = produto.pasta_id || ''
+
+      document.getElementById('prodEmPromocao').checked = Boolean(produto.em_promocao)
+      document.getElementById('prodPrecoAntigoGroup').style.display = produto.em_promocao ? 'block' : 'none'
+      document.getElementById('prodPrecoAntigo').value = produto.preco_antigo || ''
+
+      document.getElementById('prodDestaque').checked = Boolean(produto.destaque)
+
+      document.getElementById('prodSobEncomenda').checked = Boolean(produto.sob_encomenda)
+      document.getElementById('prodPrazoProducaoGroup').style.display = produto.sob_encomenda ? 'block' : 'none'
+      document.getElementById('prodPrazoProducao').value = produto.prazo_producao_dias || ''
+
+      const temDescontoPix = Boolean(produto.desconto_pix_percentual)
+      document.getElementById('prodDescontoPixAtivo').checked = temDescontoPix
+      document.getElementById('prodDescontoPixGroup').style.display = temDescontoPix ? 'block' : 'none'
+      document.getElementById('prodDescontoPix').value = produto.desconto_pix_percentual || ''
+
+      // Reaproveita as fotos já enviadas (não sobe de novo pro R2 a não ser que troque)
+      prodFotosArr = Array.isArray(produto.fotos) ? [...produto.fotos] : []
+      renderProdFotosPreview()
+    }
+
+    function cancelarEdicaoProduto() {
+      editandoProdutoId = null
+      document.getElementById('productForm').reset()
+      document.getElementById('prodFormTitulo').textContent = 'Cadastrar novo produto'
+      document.getElementById('prodSalvarBtn').textContent = 'Salvar produto'
+      document.getElementById('prodCancelarEdicaoBtn').style.display = 'none'
+      document.getElementById('prodPrecoAntigoGroup').style.display = 'none'
+      document.getElementById('prodPrazoProducaoGroup').style.display = 'none'
+      document.getElementById('prodDescontoPixGroup').style.display = 'none'
+      prodFotosArr = []
+      renderProdFotosPreview()
+      switchTab('produtos')
     }
 
     // ===== CLONAR =====
@@ -2552,6 +2630,67 @@ pasta_id,
       await carregarProdutos()
     }
 
+    async function bulkDesativarPromocao() {
+      const ids = getSelecionadosIds()
+      if (ids.length === 0) return
+      for (const id of ids) {
+        const produto = produtosCache.find(p => p.id === id)
+        if (!produto || !produto.em_promocao) continue
+        // Restaura o preço de antes da promoção (guardado em preco_antigo
+        // quando a promoção foi ativada, seja em massa ou individualmente)
+        const precoOriginal = produto.preco_antigo ? Number(produto.preco_antigo) : Number(produto.preco)
+        await atualizarProduto(id, { em_promocao: false, preco_antigo: null, preco: precoOriginal })
+      }
+      await carregarProdutos()
+    }
+
+    async function bulkDesativarDescontoPix() {
+      const ids = getSelecionadosIds()
+      if (ids.length === 0) return
+      for (const id of ids) {
+        await atualizarProduto(id, { desconto_pix_percentual: null })
+      }
+      await carregarProdutos()
+    }
+
+    // Aplica peso e/ou medidas padrão em massa — útil principalmente logo
+    // após importar uma loja de outra plataforma, já que a origem nunca traz
+    // esses dados (o SuperFrete/Correios precisam deles pra calcular o frete
+    // de verdade; sem isso o sistema usa um valor genérico de estimativa).
+    async function bulkDefinirPesoMedidas() {
+      const ids = getSelecionadosIds()
+      if (ids.length === 0) return
+
+      const pesoTexto = prompt('Peso padrão (kg) pra aplicar nos selecionados — deixe em branco pra não alterar:')
+      if (pesoTexto === null) return
+      const alturaTexto = prompt('Altura padrão (cm) — deixe em branco pra não alterar:')
+      if (alturaTexto === null) return
+      const larguraTexto = prompt('Largura padrão (cm) — deixe em branco pra não alterar:')
+      if (larguraTexto === null) return
+      const comprimentoTexto = prompt('Comprimento padrão (cm) — deixe em branco pra não alterar:')
+      if (comprimentoTexto === null) return
+
+      const atualizacoes = {}
+      if (pesoTexto.trim()) atualizacoes.peso_kg = parseFloat(pesoTexto)
+      if (alturaTexto.trim()) atualizacoes.altura_cm = parseFloat(alturaTexto)
+      if (larguraTexto.trim()) atualizacoes.largura_cm = parseFloat(larguraTexto)
+      if (comprimentoTexto.trim()) atualizacoes.comprimento_cm = parseFloat(comprimentoTexto)
+
+      if (Object.keys(atualizacoes).length === 0) {
+        alert('❌ Nenhum valor informado.')
+        return
+      }
+      if (Object.values(atualizacoes).some(v => isNaN(v) || v <= 0)) {
+        alert('❌ Os valores precisam ser números maiores que zero.')
+        return
+      }
+
+      for (const id of ids) {
+        await atualizarProduto(id, atualizacoes)
+      }
+      await carregarProdutos()
+    }
+
     async function bulkExcluir() {
       const ids = getSelecionadosIds()
       if (ids.length === 0) return
@@ -2657,7 +2796,10 @@ pasta_id,
     window.bulkAtivar = bulkAtivar
     window.bulkDesativar = bulkDesativar
     window.bulkAtivarPromocao = bulkAtivarPromocao
+    window.bulkDesativarPromocao = bulkDesativarPromocao
     window.bulkDescontoPix = bulkDescontoPix
+    window.bulkDesativarDescontoPix = bulkDesativarDescontoPix
+    window.bulkDefinirPesoMedidas = bulkDefinirPesoMedidas
     window.bulkTrocarFoto = bulkTrocarFoto
     window.bulkExcluir = bulkExcluir
     window.toggleSelecionarTodos = toggleSelecionarTodos
@@ -2793,6 +2935,7 @@ pasta_id,
     window.toggleStatus = toggleStatus
     window.handleDeleteProduto = handleDeleteProduto
     window.editarProduto = editarProduto
+    window.cancelarEdicaoProduto = cancelarEdicaoProduto
     window.handleCursoSubmit = handleCursoSubmit
     window.toggleCursoStatus = toggleCursoStatus
     window.handleDeleteCurso = handleDeleteCurso
