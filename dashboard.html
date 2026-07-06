@@ -212,6 +212,16 @@
           <label>Desconto no Pix (%)</label>
           <input type="number" id="prodDescontoPix" min="1" max="100" step="1" placeholder="Ex: 10" />
         </div>
+        <div class="toggle-row">
+          <div class="toggle-label">
+            <strong>🚚 Frete grátis</strong>
+            <p>O frete desse produto fica por sua conta — se o carrinho tiver só produtos com frete grátis daquela loja, o comprador não paga frete.</p>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="prodFreteGratis" />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
       </div>
 <button type="submit" class="btn btn-primary" id="prodSalvarBtn">Salvar produto</button>
         <button type="button" class="btn btn-ghost" id="prodCancelarEdicaoBtn" style="display:none;" onclick="cancelarEdicaoProduto()">Cancelar edição</button>
@@ -1745,6 +1755,7 @@ async function carregarPastasSelectProduto() {
       const prazo_producao_dias = sob_encomenda ? (parseInt(document.getElementById('prodPrazoProducao').value) || null) : null
       const descontoPixAtivo = document.getElementById('prodDescontoPixAtivo').checked
       const desconto_pix_percentual = descontoPixAtivo ? (parseFloat(document.getElementById('prodDescontoPix').value) || null) : null
+      const frete_gratis = document.getElementById('prodFreteGratis').checked
 
       if (em_promocao && (!preco_antigo || preco_antigo <= preco)) {
         alert('❌ Informe um preço antigo maior que o preço atual pra colocar o produto em promoção.')
@@ -1781,7 +1792,8 @@ async function carregarPastasSelectProduto() {
           nome, preco, descricao, fotos, estoque,
           peso_kg, altura_cm, largura_cm, comprimento_cm, pasta_id,
           categoria_id, em_promocao, preco_antigo, destaque,
-          sob_encomenda, prazo_producao_dias, desconto_pix_percentual
+          sob_encomenda, prazo_producao_dias, desconto_pix_percentual,
+          frete_gratis
         }
         const result = await atualizarProduto(editandoProdutoId, atualizacoes)
         if (result) {
@@ -1818,6 +1830,7 @@ pasta_id,
         sob_encomenda,
         prazo_producao_dias,
         desconto_pix_percentual,
+        frete_gratis,
         status: 'ativo',
         mes_criacao: new Date().toISOString().split('T')[0]
       }
@@ -2071,6 +2084,8 @@ pasta_id,
       document.getElementById('prodDescontoPixGroup').style.display = temDescontoPix ? 'block' : 'none'
       document.getElementById('prodDescontoPix').value = produto.desconto_pix_percentual || ''
 
+      document.getElementById('prodFreteGratis').checked = Boolean(produto.frete_gratis)
+
       // Reaproveita as fotos já enviadas (não sobe de novo pro R2 a não ser que troque)
       prodFotosArr = Array.isArray(produto.fotos) ? [...produto.fotos] : []
       renderProdFotosPreview()
@@ -2125,6 +2140,8 @@ pasta_id,
       document.getElementById('prodDescontoPixAtivo').checked = temDescontoPix
       document.getElementById('prodDescontoPixGroup').style.display = temDescontoPix ? 'block' : 'none'
       document.getElementById('prodDescontoPix').value = produto.desconto_pix_percentual || ''
+
+      document.getElementById('prodFreteGratis').checked = Boolean(produto.frete_gratis)
 
       // Reaproveita as fotos já enviadas (não precisa subir de novo pro R2)
       prodFotosArr = Array.isArray(produto.fotos) ? [...produto.fotos] : []

@@ -173,6 +173,9 @@
       const { data: vendas, error } = await supabaseClient
         .from('vendas')
         .select('*, produtos(nome, fotos, loja_id)')
+        // init_point/qr_code/mp_payment_id vêm de dentro de "*" — guardados
+        // na hora de criar o pagamento, pra dar pra continuar um pedido
+        // pendente aqui sem precisar refazer a compra do zero.
         .eq('comprador_id', compradorId)
         .order('created_at', { ascending: false })
 
@@ -212,7 +215,10 @@
             createdAt: v.created_at,
             nomeLoja: lojasPorId[v.produtos?.loja_id] || 'Loja',
             frete: 0,
-            itens: []
+            itens: [],
+            initPoint: v.init_point || null,
+            qrCode: v.qr_code || null,
+            qrCodeBase64: v.qr_code_base64 || null
           }
         }
         porPedido[chave].frete += Number(v.valor_frete || 0)
@@ -253,10 +259,84 @@
             <div class="pedido-total">
               ${p.frete > 0 ? `Produtos: R$ ${totalProdutos.toFixed(2)} + Frete: R$ ${p.frete.toFixed(2)} = ` : ''}Total: R$ ${totalPedido.toFixed(2)}
             </div>
+            ${p.status === 'pendente' ? renderContinuarPagamento(p) : ''}
           </div>
         `
       }).join('')
     }
+
+    // Pedido pendente: mostra como continuar o pagamento, de acordo com o
+    // que foi guardado na hora da compra (Pix tem QR code pra reexibir,
+    // Checkout Pro/link estático tem um link pra voltar; pagamento por
+    // cartão direto não tem o que continuar — só aguardar a confirmação).
+    function renderContinuarPagamento(p) {
+      if (p.qrCode) {
+        return `
+          <div style="margin-top:14px; padding-top:14px; border-top:1px solid var(--line); text-align:center;">
+            <p style="font-size:13px; color:var(--ink-soft); margin-bottom:10px;">Pagamento Pix ainda não confirmado — escaneie ou copie o código de novo:</p>
+            ${p.qrCodeBase64 ? `<img src="data:image/png;base64,${p.qrCodeBase64}" alt="QR Code Pix" style="width:180px; height:180px; margin:0 auto 10px;" />` : ''}
+            <textarea readonly style="width:100%; font-size:11px; padding:8px; border:1px solid var(--line); border-radius:6px; resize:none; height:56px;">${p.qrCode}</textarea>
+            <div style="display:flex; gap:8px; justify-content:center; margin-top:8px; flex-wrap:wrap;">
+              <button class="btn btn-ghost" onclick="navigator.clipboard.writeText('${p.qrCode}'); this.textContent='Copiado!'">Copiar código</button>
+              <button class="btn btn-primary" onclick="verificarPagamentoAgora('${p.pedidoId}', this)">Verificar pagamento agora</button>
+            </div>
+            <p id="verificarStatus-${p.pedidoId}" style="font-size:13px; margin-top:8px;"></p>
+          </div>
+        `
+      }
+
+      if (p.initPoint) {
+        return `
+          <div style="margin-top:14px; padding-top:14px; border-top:1px solid var(--line); text-align:center;">
+            <a class="btn btn-primary" href="${p.initPoint}" target="_blank" rel="noopener">Continuar pagamento</a>
+          </div>
+        `
+      }
+
+      return `
+        <div style="margin-top:14px; padding-top:14px; border-top:1px solid var(--line); text-align:center; font-size:13px; color:var(--ink-soft);">
+          Pagamento em análise — aguarde a confirmação, sem precisar fazer nada.
+        </div>
+      `
+    }
+
+    async function verificarPagamentoAgora(pedidoId, btnEl) {
+      const statusEl = document.getElementById(`verificarStatus-${pedidoId}`)
+      btnEl.disabled = true
+      btnEl.textContent = 'Verificando...'
+      statusEl.textContent = ''
+
+      try {
+        const res = await fetch('/.netlify/functions/verificar-pagamento', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pedidoId })
+        })
+        const data = await res.json()
+
+        if (!res.ok) {
+          statusEl.textContent = '❌ ' + (data.error || 'Não foi possível verificar agora.')
+        } else if (data.status === 'pago') {
+          statusEl.style.color = '#2f7a4d'
+          statusEl.textContent = '✅ Pagamento confirmado! Atualizando...'
+          const usuario = await getCurrentUser()
+          if (usuario) await carregarCompras(usuario.id)
+          return
+        } else if (data.status === 'pendente') {
+          statusEl.textContent = data.mensagem || '⏳ Ainda aguardando o pagamento.'
+        } else {
+          statusEl.style.color = '#c94a4a'
+          statusEl.textContent = `❌ Pagamento ${STATUS_LABEL[data.status] || data.status}.`
+        }
+      } catch (err) {
+        statusEl.textContent = '❌ Erro ao verificar: ' + err.message
+      }
+
+      btnEl.disabled = false
+      btnEl.textContent = 'Verificar pagamento agora'
+    }
+
+    window.verificarPagamentoAgora = verificarPagamentoAgora
 
     console.log('✅ Página de compras carregada com sucesso!')
   </script>

@@ -194,6 +194,13 @@ exports.handler = async (event) => {
       if (!linkEstatico) {
         return { statusCode: 422, body: JSON.stringify({ error: 'Vendedor ainda não configurou um jeito de receber pagamentos.' }) }
       }
+      // Guarda o link pra "Minhas compras" poder mostrar um botão de
+      // continuar pagamento se o pedido ficar pendente
+      await supabaseRequest(`vendas?pedido_id=eq.${pedidoId}`, {
+        method: 'PATCH',
+        prefer: 'return=minimal',
+        body: JSON.stringify({ init_point: linkEstatico })
+      })
       return {
         statusCode: 200,
         body: JSON.stringify({ initPoint: linkEstatico, pedidoId, splitAutomatico: false })
@@ -239,6 +246,14 @@ exports.handler = async (event) => {
       console.error('Erro ao criar preferência no Mercado Pago:', prefData)
       return { statusCode: 502, body: JSON.stringify({ error: 'Não foi possível iniciar o pagamento no Mercado Pago.' }) }
     }
+
+    // Guarda o link pra "Minhas compras" poder mostrar um botão de continuar
+    // pagamento se o pedido ficar pendente (a pessoa fechou a aba, etc)
+    await supabaseRequest(`vendas?pedido_id=eq.${pedidoId}`, {
+      method: 'PATCH',
+      prefer: 'return=minimal',
+      body: JSON.stringify({ init_point: prefData.init_point })
+    })
 
     return {
       statusCode: 200,

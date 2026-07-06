@@ -240,6 +240,15 @@ exports.handler = async (event) => {
       return { statusCode: 502, body: JSON.stringify({ error: pagamentoData?.message || 'Não foi possível gerar o Pix agora.' }) }
     }
 
+    // Guarda o QR code/código copia-e-cola pra "Minhas compras" poder
+    // mostrar de novo se o pedido ficar pendente (a pessoa fechou a aba
+    // antes de pagar, por exemplo)
+    await supabaseRequest(`vendas?pedido_id=eq.${pedidoId}`, {
+      method: 'PATCH',
+      prefer: 'return=minimal',
+      body: JSON.stringify({ qr_code: qrCode, qr_code_base64: qrCodeBase64, mp_payment_id: String(pagamentoData.id) })
+    })
+
     return {
       statusCode: 200,
       body: JSON.stringify({

@@ -232,7 +232,7 @@ async function calcularFretesPorLoja(cepDestino, itens) {
   if (ids.length === 0) return []
 
   const produtos = await supabaseRequest(
-    `produtos?id=in.(${ids.join(',')})&select=id,loja_id,peso_kg,altura_cm,largura_cm,comprimento_cm,lojas(id,nome_loja,cep_origem,superfrete_token)`
+    `produtos?id=in.(${ids.join(',')})&select=id,loja_id,peso_kg,altura_cm,largura_cm,comprimento_cm,frete_gratis,lojas(id,nome_loja,cep_origem,superfrete_token)`
   )
 
   const porLoja = {}
@@ -251,7 +251,12 @@ async function calcularFretesPorLoja(cepDestino, itens) {
         altura: 10,
         largura: 15,
         comprimento: 20,
-        itensDetalhados: []
+        itensDetalhados: [],
+        // Só considera o grupo inteiro "frete grátis" se TODOS os produtos
+        // dessa loja no carrinho tiverem a opção marcada — misturar um
+        // produto com frete grátis e outro sem no mesmo pacote não tem como
+        // dar pra cobrar "meio frete", então nesse caso cobra o frete normal.
+        todosFreteGratis: true
       }
     }
     const grupo = porLoja[lojaId]
@@ -261,6 +266,7 @@ async function calcularFretesPorLoja(cepDestino, itens) {
     grupo.altura = Math.max(grupo.altura, Number(produto.altura_cm || 10))
     grupo.largura = Math.max(grupo.largura, Number(produto.largura_cm || 15))
     grupo.comprimento = Math.max(grupo.comprimento, Number(produto.comprimento_cm || 20))
+    grupo.todosFreteGratis = grupo.todosFreteGratis && Boolean(produto.frete_gratis)
     grupo.itensDetalhados.push({
       quantidade,
       peso: Number(produto.peso_kg || 0.3),
@@ -281,7 +287,16 @@ async function calcularFretesPorLoja(cepDestino, itens) {
   for (const grupo of Object.values(porLoja)) {
     let resultado = null
 
-    if (grupo.superfreteToken && grupo.cepOrigem) {
+    // Se TODOS os produtos dessa loja no carrinho têm frete grátis marcado
+    // no cadastro, nem precisa consultar SuperFrete/Correios — já é grátis.
+    if (grupo.todosFreteGratis) {
+      resultado = {
+        estimativaAproximada: false,
+        opcoes: [{ servico: 'gratis', nome: 'Frete grátis', preco: 0, prazoDias: null }]
+      }
+    }
+
+    if (!resultado && grupo.superfreteToken && grupo.cepOrigem) {
       try {
         resultado = await calcularFreteSuperFrete(grupo.superfreteToken, grupo.cepOrigem, cepLimpo, grupo.itensDetalhados)
       } catch (err) {
