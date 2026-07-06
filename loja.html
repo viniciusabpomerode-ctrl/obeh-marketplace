@@ -556,6 +556,7 @@ async function carregarLoja(id) {
         styleEl.textContent = data.css_personalizado
         document.head.appendChild(styleEl)
       }
+      document.body.classList.toggle('modo-acessivel', Boolean(data.modo_acessivel))
 
       // Nome
       document.getElementById('lojaNome').textContent = data.nome_loja || 'Loja sem nome'

@@ -67,16 +67,38 @@
 
     .produto-info .price-large {
       font-family: 'Space Mono', monospace;
-      font-size: 28px;
+      font-size: 32px;
       font-weight: 700;
+      color: var(--clay-dark);
       margin: 16px 0;
     }
 
     .produto-info .descricao {
-      color: var(--ink-soft);
-      font-size: 15px;
-      line-height: 1.6;
+      color: var(--ink);
+      font-size: 16px;
+      line-height: 1.7;
       margin: 16px 0;
+    }
+
+    /* Modo acessibilidade: a loja pode ligar isso pra quem tem baixa visão
+       (fonte maior, contraste mais forte). Ver toggle "modo_acessivel" no
+       dashboard da loja. */
+    body.modo-acessivel .produto-info h1 {
+      font-size: 38px;
+    }
+
+    body.modo-acessivel .produto-info .descricao {
+      font-size: 19px;
+      line-height: 1.8;
+    }
+
+    body.modo-acessivel .produto-info .price-large {
+      font-size: 38px;
+    }
+
+    body.modo-acessivel .card-title,
+    body.modo-acessivel .card-maker {
+      font-size: 1.15em;
     }
 
     .produto-info .categoria-tag {
@@ -416,7 +438,9 @@
               nome_loja,
               logo,
               user_id,
-              mercado_pago_link
+              mercado_pago_link,
+              modo_acessivel,
+              css_personalizado
             ),
             categorias (nome)
           `)
@@ -436,6 +460,13 @@
 
       produtoData = data
       lojaData = data.lojas
+
+      document.body.classList.toggle('modo-acessivel', Boolean(lojaData?.modo_acessivel))
+      if (lojaData?.css_personalizado) {
+        const styleEl = document.createElement('style')
+        styleEl.textContent = lojaData.css_personalizado
+        document.head.appendChild(styleEl)
+      }
 
       renderizarProduto(data)
       carregarProdutosRelacionados(data)

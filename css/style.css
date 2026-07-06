@@ -1720,3 +1720,30 @@ footer {
     left: 16px;
   }
 }
+
+/* ===== MODO ACESSIBILIDADE (loja liga isso pra si própria) =====
+   Fonte maior e mais contraste nos cards e no cabeçalho da loja pública —
+   pensado pra público com baixa visão, comum em quem compra artesanato. */
+body.modo-acessivel .card-title {
+  font-size: 19px;
+  color: var(--ink);
+}
+
+body.modo-acessivel .card-maker {
+  font-size: 14.5px;
+  color: var(--ink);
+}
+
+body.modo-acessivel .card-cat {
+  font-size: 12px;
+}
+
+body.modo-acessivel .price {
+  font-size: 1.15em;
+}
+
+body.modo-acessivel #lojaNome,
+body.modo-acessivel #lojaDescricao {
+  font-size: 1.15em;
+  color: var(--ink);
+}

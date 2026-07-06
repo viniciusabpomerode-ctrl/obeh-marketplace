@@ -63,10 +63,27 @@
   <div class="cursos-hero">
     <p style="font-family:'Space Mono', monospace; font-size:11px; text-transform:uppercase; color:var(--olive); margin-bottom:8px;">🎓 Aprenda artesanato</p>
     <h1>Cursos feitos por artesãos de verdade</h1>
-    <p>Aprenda técnicas de cerâmica, tecelagem, madeira, couro e muito mais direto com quem vive disso. Cursos vendidos por lojas do plano Ultra.</p>
+    <p>Aprenda técnicas de cerâmica, tecelagem, madeira, couro e muito mais direto com quem vive disso.</p>
   </div>
 
   <div class="cursos-container">
+    <div style="max-width:340px; margin-bottom:20px;">
+      <select id="cursosCategoriaFiltro" onchange="filtrarCursosPorCategoria(this.value)">
+        <option value="">Todas as categorias</option>
+        <option value="bordado_costura">Bordado e costura</option>
+        <option value="croche_trico">Crochê e tricô</option>
+        <option value="ceramica">Cerâmica e biscuit</option>
+        <option value="marcenaria">Marcenaria e entalhe</option>
+        <option value="pintura_ilustracao">Pintura e ilustração</option>
+        <option value="resina">Resina</option>
+        <option value="papelaria">Papelaria e scrapbook</option>
+        <option value="velas_sabonetes">Velas e sabonetes artesanais</option>
+        <option value="bijuteria">Bijuteria e acessórios</option>
+        <option value="reciclagem">Reciclagem e upcycling</option>
+        <option value="digital_moldes">Digital — moldes e apostilas</option>
+        <option value="digital_gestao">Digital — precificação e gestão pra artesãos</option>
+      </select>
+    </div>
     <div class="grid" id="cursosGrid">
       <!-- Injetado via JS -->
     </div>
@@ -74,13 +91,35 @@
 
   <script src="js/supabase.js"></script>
   <script>
+    let cursosCache = []
+
+    const CATEGORIAS_CURSO = {
+      bordado_costura: 'Bordado e costura',
+      croche_trico: 'Crochê e tricô',
+      ceramica: 'Cerâmica e biscuit',
+      marcenaria: 'Marcenaria e entalhe',
+      pintura_ilustracao: 'Pintura e ilustração',
+      resina: 'Resina',
+      papelaria: 'Papelaria e scrapbook',
+      velas_sabonetes: 'Velas e sabonetes artesanais',
+      bijuteria: 'Bijuteria e acessórios',
+      reciclagem: 'Reciclagem e upcycling',
+      digital_moldes: 'Digital — moldes e apostilas',
+      digital_gestao: 'Digital — precificação e gestão'
+    }
+
     document.addEventListener('DOMContentLoaded', async () => {
-      await carregarCursos()
+      cursosCache = await getCursos() || []
+      renderizarCursos(cursosCache)
     })
 
-    async function carregarCursos() {
+    function filtrarCursosPorCategoria(categoria) {
+      const filtrados = categoria ? cursosCache.filter(c => c.categoria === categoria) : cursosCache
+      renderizarCursos(filtrados)
+    }
+
+    function renderizarCursos(cursos) {
       const grid = document.getElementById('cursosGrid')
-      const cursos = await getCursos()
 
       if (!cursos || cursos.length === 0) {
         grid.innerHTML = `
@@ -102,7 +141,7 @@
                 }
               </div>
               <div class="card-body">
-                <div class="card-cat">Curso</div>
+                <div class="card-cat">${CATEGORIAS_CURSO[c.categoria] || 'Curso'}</div>
                 <div class="card-title">${c.titulo}</div>
                 <div class="card-maker">${c.lojas?.nome_loja || 'Artesão'}</div>
                 <div class="card-foot">
@@ -113,7 +152,7 @@
           `).join('')
     }
 
-    window.carregarCursos = carregarCursos
+    window.filtrarCursosPorCategoria = filtrarCursosPorCategoria
   </script>
 
 </body>
