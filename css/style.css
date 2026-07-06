@@ -1651,3 +1651,72 @@ footer {
     padding: 40px 0;
   }
 }
+
+/* ===== OVELHINHA ANDANDO NO CABEÇALHO ===== */
+.ovelha-ticker {
+  position: relative;
+  height: 44px;
+  overflow: hidden;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--line);
+}
+
+.ovelha-andando {
+  position: absolute;
+  top: 4px;
+  left: -80px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  animation: ovelhaAndar 16s linear infinite;
+}
+
+.ovelha-svg {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+}
+
+.ovelha-bandeira {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--clay-dark);
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.ovelha-andando.com-bandeira .ovelha-bandeira {
+  opacity: 1;
+}
+
+@keyframes ovelhaAndar {
+  from { left: -260px; }
+  to { left: 100%; }
+}
+
+.ovelha-instagram {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--clay);
+  text-decoration: none;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+
+.ovelha-instagram.visivel {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ovelha-andando {
+    animation: none;
+    left: 16px;
+  }
+}

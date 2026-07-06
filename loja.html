@@ -317,6 +317,33 @@
     let produtosLoja = []
     let artesaoId = null
 
+    // Gerador pseudo-aleatório determinístico (mulberry32) — com a mesma
+    // seed sempre dá a mesma sequência, então todo mundo vê a mesma ordem
+    // dentro da mesma janela de tempo, mas ela muda quando a janela muda.
+    function criarGeradorSeed(seed) {
+      return function () {
+        seed |= 0; seed = (seed + 0x6D2B79F5) | 0
+        let t = Math.imul(seed ^ (seed >>> 15), 1 | seed)
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+      }
+    }
+
+    // Produtos em destaque ficam na frente, mas a ordem entre eles roda a
+    // cada 3 horas — assim todo produto impulsionado tem a vez de aparecer
+    // primeiro, em vez do mesmo sempre travado no topo.
+    function ordenarPorDestaque(lista) {
+      const janela3h = Math.floor(Date.now() / (3 * 60 * 60 * 1000))
+      const rand = criarGeradorSeed(janela3h)
+      const destaque = lista.filter(p => p.destaque)
+      const normal = lista.filter(p => !p.destaque)
+      for (let i = destaque.length - 1; i > 0; i--) {
+        const j = Math.floor(rand() * (i + 1))
+        ;[destaque[i], destaque[j]] = [destaque[j], destaque[i]]
+      }
+      return [...destaque, ...normal]
+    }
+
     // ===== INICIALIZAÇÃO =====
     document.addEventListener('DOMContentLoaded', async () => {
       // Pega o ID da loja da URL (link antigo ?id=, link bonito ?slug= vindo
@@ -604,7 +631,7 @@ function renderProdutosLoja(lista) {
         return
       }
 
-      const ordenada = lista.slice().sort((a, b) => (b.destaque ? 1 : 0) - (a.destaque ? 1 : 0))
+      const ordenada = ordenarPorDestaque(lista)
 
       container.innerHTML = ordenada.map(p => `
             <div class="card" onclick="window.location.href='produto.html?id=${p.id}'">
