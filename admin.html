@@ -78,6 +78,44 @@
       text-align: center;
       padding: 80px 20px;
     }
+    .admin-edit-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    .admin-field label {
+      font-size: 12.5px;
+      font-weight: 600;
+      display: block;
+      margin-bottom: 4px;
+      color: var(--ink-soft);
+    }
+    .admin-field input[type="text"],
+    .admin-field textarea {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+    @media (max-width: 640px) {
+      .admin-edit-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .admin-section-head {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .admin-section-head .contador {
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
+      background: var(--clay);
+      padding: 2px 10px;
+      border-radius: 999px;
+    }
   </style>
 </head>
 <body>
@@ -100,20 +138,26 @@
   </div>
 
   <div class="admin-wrap" id="adminArea" style="display:none;">
-    <h1>🏬 Todas as lojas</h1>
+    <div class="admin-section-head">
+      <h1 style="margin:0;">🏬 Todas as lojas</h1>
+      <span class="contador" id="contadorLojas">—</span>
+    </div>
     <p class="admin-sub">Veja e edite qualquer loja da plataforma, independente do dono.</p>
     <input id="buscaLojas" type="text" placeholder="Buscar por nome da loja, dono ou e-mail..." style="width:100%; padding:10px 14px; border:1px solid var(--line); border-radius:8px; font-size:14px; margin-bottom:16px;" oninput="filtrarTodasLojas()" />
     <div id="listaTodasLojas">
       <p style="color:var(--ink-soft); font-size:14px;">Carregando...</p>
     </div>
-  </div>
 
-  <hr style="margin:40px 0; border:none; border-top:1px solid var(--line);" />
+    <hr style="margin:40px 0; border:none; border-top:1px solid var(--line);" />
 
-  <h1>🆘 Solicitações de suporte</h1>
-  <p class="admin-sub">Pedidos de ajuda enviados pelos vendedores.</p>
-  <div id="listaSuporte">
-    <p style="color:var(--ink-soft); font-size:14px;">Carregando...</p>
+    <div class="admin-section-head">
+      <h1 style="margin:0;">🆘 Solicitações de suporte</h1>
+      <span class="contador" id="contadorSuporte">—</span>
+    </div>
+    <p class="admin-sub">Pedidos de ajuda enviados pelos vendedores.</p>
+    <div id="listaSuporte">
+      <p style="color:var(--ink-soft); font-size:14px;">Carregando...</p>
+    </div>
   </div>
 
   <!-- ===== SCRIPTS ===== -->
@@ -151,6 +195,7 @@
       }
 
       window.__todasLojasCache = data || []
+      document.getElementById('contadorLojas').textContent = window.__todasLojasCache.length
       renderTodasLojas(window.__todasLojasCache)
     }
 
@@ -179,45 +224,54 @@
           </div>
         <div id="produtosArea-${loja.id}" style="display:none; margin-top:14px; border-top:1px solid var(--line); padding-top:14px;"></div>
           <div id="editForm-${loja.id}" style="display:none; margin-top:16px; border-top:1px solid var(--line); padding-top:16px;">
-            <label style="font-size:13px; font-weight:600;">Nome da loja</label>
-            <input id="edNome-${loja.id}" type="text" value="${(loja.nome_loja || '').replace(/"/g, '&quot;')}" style="width:100%; padding:8px 12px; border:1px solid var(--line); border-radius:8px; margin:6px 0 14px;" />
-
-            <label style="font-size:13px; font-weight:600;">Descrição</label>
-            <textarea id="edDesc-${loja.id}" style="width:100%; padding:8px 12px; border:1px solid var(--line); border-radius:8px; margin:6px 0 14px; min-height:70px;">${loja.descricao || ''}</textarea>
-
-            <label style="font-size:13px; font-weight:600;">Instagram</label>
-            <input id="edInsta-${loja.id}" type="text" value="${(loja.instagram || '').replace(/"/g, '&quot;')}" style="width:100%; padding:8px 12px; border:1px solid var(--line); border-radius:8px; margin:6px 0 14px;" />
-
-            <label style="font-size:13px; font-weight:600;">WhatsApp</label>
-            <input id="edWhats-${loja.id}" type="text" value="${(loja.whatsapp || '').replace(/"/g, '&quot;')}" style="width:100%; padding:8px 12px; border:1px solid var(--line); border-radius:8px; margin:6px 0 14px;" />
-
-            <label style="font-size:13px; font-weight:600;">Link Mercado Pago (fallback manual, opcional)</label>
-            <input id="edMP-${loja.id}" type="text" value="${(loja.mercado_pago_link || '').replace(/"/g, '&quot;')}" style="width:100%; padding:8px 12px; border:1px solid var(--line); border-radius:8px; margin:6px 0 14px;" />
-
-            <label style="font-size:13px; font-weight:600;">CNPJ</label>
-            <input id="edCnpj-${loja.id}" type="text" value="${(loja.cnpj || '').replace(/"/g, '&quot;')}" style="width:100%; padding:8px 12px; border:1px solid var(--line); border-radius:8px; margin:6px 0 14px;" />
-
-            <label style="font-size:13px; font-weight:600;">CEP de origem</label>
-            <input id="edCep-${loja.id}" type="text" value="${(loja.cep_origem || '').replace(/"/g, '&quot;')}" style="width:100%; padding:8px 12px; border:1px solid var(--line); border-radius:8px; margin:6px 0 14px;" />
-
-            <label style="font-size:13px; font-weight:600;">Categoria da loja</label>
-            <input id="edCategoria-${loja.id}" type="text" value="${(loja.categoria || '').replace(/"/g, '&quot;')}" style="width:100%; padding:8px 12px; border:1px solid var(--line); border-radius:8px; margin:6px 0 14px;" />
-
-            <label style="font-size:13px; font-weight:600;">Token do SuperFrete</label>
-            <input id="edSuperfrete-${loja.id}" type="text" value="${(loja.superfrete_token || '').replace(/"/g, '&quot;')}" style="width:100%; padding:8px 12px; border:1px solid var(--line); border-radius:8px; margin:6px 0 14px;" />
-
-            <div style="display:flex; gap:16px; margin-bottom:14px;">
-              <div>
-                <label style="font-size:13px; font-weight:600; display:block; margin-bottom:6px;">Cor de destaque</label>
-                <input id="edCorDestaque-${loja.id}" type="color" value="${loja.cor_destaque || '#B5502F'}" style="height:36px; width:70px;" />
+            <div class="admin-edit-grid">
+              <div class="admin-field">
+                <label>Nome da loja</label>
+                <input id="edNome-${loja.id}" type="text" value="${(loja.nome_loja || '').replace(/"/g, '&quot;')}" />
               </div>
-              <div>
-                <label style="font-size:13px; font-weight:600; display:block; margin-bottom:6px;">Cor da borda da logo</label>
-                <input id="edCorBorda-${loja.id}" type="color" value="${loja.cor_borda_logo || '#B5502F'}" style="height:36px; width:70px;" />
+              <div class="admin-field">
+                <label>Categoria da loja</label>
+                <input id="edCategoria-${loja.id}" type="text" value="${(loja.categoria || '').replace(/"/g, '&quot;')}" />
+              </div>
+              <div class="admin-field">
+                <label>Instagram</label>
+                <input id="edInsta-${loja.id}" type="text" value="${(loja.instagram || '').replace(/"/g, '&quot;')}" />
+              </div>
+              <div class="admin-field">
+                <label>WhatsApp</label>
+                <input id="edWhats-${loja.id}" type="text" value="${(loja.whatsapp || '').replace(/"/g, '&quot;')}" />
+              </div>
+              <div class="admin-field">
+                <label>CNPJ</label>
+                <input id="edCnpj-${loja.id}" type="text" value="${(loja.cnpj || '').replace(/"/g, '&quot;')}" />
+              </div>
+              <div class="admin-field">
+                <label>CEP de origem</label>
+                <input id="edCep-${loja.id}" type="text" value="${(loja.cep_origem || '').replace(/"/g, '&quot;')}" />
+              </div>
+              <div class="admin-field">
+                <label>Token do SuperFrete</label>
+                <input id="edSuperfrete-${loja.id}" type="text" value="${(loja.superfrete_token || '').replace(/"/g, '&quot;')}" />
+              </div>
+              <div class="admin-field">
+                <label>Link Mercado Pago (fallback manual)</label>
+                <input id="edMP-${loja.id}" type="text" value="${(loja.mercado_pago_link || '').replace(/"/g, '&quot;')}" />
+              </div>
+              <div class="admin-field" style="grid-column:1/-1;">
+                <label>Descrição</label>
+                <textarea id="edDesc-${loja.id}" style="min-height:70px;">${loja.descricao || ''}</textarea>
+              </div>
+              <div class="admin-field">
+                <label>Cor de destaque</label>
+                <input id="edCorDestaque-${loja.id}" type="color" value="${loja.cor_destaque || '#B5502F'}" style="height:38px; padding:2px;" />
+              </div>
+              <div class="admin-field">
+                <label>Cor da borda da logo</label>
+                <input id="edCorBorda-${loja.id}" type="color" value="${loja.cor_borda_logo || '#B5502F'}" style="height:38px; padding:2px;" />
               </div>
             </div>
 
-            <label style="font-size:13px; font-weight:600;">
+            <label style="font-size:13px; font-weight:600; display:block; margin:14px 0;">
               <input id="edAtiva-${loja.id}" type="checkbox" ${loja.ativa ? 'checked' : ''} /> Loja ativa (visível no marketplace)
             </label>
 
@@ -375,6 +429,9 @@
       return
     }
 
+    const abertas = (data || []).filter(s => s.status !== 'resolvido').length
+    document.getElementById('contadorSuporte').textContent = abertas + ' aberta(s)'
+
     if (!data || data.length === 0) {
       container.innerHTML = '<div class="empty-state"><p>Nenhuma solicitação no momento.</p></div>'
       return
@@ -390,6 +447,7 @@
             <p style="font-size:11px;">${new Date(s.created_at).toLocaleString('pt-BR')}</p>
           </div>
           <div class="loja-actions">
+            <button class="btn-aprovar" onclick="window.location.href='chat.html?user=${s.user_id}'">💬 Responder</button>
             ${s.status !== 'resolvido' ? `<button class="btn-aprovar" onclick="resolverSuporte('${s.id}')">Marcar como resolvido</button>` : ''}
           </div>
         </div>

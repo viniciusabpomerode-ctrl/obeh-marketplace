@@ -653,28 +653,42 @@ function atualizarCarrinhoUI() {
 // FUNÇÕES DE CHAT (COM BLOQUEIO)
 // ============================================
 
-async function enviarMensagem(destinatarioId, conteudo) {
+// Bloqueia troca de contato direto (WhatsApp, Instagram, telefone, e-mail,
+// Telegram etc.) pra ninguém combinar de sair da plataforma e a Obeh perder
+// a venda/taxa. Não é infalível (dá pra escrever "zero onze" por extenso),
+// mas cobre o caso comum de colar um número/link/usuário.
+function contemInformacaoDeContato(texto) {
+  const t = texto.toLowerCase()
+
+  const palavrasProibidas = [
+    'whatsapp', 'wpp', 'zap', 'zapzap', 'telefone', 'celular', 'ligação', 'liga pra',
+    'instagram', 'insta ', '@insta', 'facebook', 'telegram', 'tlgrm', 't.me/', 'wa.me/',
+    'gmail.com', 'hotmail.com', 'outlook.com', 'yahoo.com', 'icloud.com'
+  ]
+  if (palavrasProibidas.some(p => t.includes(p))) return true
+
+  // E-mail em qualquer domínio
+  if (/[\w.+-]+@[\w-]+\.[a-z]{2,}/i.test(texto)) return true
+
+  // "@usuario" (menção de rede social)
+  if (/@[a-z0-9_.]{3,}/i.test(texto)) return true
+
+  // Sequência de 8+ dígitos (número de telefone, com ou sem formatação)
+  const somenteDigitos = texto.replace(/\D/g, '')
+  if (somenteDigitos.length >= 8) return true
+
+  return false
+}
+
+async function enviarMensagem(destinatarioId, conteudo, produtoId) {
   const user = await getCurrentUser()
   if (!user) {
     alert('Faça login para enviar mensagens')
     return false
   }
 
-  // Bloqueia WhatsApp, telefone e email
-  const palavrasProibidas = ['whatsapp', 'telefone', 'celular', '@gmail', '@hotmail', '@outlook', '@yahoo', 'zap']
-  const conteudoLower = conteudo.toLowerCase()
-
-  for (const palavra of palavrasProibidas) {
-    if (conteudoLower.includes(palavra)) {
-      alert('❌ Mensagem contém informação de contato proibida (WhatsApp, telefone, etc).')
-      return false
-    }
-  }
-
-  // Bloqueia números de telefone
-  const telefoneRegex = /\(?\d{2}\)?\s?\d{4,5}-?\d{4}/g
-  if (telefoneRegex.test(conteudo)) {
-    alert('❌ Não é permitido enviar números de telefone.')
+  if (contemInformacaoDeContato(conteudo)) {
+    alert('❌ Mensagem bloqueada: não é permitido trocar contato direto (WhatsApp, Instagram, telefone, e-mail etc.) por aqui. Combine tudo dentro do Obeh.')
     return false
   }
 
@@ -683,7 +697,8 @@ async function enviarMensagem(destinatarioId, conteudo) {
     .insert({
       remetente_id: user.id,
       destinatario_id: destinatarioId,
-      conteudo: conteudo
+      conteudo: conteudo,
+      produto_id: produtoId || null
     })
     .select()
 

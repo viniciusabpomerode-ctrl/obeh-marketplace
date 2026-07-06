@@ -1955,6 +1955,67 @@ pasta_id,
     if (tab === 'vendas') {
         carregarVendas()
       }
+      if (tab === 'mensagens') {
+        carregarConversas()
+      }
+    }
+
+    // ===== MENSAGENS (inbox do vendedor) =====
+    async function carregarConversas() {
+      const container = document.getElementById('mensagensList')
+      if (!container) return
+
+      const { data, error } = await supabaseClient
+        .from('mensagens')
+        .select('*')
+        .or(`remetente_id.eq.${currentUserId},destinatario_id.eq.${currentUserId}`)
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        container.innerHTML = `<p style="color:#c94a4a;">Erro ao carregar mensagens: ${error.message}</p>`
+        return
+      }
+
+      if (!data || data.length === 0) {
+        container.innerHTML = '<p style="color:var(--ink-soft); text-align:center; padding:40px;">Nenhuma mensagem.</p>'
+        return
+      }
+
+      // Uma conversa por "outra pessoa" — pega só a mensagem mais recente de
+      // cada uma (a lista já vem ordenada da mais nova pra mais velha) e
+      // conta quantas não lidas tem de cada uma.
+      const conversasPorPessoa = {}
+      for (const m of data) {
+        const outraPessoaId = m.remetente_id === currentUserId ? m.destinatario_id : m.remetente_id
+        if (!conversasPorPessoa[outraPessoaId]) {
+          conversasPorPessoa[outraPessoaId] = { ultimaMensagem: m, naoLidas: 0 }
+        }
+        if (m.destinatario_id === currentUserId && !m.lida) {
+          conversasPorPessoa[outraPessoaId].naoLidas++
+        }
+      }
+
+      const idsOutrasPessoas = Object.keys(conversasPorPessoa)
+      const { data: pessoas } = await supabaseClient.from('users').select('id, nome, avatar').in('id', idsOutrasPessoas)
+      const pessoasPorId = {}
+      ;(pessoas || []).forEach(p => { pessoasPorId[p.id] = p })
+
+      const conversas = idsOutrasPessoas
+        .map(id => ({ id, pessoa: pessoasPorId[id], ...conversasPorPessoa[id] }))
+        .sort((a, b) => new Date(b.ultimaMensagem.created_at) - new Date(a.ultimaMensagem.created_at))
+
+      container.innerHTML = conversas.map(c => `
+        <div class="loja-card" style="cursor:pointer;" onclick="window.location.href='chat.html?user=${c.id}${c.ultimaMensagem.produto_id ? '&produto=' + c.ultimaMensagem.produto_id : ''}'">
+          <div style="width:44px; height:44px; border-radius:50%; background:#E9DFC7; flex-shrink:0; overflow:hidden;">
+            ${c.pessoa?.avatar ? `<img src="${c.pessoa.avatar}" alt="" style="width:100%; height:100%; object-fit:cover;" />` : ''}
+          </div>
+          <div class="info">
+            <h3>${c.pessoa?.nome || 'Usuário'} ${c.naoLidas > 0 ? `<span style="background:var(--clay); color:#fff; font-size:11px; padding:2px 8px; border-radius:999px;">${c.naoLidas} nova(s)</span>` : ''}</h3>
+            <p>${(c.ultimaMensagem.conteudo || '').slice(0, 80)}</p>
+            <p style="font-size:11px;">${new Date(c.ultimaMensagem.created_at).toLocaleString('pt-BR')}</p>
+          </div>
+        </div>
+      `).join('')
     }
 
     function switchLojaSubTab(nome) {

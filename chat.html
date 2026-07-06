@@ -203,6 +203,7 @@
       <div>
         <div class="nome" id="chatNome">Carregando...</div>
         <div class="status" id="chatStatus">Online</div>
+        <div id="chatProdutoContexto" style="display:none; font-size:12.5px; color:var(--clay-dark); margin-top:2px; font-weight:500;"></div>
       </div>
     </div>
 
@@ -228,6 +229,7 @@
     let currentUser = null
     let destinatarioId = null
     let destinatarioData = null
+    let produtoContextoId = null
     let intervalId = null
 
     // ===== INICIALIZAÇÃO =====
@@ -247,9 +249,11 @@
         return
       }
 
-      // Pega o ID do destinatário da URL
+      // Pega o ID do destinatário (e, se veio da página de um produto, o
+      // produto de contexto) da URL
       const urlParams = new URLSearchParams(window.location.search)
       destinatarioId = urlParams.get('user')
+      produtoContextoId = urlParams.get('produto')
 
       if (!destinatarioId) {
         document.getElementById('chatBox').innerHTML = `
@@ -273,10 +277,21 @@
       }
 
       await carregarDestinatario()
+      await carregarProdutoContexto()
       await carregarMensagens()
       configurarAutoRefresh()
       configurarEnter()
     })
+
+    // ===== CONTEXTO DO PRODUTO (se veio da página de um produto) =====
+    async function carregarProdutoContexto() {
+      if (!produtoContextoId) return
+      const { data } = await supabaseClient.from('produtos').select('nome').eq('id', produtoContextoId).maybeSingle()
+      if (!data) return
+      const el = document.getElementById('chatProdutoContexto')
+      el.textContent = `📦 Sobre: ${data.nome}`
+      el.style.display = 'block'
+    }
 
     // ===== CARREGAR DESTINATÁRIO =====
     async function carregarDestinatario() {
@@ -374,7 +389,7 @@
         return
       }
 
-      const resultado = await enviarMensagem(destinatarioId, conteudo)
+      const resultado = await enviarMensagem(destinatarioId, conteudo, produtoContextoId)
 
       if (resultado) {
         input.value = ''
