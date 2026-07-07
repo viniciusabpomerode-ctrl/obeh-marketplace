@@ -548,6 +548,23 @@
     // MINHAS LOJAS (CRIADAS PELO ADMIN)
     // ============================================
 
+    // Helper: pega o token de acesso do Supabase para autenticar nas Netlify Functions
+    async function getAuthToken() {
+      const { data } = await supabaseClient.auth.getSession()
+      return data?.session?.access_token || ''
+    }
+
+    // Helper: chama uma Netlify Function com autenticação
+    async function callNetlifyFunction(name, body) {
+      const token = await getAuthToken()
+      const res = await fetch(`/.netlify/functions/${name}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify(body)
+      })
+      return res.json()
+    }
+
     async function carregarMinhasLojas() {
       const container = document.getElementById('listaMinhasLojas')
       const data = await getLojasAdmin()
@@ -583,7 +600,8 @@
       const nome = document.getElementById('novaLojaNome').value.trim()
       if (!nome) { alert('Nome da loja é obrigatório.'); return }
 
-      const loja = await criarLojaAdmin({
+      // Usa Netlify Function (service role) para bypassar RLS
+      const result = await callNetlifyFunction('admin-criar-loja', {
         nome_loja: nome,
         categoria: document.getElementById('novaLojaCategoria').value.trim(),
         instagram: document.getElementById('novaLojaInsta').value.trim(),
@@ -591,7 +609,7 @@
         descricao: document.getElementById('novaLojaDesc').value.trim()
       })
 
-      if (!loja) { alert('Erro ao criar loja.'); return }
+      if (result.error) { alert('❌ ' + result.error); return }
 
       alert('✅ Loja criada com sucesso! Ela está oculta até você transferi-la.')
       document.getElementById('formCriarLoja').style.display = 'none'
@@ -636,12 +654,18 @@
       btn.disabled = true
       btn.textContent = 'Transferindo...'
 
-      const result = await transferirLoja(__transferindoLojaId, email, plano || null, meses)
+      // Usa Netlify Function (service role) para bypassar RLS
+      const result = await callNetlifyFunction('admin-transferir-loja', {
+        loja_id: __transferindoLojaId,
+        email_destino: email,
+        plano: plano || null,
+        meses
+      })
 
       btn.disabled = false
       btn.textContent = 'Transferir'
 
-      if (!result.success) {
+      if (result.error) {
         alert('❌ ' + result.error)
         return
       }

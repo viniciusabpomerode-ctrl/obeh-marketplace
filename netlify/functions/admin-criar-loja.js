@@ -44,19 +44,19 @@ exports.handler = async (event) => {
     const userRes = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
       headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${token}` }
     })
-    if (!userRes.ok) return { statusCode: 403, body: JSON.stringify({ error: 'Token inválido' }) }
+    if (!userRes.ok) return { statusCode: 403, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Token inválido' }) }
     const { email } = await userRes.json()
-    if (email !== ADMIN_EMAIL) return { statusCode: 403, body: JSON.stringify({ error: 'Acesso negado' }) }
+    if (email !== ADMIN_EMAIL) return { statusCode: 403, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Acesso negado' }) }
 
     const { nome_loja, descricao, categoria, instagram, whatsapp } = body
     if (!nome_loja || !nome_loja.trim()) {
-      return { statusCode: 400, body: JSON.stringify({ error: 'Nome da loja é obrigatório' }) }
+      return { statusCode: 400, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Nome da loja é obrigatório' }) }
     }
 
     // Buscar user_id do admin
     const users = await supabaseFetch(`users?email=eq.${encodeURIComponent(email)}&select=id`)
     const adminUserId = users?.[0]?.id
-    if (!adminUserId) return { statusCode: 500, body: JSON.stringify({ error: 'Admin não encontrado' }) }
+    if (!adminUserId) return { statusCode: 500, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Admin não encontrado' }) }
 
     // Criar slug
     const slug = nome_loja.toLowerCase()
@@ -83,9 +83,10 @@ exports.handler = async (event) => {
 
     return {
       statusCode: 200,
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ success: true, loja: loja?.[0] || loja })
     }
   } catch (err) {
-    return { statusCode: 500, body: JSON.stringify({ error: err.message }) }
+    return { statusCode: 500, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: err.message }) }
   }
 }
