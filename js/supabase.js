@@ -315,9 +315,10 @@ async function getLoja(userId) {
     .from('lojas')
     .select('*')
     .eq('user_id', userId)
-    .single()
+    .eq('criada_por_admin', false)
+    .maybeSingle()
 
-  if (error && error.code !== 'PGRST116') {
+  if (error) {
     console.error('Erro ao buscar loja:', error)
     return null
   }
