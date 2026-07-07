@@ -207,8 +207,8 @@
       const lojaIds = [...new Set(vendas.map(v => v.produtos?.loja_id).filter(Boolean))]
       let lojasPorId = {}
       if (lojaIds.length > 0) {
-        const { data: lojas } = await supabaseClient.from('lojas').select('id, nome_loja').in('id', lojaIds)
-        ;(lojas || []).forEach(l => { lojasPorId[l.id] = l.nome_loja })
+        const { data: lojas } = await supabaseClient.from('lojas').select('id, nome_loja, user_id').in('id', lojaIds)
+        ;(lojas || []).forEach(l => { lojasPorId[l.id] = { nome: l.nome_loja, userId: l.user_id } })
       }
 
       // Agrupa por pedido_id — cada pedido é uma cobrança feita numa loja
@@ -220,8 +220,9 @@
             pedidoId: chave,
             status: v.status,
             createdAt: v.created_at,
-            nomeLoja: lojasPorId[v.produtos?.loja_id] || 'Loja',
+            nomeLoja: lojasPorId[v.produtos?.loja_id]?.nome || 'Loja',
             lojaId: v.produtos?.loja_id || null,
+            vendedorId: lojasPorId[v.produtos?.loja_id]?.userId || null,
             frete: 0,
             itens: [],
             initPoint: v.init_point || null,
@@ -269,6 +270,11 @@
             <div class="pedido-total">
               ${p.frete > 0 ? `Produtos: R$ ${totalProdutos.toFixed(2).replace('.', ',')} + Frete: R$ ${p.frete.toFixed(2).replace('.', ',')} = ` : ''}Total: R$ ${totalPedido.toFixed(2).replace('.', ',')}
             </div>
+            ${p.vendedorId ? `
+              <div style="margin-top:10px;">
+                <a href="chat.html?user=${p.vendedorId}" class="btn btn-ghost" style="padding:8px 16px; font-size:13px;">💬 Falar com o vendedor</a>
+              </div>
+            ` : ''}
             ${p.status === 'pendente' ? renderContinuarPagamento(p) : ''}
           </div>
         `

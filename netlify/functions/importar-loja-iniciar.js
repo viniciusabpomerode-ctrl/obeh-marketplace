@@ -32,6 +32,8 @@ async function supabaseRequest(path, options = {}) {
 
 function identificarPlataforma(url) {
   if (/artesanou\.com\.br/i.test(url)) return 'artesanou'
+  if (/minhavenda\.com\.br/i.test(url)) return 'minhavenda'
+  if (/akeba\.com\.br/i.test(url)) return 'akeba'
   return null
 }
 

@@ -31,7 +31,9 @@ async function buscarHtml(url) {
   if (!res.ok) {
     throw new Error(`Falha ao acessar ${url} (${res.status})`)
   }
-  return cheerio.load(await res.text())
+  const html = await res.text()
+  if (!html || html.trim().length < 100) throw new Error(`Resposta vazia de ${url}`)
+  return cheerio.load(html)
 }
 
 function extrairSlugLojaDaUrl(urlOuSlug) {

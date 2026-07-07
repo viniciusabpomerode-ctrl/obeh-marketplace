@@ -395,7 +395,73 @@
         </label>
       </div>
       <div class="form-group" style="background:rgba(0,0,0,0.03); border:1px solid var(--line); border-radius:12px; padding:14px;">
-        <label>✨ Assistente de CSS (IA, grátis) <span style="font-weight:400; font-size:12px; color:var(--ink-soft);">— descreva o estilo que você quer e a IA gera o CSS</span></label>
+        <label>🎨 Temas prontos <span style="font-weight:400; font-size:12px; color:var(--ink-soft);">— clique para aplicar um tema base</span></label>
+        <div style="display:flex; gap:10px; margin-top:8px; flex-wrap:wrap;">
+          <button type="button" class="btn btn-outline" onclick="aplicarTema('feminino')" style="display:flex; align-items:center; gap:8px;">
+            <span style="display:inline-block; width:18px; height:18px; border-radius:50%; background:#D97A7A;"></span> 🌸 Público Feminino
+          </button>
+          <button type="button" class="btn btn-outline" onclick="aplicarTema('masculino')" style="display:flex; align-items:center; gap:8px;">
+            <span style="display:inline-block; width:18px; height:18px; border-radius:50%; background:#3E5C76;"></span> 🛠️ Público Masculino
+          </button>
+        </div>
+      </div>
+
+      <div class="form-group" style="background:rgba(0,0,0,0.03); border:1px solid var(--line); border-radius:12px; padding:14px;">
+        <label>🖌️ Personalização guiada <span style="font-weight:400; font-size:12px; color:var(--ink-soft);">— preencha o que quiser e clique em Gerar CSS</span></label>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:8px;">
+          <div class="admin-field" style="margin:0;">
+            <label style="font-size:12px;">Cor de fundo da loja</label>
+            <div style="display:flex; gap:6px;">
+              <input type="color" id="guiFundo" value="#FAF6F1" style="width:36px; height:34px; padding:2px; border:1px solid var(--line); border-radius:6px;" />
+              <input type="text" id="guiFundoHex" placeholder="#FAF6F1" style="flex:1; font-size:12px;" oninput="syncColor('guiFundo', this.value)" />
+            </div>
+          </div>
+          <div class="admin-field" style="margin:0;">
+            <label style="font-size:12px;">Cor dos cards</label>
+            <div style="display:flex; gap:6px;">
+              <input type="color" id="guiCards" value="#FFFFFF" style="width:36px; height:34px; padding:2px; border:1px solid var(--line); border-radius:6px;" />
+              <input type="text" id="guiCardsHex" placeholder="#FFFFFF" style="flex:1; font-size:12px;" oninput="syncColor('guiCards', this.value)" />
+            </div>
+          </div>
+          <div class="admin-field" style="margin:0;">
+            <label style="font-size:12px;">Cor dos botões</label>
+            <div style="display:flex; gap:6px;">
+              <input type="color" id="guiBotoes" value="#B5502F" style="width:36px; height:34px; padding:2px; border:1px solid var(--line); border-radius:6px;" />
+              <input type="text" id="guiBotoesHex" placeholder="#B5502F" style="flex:1; font-size:12px;" oninput="syncColor('guiBotoes', this.value)" />
+            </div>
+          </div>
+          <div class="admin-field" style="margin:0;">
+            <label style="font-size:12px;">Cor dos títulos</label>
+            <div style="display:flex; gap:6px;">
+              <input type="color" id="guiTitulos" value="#2B2620" style="width:36px; height:34px; padding:2px; border:1px solid var(--line); border-radius:6px;" />
+              <input type="text" id="guiTitulosHex" placeholder="#2B2620" style="flex:1; font-size:12px;" oninput="syncColor('guiTitulos', this.value)" />
+            </div>
+          </div>
+          <div class="admin-field" style="margin:0;">
+            <label style="font-size:12px;">Cor do texto</label>
+            <div style="display:flex; gap:6px;">
+              <input type="color" id="guiTexto" value="#5D4A44" style="width:36px; height:34px; padding:2px; border:1px solid var(--line); border-radius:6px;" />
+              <input type="text" id="guiTextoHex" placeholder="#5D4A44" style="flex:1; font-size:12px;" oninput="syncColor('guiTexto', this.value)" />
+            </div>
+          </div>
+          <div class="admin-field" style="margin:0;">
+            <label style="font-size:12px;">Bordas dos cards</label>
+            <select id="guiBordas" style="width:100%; padding:7px 10px; font-size:12px; border:1px solid var(--line); border-radius:6px;">
+              <option value="12px">Arredondadas (12px)</option>
+              <option value="8px">Médias (8px)</option>
+              <option value="4px">Suaves (4px)</option>
+              <option value="0px">Retas (0px)</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:flex; gap:10px; margin-top:14px; align-items:center;">
+          <button type="button" class="btn btn-primary" onclick="gerarCssGuiado()" style="font-size:13px;">✨ Gerar CSS personalizado</button>
+          <span style="font-size:12px; color:var(--ink-soft);">Depois refine com a IA abaixo se quiser efeitos especiais</span>
+        </div>
+      </div>
+
+      <div class="form-group" style="background:rgba(0,0,0,0.03); border:1px solid var(--line); border-radius:12px; padding:14px;">
+        <label>✨ Assistente de CSS (IA, grátis) <span style="font-weight:400; font-size:12px; color:var(--ink-soft);">— descreva efeitos especiais: flocos caindo, animações, gradientes...</span></label>
         <div id="cssIaChatLog" style="max-height:220px; overflow-y:auto; display:flex; flex-direction:column; gap:8px; margin:10px 0;"></div>
         <div style="display:flex; gap:8px;">
           <input id="cssIaInput" type="text" placeholder="Ex: cor azul com flocos caindo do lado" style="flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault(); enviarMensagemCssIa()}" />
@@ -2617,12 +2683,15 @@ pasta_id,
       const ticketMedio = totalVendas > 0 ? totalFaturado / totalVendas : 0
 
       const contagemProdutos = {}
+      const receitaProdutos = {}
       concluidas.forEach(v => {
         const nome = v.produtos?.nome || 'Produto'
         contagemProdutos[nome] = (contagemProdutos[nome] || 0) + (v.quantidade || 1)
+        receitaProdutos[nome] = (receitaProdutos[nome] || 0) + Number(v.valor_total || 0)
       })
-      const listaMaisVendidos = Object.entries(contagemProdutos).sort((a, b) => b[1] - a[1])
-      const maisVendido = listaMaisVendidos[0]
+      const topProdutos = Object.entries(contagemProdutos)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
 
       resumo.innerHTML = `
         <div style="flex:1; min-width:160px; border:1px solid var(--line); border-radius:12px; padding:16px;">
@@ -2638,12 +2707,30 @@ pasta_id,
           <p style="font-size:22px; font-weight:700;">R$ ${ticketMedio.toFixed(2).replace('.', ',')}</p>
         </div>
         <div style="flex:1; min-width:160px; border:1px solid var(--line); border-radius:12px; padding:16px;">
-          <p style="font-size:13px; color:var(--ink-soft); margin-bottom:4px;">Mais vendido</p>
-          <p style="font-size:16px; font-weight:700;">${maisVendido ? maisVendido[0] : '—'}</p>
+          <p style="font-size:13px; color:var(--ink-soft); margin-bottom:4px;">⭐ Mais vendido</p>
+          <p style="font-size:15px; font-weight:700;">${topProdutos[0] ? topProdutos[0][0] : '—'}</p>
+          ${topProdutos[0] ? `<p style="font-size:12px; color:var(--ink-soft);">${topProdutos[0][1]} un.</p>` : ''}
         </div>
       `
 
-      container.innerHTML = vendas.map(v => {
+      // Top 5 produtos
+      const topHtml = topProdutos.length > 0 ? `
+        <div style="margin-bottom:20px; border:1px solid var(--line); border-radius:12px; padding:18px;">
+          <h3 style="font-size:16px; margin:0 0 12px;">🏆 Top produtos mais vendidos</h3>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            ${topProdutos.map(([nome, qtd], i) => `
+              <div style="display:flex; align-items:center; gap:12px; padding:8px 12px; background:${i === 0 ? 'rgba(181,80,47,0.06)' : 'transparent'}; border-radius:8px;">
+                <span style="font-weight:700; font-size:16px; color:${i === 0 ? 'var(--clay)' : 'var(--ink-soft)'}; min-width:24px;">${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}</span>
+                <span style="flex:1; font-size:14px; font-weight:500;">${esc(nome)}</span>
+                <span style="font-size:13px; color:var(--ink-soft);">${qtd} un. vendida(s)</span>
+                <span style="font-size:14px; font-weight:600;">R$ ${receitaProdutos[nome].toFixed(2).replace('.', ',')}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      ` : ''
+
+      container.innerHTML = topHtml + vendas.map(v => {
         const concluida = ['pago', 'concluida', 'aprovado', 'approved'].includes(v.status)
         return `
         <div class="loja-card">
@@ -3002,6 +3089,114 @@ pasta_id,
     window.toggleSelecionarTodos = toggleSelecionarTodos
     window.atualizarBulkToolbar = atualizarBulkToolbar
     window.carregarVendas = carregarVendas
+
+    // ===== TEMAS PRONTOS =====
+    const TEMAS_CSS = {
+      feminino: `/* 🌸 Tema Feminino — Obeh */
+.loja-header-public { background: #FAF6F1 !important; }
+.loja-header-public .loja-nome { color: #D97A7A !important; }
+body { background: #FAF6F1; }
+.card, .loja-card, .produto-card { background: #FEF9F5 !important; border-radius: 12px !important; border: 1px solid #E8DDD5 !important; }
+.btn-primary { background: #D97A7A !important; border-color: #D97A7A !important; color: #fff !important; }
+.btn-primary:hover { background: #C56868 !important; }
+.btn-outline { border-color: #D97A7A !important; color: #D97A7A !important; }
+a, .link { color: #D97A7A !important; }
+.chip, .cat-strip .chip { background: #FEF9F5 !important; border: 1px solid #E8DDD5 !important; }
+.chip.active { background: #D97A7A !important; color: #fff !important; border-color: #D97A7A !important; }
+.price, .price-large { color: #C56868 !important; }
+h1, h2, h3 { color: #5D4A44 !important; }
+.artisan-box, .artisan-avatar { border-color: #E8DDD5 !important; }`,
+
+      masculino: `/* 🛠️ Tema Masculino — Obeh */
+.loja-header-public { background: #F5F3F0 !important; }
+.loja-header-public .loja-nome { color: #3E5C76 !important; }
+body { background: #F5F3F0; }
+.card, .loja-card, .produto-card { background: #FAFAF8 !important; border-radius: 8px !important; border: 1px solid #D5D2CF !important; }
+.btn-primary { background: #3E5C76 !important; border-color: #3E5C76 !important; color: #fff !important; }
+.btn-primary:hover { background: #344E64 !important; }
+.btn-outline { border-color: #3E5C76 !important; color: #3E5C76 !important; }
+a, .link { color: #3E5C76 !important; }
+.chip, .cat-strip .chip { background: #FAFAF8 !important; border: 1px solid #D5D2CF !important; }
+.chip.active { background: #3E5C76 !important; color: #fff !important; border-color: #3E5C76 !important; }
+.price, .price-large { color: #2E4A60 !important; }
+h1, h2, h3 { color: #2B3A48 !important; }
+.artisan-box, .artisan-avatar { border-color: #D5D2CF !important; }`
+    }
+
+    function aplicarTema(tema) {
+      const css = TEMAS_CSS[tema]
+      if (!css) return
+      const textarea = document.getElementById('lojaCssPersonalizado')
+      const atual = textarea.value.trim()
+      if (atual && !confirm('Sua loja já tem CSS personalizado. Deseja substituir pelo tema?\n\nOK = Substituir\nCancelar = Juntar com o existente')) {
+        textarea.value = atual + '\n\n' + css
+      } else {
+        textarea.value = css
+      }
+      alert('✅ Tema aplicado no campo CSS! Clique em "Salvar loja" para publicar.')
+      textarea.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+
+    window.aplicarTema = aplicarTema
+
+    // Sincroniza o input color com o campo hex
+    function syncColor(colorId, hexValue) {
+      const colorInput = document.getElementById(colorId)
+      if (colorInput && /^#[0-9a-fA-F]{6}$/.test(hexValue)) {
+        colorInput.value = hexValue
+      }
+    }
+    // Sincroniza campo hex com o color picker
+    document.addEventListener('DOMContentLoaded', () => {
+      ['guiFundo','guiCards','guiBotoes','guiTitulos','guiTexto'].forEach(id => {
+        const colorEl = document.getElementById(id)
+        const hexEl = document.getElementById(id + 'Hex')
+        if (colorEl && hexEl) {
+          colorEl.addEventListener('input', () => { hexEl.value = colorEl.value })
+        }
+      })
+    })
+
+    function gerarCssGuiado() {
+      const fundo = document.getElementById('guiFundo').value
+      const cards = document.getElementById('guiCards').value
+      const botoes = document.getElementById('guiBotoes').value
+      const titulos = document.getElementById('guiTitulos').value
+      const texto = document.getElementById('guiTexto').value
+      const bordas = document.getElementById('guiBordas').value
+
+      const css = `/* 🎨 CSS personalizado gerado pelo assistente Obeh */
+body { background: ${fundo}; }
+.loja-header-public { background: ${fundo}; }
+.card, .loja-card, .produto-card {
+  background: ${cards} !important;
+  border-radius: ${bordas} !important;
+}
+.btn-primary { background: ${botoes} !important; border-color: ${botoes} !important; color: #fff !important; }
+.btn-primary:hover { filter: brightness(0.9); }
+.btn-outline { border-color: ${botoes} !important; color: ${botoes} !important; }
+a, .link, .loja-link { color: ${botoes} !important; }
+.chip, .cat-strip .chip { background: ${cards}; }
+.chip.active { background: ${botoes} !important; color: #fff !important; border-color: ${botoes} !important; }
+.price, .price-large { color: ${botoes} !important; }
+h1, h2, h3, h4 { color: ${titulos} !important; }
+p, span, div { color: ${texto}; }
+.artisan-box, .artisan-avatar { border-color: ${botoes}33 !important; }`
+
+      const textarea = document.getElementById('lojaCssPersonalizado')
+      const atual = textarea.value.trim()
+      if (atual && !confirm('Sua loja já tem CSS personalizado. Deseja substituir?\n\nOK = Substituir\nCancelar = Juntar com o existente')) {
+        textarea.value = atual + '\n\n' + css
+      } else {
+        textarea.value = css
+      }
+      textarea.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      alert('✅ CSS gerado! Agora use a IA abaixo se quiser adicionar efeitos especiais (flocos caindo, animações, etc). Depois clique em "Salvar loja".')
+    }
+
+    window.syncColor = syncColor
+    window.gerarCssGuiado = gerarCssGuiado
+
     // ===== ASSISTENTE DE CSS (IA) =====
     let cssIaHistorico = []
     let cssIaUltimoCss = ''

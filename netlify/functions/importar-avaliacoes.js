@@ -13,7 +13,15 @@
 //
 // Precisa de SUPABASE_SERVICE_ROLE_KEY.
 // ============================================
-const { extrairAvaliacoesDaLoja } = require('./lib/artesanou-adapter')
+const { extrairAvaliacoesDaLoja: extrairAvaliacoesArtesanou } = require('./lib/artesanou-adapter')
+const { extrairAvaliacoesDaLoja: extrairAvaliacoesMinhavenda } = require('./lib/minhavenda-adapter')
+const { extrairAvaliacoesDaLoja: extrairAvaliacoesAkeba } = require('./lib/akeba-adapter')
+
+const ADAPTERS_AVALIACOES = {
+  artesanou: extrairAvaliacoesArtesanou,
+  minhavenda: extrairAvaliacoesMinhavenda,
+  akeba: extrairAvaliacoesAkeba
+}
 
 const SUPABASE_URL = 'https://pzvqtpestzrmipcyqbsp.supabase.co'
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -39,6 +47,8 @@ async function supabaseRequest(path, options = {}) {
 
 function identificarPlataforma(url) {
   if (/artesanou\.com\.br/i.test(url)) return 'artesanou'
+  if (/minhavenda\.com\.br/i.test(url)) return 'minhavenda'
+  if (/akeba\.com\.br/i.test(url)) return 'akeba'
   return null
 }
 
@@ -76,7 +86,8 @@ exports.handler = async (event) => {
       return { statusCode: 404, body: JSON.stringify({ error: 'Loja do vendedor não encontrada no Obeh.' }) }
     }
 
-    const avaliacoesExtraidas = await extrairAvaliacoesDaLoja(urlLoja)
+    const extrairFn = ADAPTERS_AVALIACOES[plataforma]
+    const avaliacoesExtraidas = await extrairFn(urlLoja)
 
     if (avaliacoesExtraidas.length === 0) {
       return { statusCode: 200, body: JSON.stringify({ total: 0, novas: 0, mensagem: 'Nenhuma avaliação encontrada na loja de origem.' }) }

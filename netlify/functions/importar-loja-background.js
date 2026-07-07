@@ -14,6 +14,8 @@
 // importado entra com pendente_dados_frete=true.
 // ============================================
 const artesanouAdapter = require('./lib/artesanou-adapter')
+const minhavendaAdapter = require('./lib/minhavenda-adapter')
+const akebaAdapter = require('./lib/akeba-adapter')
 const { mapearProdutoImportado } = require('./lib/mapear-produto-importado')
 const { importarImagemParaR2 } = require('./lib/r2-upload-servidor')
 
@@ -21,7 +23,27 @@ const SUPABASE_URL = 'https://pzvqtpestzrmipcyqbsp.supabase.co'
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
 
 const ADAPTERS = {
-  artesanou: artesanouAdapter
+  artesanou: artesanouAdapter,
+  minhavenda: minhavendaAdapter,
+  akeba: akebaAdapter
+}
+
+// Tenta executar uma função assíncrona até MAX_TENTATIVAS vezes, com pausa
+// crescente entre tentativas. Se falhar todas, retorna null (não estoura).
+async function comRetry(fn, nome = '', maxTentativas = 3) {
+  for (let t = 1; t <= maxTentativas; t++) {
+    try {
+      return await fn()
+    } catch (err) {
+      if (t === maxTentativas) {
+        console.error(`${nome}: falha definitiva após ${maxTentativas} tentativas:`, err.message)
+        return null
+      }
+      const pausa = t * 800 + Math.random() * 400
+      console.warn(`${nome}: tentativa ${t}/${maxTentativas} falhou, retentando em ${Math.round(pausa)}ms...`, err.message)
+      await esperar(pausa)
+    }
+  }
 }
 
 async function supabaseRequest(path, options = {}) {
@@ -96,44 +118,64 @@ exports.handler = async (event) => {
     // 2. Busca as categorias do Obeh pra tentar casar com a categoria de origem
     const categoriasObeh = await supabaseRequest('categorias?select=id,nome')
 
-    // 3. Pra cada produto, busca os detalhes completos (com pausa educada
-    // entre requisições) e já mapeia pro formato do Obeh
+    // 3. Processa produtos em paralelo (5 simultâneos) pra acelerar a importação.
+    // O delay entre lotes evita sobrecarregar o servidor de origem.
+    const CONCURRENCIA = 5
     const produtosMapeados = []
-    for (const cartao of cartoes) {
-      await esperar(300 + Math.random() * 500)
-      let detalhes
-      try {
-        detalhes = await adapter.extrairDetalhesProduto(cartao.url)
-      } catch (err) {
-        console.error('Falha ao extrair detalhes de', cartao.url, err.message)
-        detalhes = {
-          urlOrigem: cartao.url,
-          titulo: cartao.titulo,
-          descricao: null,
-          precoAtual: artesanouAdapter.parsePrecoBRL(cartao.precoAtualTexto),
-          precoAntigo: artesanouAdapter.parsePrecoBRL(cartao.precoAntigoTexto),
-          categoriaTexto: cartao.categoriaTexto,
-          pastaOrigemTexto: null,
-          imagens: cartao.imagemThumb ? [cartao.imagemThumb] : [],
-          sobEncomenda: Boolean(cartao.prazoProducaoTexto),
-          prazoProducaoDias: artesanouAdapter.extrairDiasProducao(cartao.prazoProducaoTexto)
+    
+    for (let i = 0; i < cartoes.length; i += CONCURRENCIA) {
+      const lote = cartoes.slice(i, i + CONCURRENCIA)
+      const promessas = lote.map(async (cartao) => {
+        let detalhes
+        try {
+          detalhes = await comRetry(
+            () => adapter.extrairDetalhesProduto(cartao.url),
+            `Detalhes ${cartao.url.split('/').pop()}`,
+            3
+          )
+        } catch (err) {
+          console.error('Falha ao extrair detalhes de', cartao.url, err.message)
         }
+        
+        // Se o retry falhou ou retornou null, usa fallback com dados do card
+        if (!detalhes) {
+            urlOrigem: cartao.url,
+            titulo: cartao.titulo,
+            descricao: null,
+            precoAtual: artesanouAdapter.parsePrecoBRL(cartao.precoAtualTexto),
+            precoAntigo: artesanouAdapter.parsePrecoBRL(cartao.precoAntigoTexto),
+            categoriaTexto: cartao.categoriaTexto,
+            pastaOrigemTexto: null,
+            imagens: cartao.imagemThumb ? [cartao.imagemThumb] : [],
+            sobEncomenda: Boolean(cartao.prazoProducaoTexto),
+            prazoProducaoDias: artesanouAdapter.extrairDiasProducao(cartao.prazoProducaoTexto)
+          }
+        }
+        return mapearProdutoImportado(detalhes, { categoriasObeh, plataforma, lojaId })
+      })
+      
+      const resultados = await Promise.all(promessas)
+      produtosMapeados.push(...resultados)
+      
+      // Pausa pequena entre lotes (mais rápida)
+      if (i + CONCURRENCIA < cartoes.length) {
+        await esperar(150 + Math.random() * 200)
       }
-      produtosMapeados.push(mapearProdutoImportado(detalhes, { categoriasObeh, plataforma, lojaId }))
     }
 
-    // 4. Sobe as imagens de cada produto pro R2 (pula silenciosamente as que falharem)
+    // 4. Sobe as imagens de cada produto pro R2 em paralelo
     for (const produto of produtosMapeados) {
       const urlsFinais = []
-      for (const urlOrigemImg of produto.imagensOrigem) {
-        try {
-          const urlFinal = await importarImagemParaR2(urlOrigemImg, 'produtos')
-          urlsFinais.push(urlFinal)
-        } catch (err) {
-          console.error('Falha ao importar imagem, pulando:', urlOrigemImg, err.message)
-        }
-        await esperar(200 + Math.random() * 300)
-      }
+      const promisesImg = produto.imagensOrigem.map(async (urlOrigemImg) => {
+        return await comRetry(
+          () => importarImagemParaR2(urlOrigemImg, 'produtos'),
+          `Img ${urlOrigemImg.split('/').pop()}`,
+          2
+        )
+      })
+      const resultados = await Promise.all(promisesImg)
+      urlsFinais.push(...resultados.filter(Boolean))
+      await esperar(80 + Math.random() * 120) // micro-pausa entre produtos
       produto.fotos = urlsFinais
       produto.sem_imagem = urlsFinais.length === 0
       delete produto.imagensOrigem

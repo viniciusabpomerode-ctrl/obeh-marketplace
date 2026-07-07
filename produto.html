@@ -147,6 +147,33 @@
       border-color: #5A6040;
     }
 
+    /* Botões de compartilhar */
+    .share-buttons {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+    .share-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      color: #fff;
+      text-decoration: none;
+      transition: transform 0.15s, opacity 0.15s;
+    }
+    .share-btn:hover { transform: scale(1.05); opacity: 0.9; }
+    .share-whatsapp { background: #25D366; }
+    .share-facebook { background: #1877F2; }
+    .share-pinterest { background: #E60023; }
+    .share-copiar { background: #666; }
+
     .produto-extra {
       margin-top: 32px;
       padding-top: 24px;
@@ -528,6 +555,36 @@
       }
     }
 
+    // ===== COMPARTILHAR PRODUTO =====
+    function compartilhar(rede) {
+      if (!produtoData) return
+      const url = window.location.href
+      const nome = produtoData.nome || 'Produto artesanal'
+      const loja = lojaData?.nome_loja || 'Obeh'
+      const texto = encodeURIComponent(`Olha que lindo esse(a) "${nome}" da loja ${loja} na Obeh! 🧵✨`)
+      const urlEnc = encodeURIComponent(url)
+
+      switch (rede) {
+        case 'whatsapp':
+          window.open(`https://wa.me/?text=${texto}%20${urlEnc}`, '_blank')
+          break
+        case 'facebook':
+          window.open(`https://www.facebook.com/sharer/sharer.php?u=${urlEnc}`, '_blank')
+          break
+        case 'pinterest':
+          const img = produtoData.fotos?.[0] || ''
+          window.open(`https://pinterest.com/pin/create/button/?url=${urlEnc}&description=${texto}&media=${encodeURIComponent(img)}`, '_blank')
+          break
+        case 'copiar':
+          navigator.clipboard.writeText(url).then(() => {
+            alert('🔗 Link copiado!')
+          }).catch(() => {
+            prompt('Copie o link:', url)
+          })
+          break
+      }
+    }
+
     // ===== PRODUTOS RELACIONADOS =====
     function renderizarCardsRelacionados(lista) {
       return lista.map(p => `
@@ -666,6 +723,14 @@
               </div>
 
               <div class="descricao">${p.descricao || 'Sem descrição detalhada.'}</div>
+
+              <div class="share-buttons">
+                <span style="font-size:12px; color:var(--ink-soft); align-self:center;">Compartilhar:</span>
+                <button class="share-btn share-whatsapp" onclick="compartilhar('whatsapp')" title="WhatsApp">📱 WhatsApp</button>
+                <button class="share-btn share-facebook" onclick="compartilhar('facebook')" title="Facebook">📘 Facebook</button>
+                <button class="share-btn share-pinterest" onclick="compartilhar('pinterest')" title="Pinterest">📌 Pinterest</button>
+                <button class="share-btn share-copiar" onclick="compartilhar('copiar')" title="Copiar link">🔗 Copiar link</button>
+              </div>
 
               <div class="produto-extra">
                 <h3>📦 Detalhes do produto</h3>

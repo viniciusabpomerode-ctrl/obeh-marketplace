@@ -105,9 +105,9 @@
         </div>
 
         <a href="#categorias">Categorias</a>
-        <a href="lojas.html">🏪 Lojas</a>
-        <a href="cursos.html">🎓 Cursos</a>
-        <a href="embaixadores.html">💛 Embaixadores</a>
+        <a href="lojas.html">Lojas</a>
+        <a href="cursos.html">Cursos</a>
+        <a href="embaixadores.html">Embaixadores</a>
         <a href="#como-funciona">Como funciona</a>
         <a href="#vender">Vender</a>
 
@@ -127,7 +127,7 @@
               <span id="userNomeNav" style="font-size:13px; color:var(--ink-soft); max-width:110px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Minha conta ▾</span>
             </button>
             <div id="userMenuDropdown" style="display:none; position:absolute; top:calc(100% + 8px); right:0; background:var(--white); border:1px solid var(--line); border-radius:10px; box-shadow:0 8px 24px rgba(43,38,32,0.14); min-width:190px; overflow:hidden; z-index:200;">
-              <a href="dashboard.html" style="display:flex; align-items:center; gap:8px; padding:12px 16px; font-size:14px; font-weight:700; color:var(--clay-dark); text-decoration:none; background:rgba(181,80,47,0.08); border-bottom:1px solid var(--line);">🏪 Minha loja</a>
+              <a href="dashboard.html?tab=loja" style="display:flex; align-items:center; gap:8px; padding:12px 16px; font-size:14px; font-weight:700; color:var(--clay-dark); text-decoration:none; background:rgba(181,80,47,0.08); border-bottom:1px solid var(--line);">🏪 Minha loja</a>
               <a href="minhas-compras.html" style="display:flex; align-items:center; gap:8px; padding:11px 16px; font-size:14px; color:var(--ink); text-decoration:none;">📦 Minhas compras</a>
               <a href="favoritos.html" style="display:flex; align-items:center; gap:8px; padding:11px 16px; font-size:14px; color:var(--ink); text-decoration:none;">❤️ Favoritos</a>
               <a href="perfil.html" style="display:flex; align-items:center; gap:8px; padding:11px 16px; font-size:14px; color:var(--ink); text-decoration:none;">👤 Cadastro <span id="cadastroAvisoTexto" style="display:none; color:#c94a4a; font-size:12px;">⚠️ incompleto</span></a>
@@ -152,14 +152,6 @@
       <span class="ovelha-bandeira" id="ovelhaBandeira">🏳️ Melhor marketplace de artesanato</span>
     </div>
     <a class="ovelha-instagram" id="ovelhaInstagram" href="https://instagram.com/obehartesanatos" target="_blank" rel="noopener">@obehartesanatos</a>
-  </div>
-
-  <!-- ===== ABAS CLIENTE / ARTESÃO ===== -->
-  <div class="wrap">
-    <div class="role-tabs">
-      <button class="role-tab active" data-role="cliente">🛍️ Sou Cliente</button>
-      <button class="role-tab" data-role="artesao">🧶 Sou Artesão</button>
-    </div>
   </div>
 
   <!-- ===== HERO ===== -->
@@ -313,13 +305,13 @@
   <section class="section sell-cta" id="vender">
     <div class="wrap">
       <!-- DIFERENCIAL PRINCIPAL -->
-      <div style="text-align:center; background:var(--clay); color:var(--white); padding:28px 20px; border-radius:8px; margin-bottom:40px;">
+      <div style="text-align:center; background:var(--clay); color:var(--white); padding:32px 24px; border-radius:12px; margin-bottom:40px;">
         <div style="font-size:44px; margin-bottom:8px;">🎯</div>
         <h2 style="color:var(--white); font-size:clamp(28px,3vw,38px);">Taxas justas, que caem conforme você cresce.</h2>
-        <p style="font-size:16px; margin-top:10px; max-width:600px; margin-left:auto; margin-right:auto;">
+        <p style="font-size:16px; margin-top:10px; max-width:620px; margin-left:auto; margin-right:auto; color:#F7F2E7; line-height:1.7; opacity:0.92;">
           Manter a plataforma no ar, segura e funcionando tem custo — por isso cobramos uma pequena taxa por venda.
-          Mas ela é <strong>a menor possível</strong> pra viabilizar o Obeh, nunca uma taxa abusiva: começa em <strong>8%</strong> no
-          plano grátis e cai pra <strong>4%, 2%</strong> e até <strong>0%</strong> conforme você assina um plano melhor.
+          Mas ela é <strong style="color:#fff;">a menor possível</strong> pra viabilizar o Obeh, nunca uma taxa abusiva: começa em <strong style="color:#fff;">8%</strong> no
+          plano grátis e cai pra <strong style="color:#fff;">4%, 2%</strong> e até <strong style="color:#fff;">0%</strong> conforme você assina um plano melhor.
           O pagamento cai direto na sua conta do Mercado Pago, já com a taxa descontada automaticamente.
         </p>
         <div style="display:flex; gap:20px; justify-content:center; margin-top:16px; flex-wrap:wrap; font-size:14px;">
@@ -627,9 +619,10 @@
       if (!produtosFiltrados || produtosFiltrados.length === 0) {
         grid.innerHTML = `
                 <div style="grid-column:1/-1; text-align:center; padding:60px 20px; color:var(--ink-soft);">
-                  <div style="font-size:48px; margin-bottom:16px;">🧶</div>
-                  <p style="font-size:18px; font-weight:500;">Nenhum produto encontrado</p>
-                  <p style="font-size:14px; margin-top:8px;">Volte em breve para ver as novidades dos artesãos.</p>
+                  <div style="font-size:48px; margin-bottom:16px;">🏗️</div>
+                  <p style="font-size:18px; font-weight:500;">Ateliês chegando!</p>
+                  <p style="font-size:14px; margin-top:8px;">Estamos recebendo os primeiros artesãos. As peças aparecem aqui em breve.</p>
+                  <p style="font-size:13px; margin-top:12px;"><a href="cadastro.html" style="color:var(--clay); font-weight:600;">Quer ser um dos primeiros? Crie sua loja grátis →</a></p>
                 </div>
               `
         return
@@ -870,35 +863,6 @@
       if (e.key === 'Enter') {
         buscarProdutos()
       }
-    })
-
-    // ===== ROLES (CLIENTE / ARTESÃO) =====
-    document.querySelectorAll('.role-tab').forEach(tab => {
-      tab.addEventListener('click', () => {
-        document.querySelectorAll('.role-tab').forEach(t => t.classList.remove('active'))
-        tab.classList.add('active')
-
-        const role = tab.dataset.role
-        const heroTitle = document.getElementById('heroTitle')
-        const heroSub = document.getElementById('heroSub')
-        const heroCtas = document.getElementById('heroCtas')
-
-        if (role === 'cliente') {
-          heroTitle.innerHTML = 'Cada peça carrega <span class="stitch">a marca</span> de quem fez.'
-          heroSub.textContent = 'Compre direto de quem faz com as próprias mãos — cerâmica, tecelagem, madeira, couro e muito mais. Sem intermediário, com a história de cada artesão.'
-          heroCtas.innerHTML = `
-                  <a href="#vitrine" class="btn btn-primary">Explorar peças</a>
-                  <a href="cadastro.html" class="btn btn-ghost">Quero vender</a>
-                `
-        } else {
-          heroTitle.innerHTML = 'Transforme seu <span class="stitch">talento</span> em renda.'
-          heroSub.textContent = 'Crie sua loja grátis com até 200 produtos e taxa de 8% por venda, a maior parte pra manter a plataforma no ar. Quer vender mais e pagar menos? A taxa cai pra 4%, 2% e até 0% no plano Ultra conforme você cresce — e o pagamento sempre vai direto pra sua conta.'
-          heroCtas.innerHTML = `
-                  <a href="cadastro.html" class="btn btn-primary">Criar minha loja</a>
-                  <a href="#vender" class="btn btn-ghost">Ver planos</a>
-                `
-        }
-      })
     })
 
     // ===== OVELHINHA ANDANDO NO CABEÇALHO =====
