@@ -701,10 +701,16 @@
       document.getElementById('produtoBreadcrumb').innerHTML = `
         <span><a href="index.html" style="color:inherit;">Início</a> &gt; ${p.categorias?.nome ? `${p.categorias.nome} &gt; ` : ''}${esc(p.nome)}</span>
         <span style="display:flex; gap:14px; flex-wrap:wrap;">
-          <span>🔒 Compra segura</span>
-          <span>🚚 Envio direto do artesão</span>
+          <span style="display:inline-flex; align-items:center; gap:5px;"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-lock"></use></svg> Compra segura</span>
+          <span style="display:inline-flex; align-items:center; gap:5px;"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-truck"></use></svg> Envio direto do artesão</span>
         </span>
       `
+
+      // Parcelamento em até 12x (só exibe quando a parcela vale a pena)
+      const precoNum = Number(p.preco)
+      const parcelamentoHtml = precoNum >= 30
+        ? `<div class="installments" style="font-size:15px;">ou até <strong>12x de R$ ${(precoNum / 12).toFixed(2).replace('.', ',')}</strong> no cartão</div>`
+        : ''
 
       container.innerHTML = `
             <!-- Galeria -->
@@ -716,11 +722,11 @@
                 }
               </div>
               ${fotos.length > 1 ? `
-                <div style="display:flex; gap:8px; margin-top:12px; overflow-x:auto; padding-bottom:8px;">
+                <div style="display:flex; gap:10px; margin-top:14px; overflow-x:auto; padding-bottom:8px;">
                   ${fotos.map(f => `
-                    <div style="width:60px; height:60px; border-radius:4px; overflow:hidden; border:1px solid var(--line); flex-shrink:0; cursor:pointer; background:#E9DFC7;" onclick="trocarImagem('${f}')">
+                    <button class="produto-thumb" onclick="trocarImagem('${f}')" aria-label="Ver esta foto">
                       <img src="${f}" alt="Miniatura" style="width:100%; height:100%; object-fit:cover;" />
-                    </div>
+                    </button>
                   `).join('')}
                 </div>
               ` : ''}
@@ -730,59 +736,59 @@
             <div class="produto-info">
               <div class="categoria-tag">${p.categorias?.nome || 'Artesanato'}</div>
               <h1>${esc(p.nome)}</h1>
-              <div class="loja-link" onclick="window.location.href='loja.html?id=${lojaData?.id}'">
-                🏪 ${esc(nomeLoja)}${lojaData?.nota_media ? ` · ⭐ ${Number(lojaData.nota_media).toFixed(1)}` : ''}
+              <div class="loja-link" onclick="window.location.href='loja.html?id=${lojaData?.id}'" style="display:inline-flex; align-items:center; gap:6px;">
+                <svg class="icon icon-sm" aria-hidden="true"><use href="#i-store"></use></svg> ${esc(nomeLoja)}${lojaData?.nota_media ? ` <span class="rating-stars"><svg class="star" viewBox="0 0 24 24" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26"/></svg><span class="rating-num">${Number(lojaData.nota_media).toFixed(1)}</span>${lojaData.total_avaliacoes ? `<span>(${lojaData.total_avaliacoes})</span>` : ''}</span>` : ''}
               </div>
 
-              <div style="background:var(--bg-card); border:1px solid var(--line); border-radius:12px; padding:18px; margin:14px 0;">
-                ${p.em_promocao ? '<span style="display:inline-block; background:var(--clay); color:#fff; font-size:12px; font-weight:700; padding:3px 12px; border-radius:999px; margin-bottom:8px;">🔥 Promoção</span>' : ''}
-                <div class="price-large">
-                  ${p.em_promocao && p.preco_antigo ? `<span style="text-decoration:line-through; color:var(--ink-soft); font-size:16px; margin-right:10px;">R$ ${Number(p.preco_antigo).toFixed(2).replace('.', ',')}</span>` : ''}
-                  R$ ${Number(p.preco).toFixed(2).replace('.', ',')}
-                </div>
+              <div style="background:var(--bg-card); border:1px solid var(--line); border-radius:var(--radius); padding:24px; margin:16px 0; box-shadow:var(--shadow);">
+                ${p.em_promocao ? '<span style="display:inline-block; background:var(--clay); color:#fff; font-size:12.5px; font-weight:700; padding:4px 14px; border-radius:999px; margin-bottom:8px;">Promoção</span>' : ''}
+                ${p.em_promocao && p.preco_antigo ? `<div class="price-old" style="font-size:16px;">R$ ${Number(p.preco_antigo).toFixed(2).replace('.', ',')}</div>` : ''}
+                <div class="price-large">R$ ${precoNum.toFixed(2).replace('.', ',')}</div>
+                ${parcelamentoHtml}
                 ${p.desconto_pix_percentual ? `
-                  <p style="font-size:13px; color:#2f7a4d; font-weight:600; margin:4px 0 14px;">
-                    💠 R$ ${(Number(p.preco) * (1 - Number(p.desconto_pix_percentual) / 100)).toFixed(2).replace('.', ',')} pagando com Pix (${p.desconto_pix_percentual}% de desconto)
+                  <p class="pix-tag" style="margin:8px 0 0; font-size:14px;">
+                    <svg class="icon icon-sm" aria-hidden="true"><use href="#i-zap"></use></svg>
+                    R$ ${(precoNum * (1 - Number(p.desconto_pix_percentual) / 100)).toFixed(2).replace('.', ',')} no Pix (${p.desconto_pix_percentual}% de desconto)
                   </p>
-                ` : '<div style="margin-bottom:10px;"></div>'}
-                <div class="produto-actions" style="margin-top:0;">
-                  <button class="btn btn-outline btn-lg" onclick="adicionarAoCarrinhoClique()">
-                    🛒 Adicionar ao carrinho
+                ` : ''}
+                <div class="produto-actions" style="margin-top:18px;">
+                  <button class="btn btn-primary btn-lg" onclick="comprarAgora()" style="flex:1.2;">
+                    Comprar agora
                   </button>
-                  <button class="btn btn-primary btn-lg" onclick="comprarAgora()">
-                    ⚡ Comprar agora
+                  <button class="btn btn-outline btn-lg" onclick="adicionarAoCarrinhoClique()">
+                    <svg class="icon" aria-hidden="true"><use href="#i-cart"></use></svg> Adicionar
                   </button>
                   <button class="btn btn-outline" id="btnFavoritar" onclick="toggleFavorito()" title="Favoritar" aria-label="Adicionar aos favoritos" style="flex:0 0 auto; padding:0 18px; min-width:56px;">
                     🤍
                   </button>
                 </div>
-                <div class="trust-bar" style="margin-top:14px; padding:12px 14px;">
-                  <span class="trust-item"><span class="trust-icon" aria-hidden="true">🔒</span> Compra protegida</span>
-                  <span class="trust-item"><span class="trust-icon" aria-hidden="true">💳</span> Pix e cartão via Mercado Pago</span>
-                  <span class="trust-item"><span class="trust-icon" aria-hidden="true">🤝</span> Dinheiro direto pro artesão</span>
+                <div class="trust-list" style="margin-top:16px;">
+                  <span class="trust-row"><svg class="icon" aria-hidden="true"><use href="#i-lock"></use></svg> <strong>Compra protegida</strong>&nbsp;do início ao fim</span>
+                  <span class="trust-row"><svg class="icon" aria-hidden="true"><use href="#i-card"></use></svg> Pix e cartão em até 12x via Mercado Pago</span>
+                  <span class="trust-row"><svg class="icon" aria-hidden="true"><use href="#i-users"></use></svg> Dinheiro direto pro artesão</span>
                 </div>
               </div>
 
               <div style="display:flex; gap:16px; flex-wrap:wrap; font-size:14.5px; color:var(--ink-soft); margin-bottom:16px;">
-                <span>${p.status === 'ativo' ? (Number(p.estoque) > 0 && Number(p.estoque) <= 3 ? `<strong style="color:var(--clay);">🔥 Últimas ${p.estoque} unidade(s)!</strong>` : '✅ Estoque disponível') : '❌ Indisponível'}</span>
-                ${p.sob_encomenda
-                  ? `<span>📦 Sob encomenda${p.prazo_producao_dias ? ` — envio em até ${p.prazo_producao_dias} dia(s)` : ''}</span>`
-                  : '<span>📦 Pronta entrega</span>'
-                }
+                <span style="display:inline-flex; align-items:center; gap:6px;">${p.status === 'ativo' ? (Number(p.estoque) > 0 && Number(p.estoque) <= 3 ? `<strong style="color:var(--clay);">Últimas ${p.estoque} unidade(s)!</strong>` : `<svg class="icon icon-sm" style="color:var(--green);" aria-hidden="true"><use href="#i-check"></use></svg> Estoque disponível`) : 'Indisponível'}</span>
+                <span style="display:inline-flex; align-items:center; gap:6px;"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-package"></use></svg> ${p.sob_encomenda
+                  ? `Sob encomenda${p.prazo_producao_dias ? ` — envio em até ${p.prazo_producao_dias} dia(s)` : ''}`
+                  : 'Pronta entrega'
+                }</span>
               </div>
 
               <div class="descricao">${p.descricao || 'Sem descrição detalhada.'}</div>
 
               <div class="share-buttons">
                 <span style="font-size:12px; color:var(--ink-soft); align-self:center;">Compartilhar:</span>
-                <button class="share-btn share-whatsapp" onclick="compartilhar('whatsapp')" title="WhatsApp">📱 WhatsApp</button>
-                <button class="share-btn share-facebook" onclick="compartilhar('facebook')" title="Facebook">📘 Facebook</button>
-                <button class="share-btn share-pinterest" onclick="compartilhar('pinterest')" title="Pinterest">📌 Pinterest</button>
-                <button class="share-btn share-copiar" onclick="compartilhar('copiar')" title="Copiar link">🔗 Copiar link</button>
+                <button class="share-btn share-whatsapp" onclick="compartilhar('whatsapp')" title="WhatsApp">WhatsApp</button>
+                <button class="share-btn share-facebook" onclick="compartilhar('facebook')" title="Facebook">Facebook</button>
+                <button class="share-btn share-pinterest" onclick="compartilhar('pinterest')" title="Pinterest">Pinterest</button>
+                <button class="share-btn share-copiar" onclick="compartilhar('copiar')" title="Copiar link"><svg class="icon icon-sm" aria-hidden="true" style="vertical-align:-3px;"><use href="#i-link"></use></svg> Copiar link</button>
               </div>
 
               <div class="produto-extra">
-                <h3>📦 Detalhes do produto</h3>
+                <h3>Detalhes do produto</h3>
                 <div class="detalhes">
                   <span><strong>Estoque:</strong> ${p.estoque || 1} unidades</span>
                   <span><strong>Categoria:</strong> ${p.categorias?.nome || 'Não definida'}</span>
@@ -791,6 +797,9 @@
               </div>
             </div>
           `
+
+      // Barra fixa de compra no mobile — preço + CTA sempre visíveis
+      montarBarraFixaCompra(p, parcelamentoHtml)
 
       // Cartão do vendedor — "Quem fez esta peça"
       document.getElementById('produtoVendedorCard').innerHTML = `
