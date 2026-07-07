@@ -45,7 +45,7 @@ exports.handler = async (event) => {
     })
     if (!userRes.ok) return { statusCode: 403, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Token inválido' }) }
     const { email } = await userRes.json()
-    if (email !== ADMIN_EMAIL) return { statusCode: 403, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Acesso negado' }) })
+    if (email !== ADMIN_EMAIL) return { statusCode: 403, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Acesso negado' }) }
 
     if (!loja_id) {
       return { statusCode: 400, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'ID da loja é obrigatório' }) }
@@ -54,53 +54,16 @@ exports.handler = async (event) => {
     // Buscar imagens antes de deletar
     const [loja, produtos, cursos] = await Promise.all([
       supabaseFetch(`lojas?id=eq.${loja_id}&select=logo,banner`),
-      supabaseFetch(`produtos?loja_id=eq.${loja_id}&select=fotos`),
+      supabaseFetch(`produtos?loja_id=eq.${loja_id}&select=id,fotos`),
       supabaseFetch(`cursos?loja_id=eq.${loja_id}&select=capa_url`)
     ])
 
-    // Limpar tudo que referencia a loja (ordem importa por causa das FKs)
-    const tabelas = [
-      'avaliacoes',
-      'avaliacoes_importadas', 
-      'favoritos',
-      'cupons',
-      'advertencias',
-      'loja_categorias',
-      'fretes_regiao',
-      'apoiadores',
-      'apoio_beneficios',
-      'conteudo_apoiadores',
-      'pastas',
-      'importacoes_lojas',
-      'produtos',
-      'cursos'
-    ]
+    // Deletar a loja (cascade deve limpar produtos, cursos, etc)
+    // Se alguma FK bloquear, o erro vai dizer exatamente qual tabela
+    const result = await supabaseFetch(`lojas?id=eq.${loja_id}`, { method: 'DELETE' })
+    console.log('Loja deletada:', loja_id)
 
-    for (const tabela of tabelas) {
-      try {
-        await supabaseFetch(`${tabela}?loja_id=eq.${loja_id}`, { method: 'DELETE' })
-      } catch (e) {
-        // Tabela pode não existir ou não ter a coluna — segue
-        console.warn(`admin-excluir-loja: ${tabela}:`, e.message)
-      }
-    }
-
-    // Deletar vendas que referenciam produtos dessa loja (não tem loja_id direto)
-    if (produtos?.length) {
-      const produtoIds = produtos.map(p => p.id).filter(Boolean)
-      if (produtoIds.length > 0) {
-        try {
-          await supabaseFetch(`vendas?produto_id=in.(${produtoIds.join(',')})`, { method: 'DELETE' })
-        } catch (e) {
-          console.warn('admin-excluir-loja: vendas:', e.message)
-        }
-      }
-    }
-
-    // Finalmente deletar a loja
-    await supabaseFetch(`lojas?id=eq.${loja_id}`, { method: 'DELETE' })
-
-    // Deletar imagens do R2
+    // Deletar imagens do R2 (não falha a operação se isso der erro)
     const lojaData = loja?.[0]
     const imagens = [
       lojaData?.logo, lojaData?.banner,
