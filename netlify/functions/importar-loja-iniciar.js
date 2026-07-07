@@ -51,7 +51,7 @@ exports.handler = async (event) => {
     return { statusCode: 400, body: JSON.stringify({ error: 'Corpo da requisição inválido.' }) }
   }
 
-  const { userId, urlLoja, aceiteTermos } = payload
+  const { userId, urlLoja, aceiteTermos, lojaId } = payload
 
   if (!userId || !urlLoja || aceiteTermos !== true) {
     return { statusCode: 400, body: JSON.stringify({ error: 'userId, urlLoja e o aceite dos termos são obrigatórios.' }) }
@@ -63,8 +63,16 @@ exports.handler = async (event) => {
   }
 
   try {
-    const lojas = await supabaseRequest(`lojas?user_id=eq.${userId}&select=id`)
-    const loja = lojas[0]
+    // Se veio lojaId (admin importando numa loja específica), usa ela
+    let loja
+    if (lojaId) {
+      const lojas = await supabaseRequest(`lojas?id=eq.${lojaId}&select=id`)
+      loja = lojas[0]
+    } else {
+      const lojas = await supabaseRequest(`lojas?user_id=eq.${userId}&select=id`)
+      loja = lojas[0]
+    }
+
     if (!loja) {
       return { statusCode: 404, body: JSON.stringify({ error: 'Loja do vendedor não encontrada no Obeh.' }) }
     }

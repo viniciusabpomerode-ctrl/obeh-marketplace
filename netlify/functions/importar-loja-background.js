@@ -113,6 +113,7 @@ exports.handler = async (event) => {
           precoAtual: artesanouAdapter.parsePrecoBRL(cartao.precoAtualTexto),
           precoAntigo: artesanouAdapter.parsePrecoBRL(cartao.precoAntigoTexto),
           categoriaTexto: cartao.categoriaTexto,
+          pastaOrigemTexto: null,
           imagens: cartao.imagemThumb ? [cartao.imagemThumb] : [],
           sobEncomenda: Boolean(cartao.prazoProducaoTexto),
           prazoProducaoDias: artesanouAdapter.extrairDiasProducao(cartao.prazoProducaoTexto)
@@ -138,13 +139,51 @@ exports.handler = async (event) => {
       delete produto.imagensOrigem
     }
 
+    // 4.5 Cria pastas (folders) que não existem ainda nessa loja
+    const nomesPastas = [...new Set(produtosMapeados.map(p => p.pasta_nome).filter(Boolean))]
+    const pastaMap = {} // nome → id
+
+    if (nomesPastas.length > 0) {
+      // Busca pastas já existentes nessa loja
+      const pastasExistentes = await supabaseRequest(`pastas?loja_id=eq.${lojaId}&select=id,nome`)
+      for (const p of pastasExistentes) {
+        pastaMap[p.nome] = p.id
+      }
+
+      // Cria as que faltam
+      for (const nome of nomesPastas) {
+        if (pastaMap[nome]) continue
+        const nova = await supabaseRequest('pastas', {
+          method: 'POST',
+          prefer: 'return=representation',
+          body: JSON.stringify({ loja_id: lojaId, nome, capa_url: null })
+        })
+        if (nova?.[0]) pastaMap[nome] = nova[0].id
+      }
+
+      // Atribui pasta_id nos produtos
+      for (const produto of produtosMapeados) {
+        if (produto.pasta_nome && pastaMap[produto.pasta_nome]) {
+          produto.pasta_id = pastaMap[produto.pasta_nome]
+        }
+        delete produto.pasta_nome
+      }
+    } else {
+      // Remove campo se não tem pasta
+      for (const produto of produtosMapeados) {
+        delete produto.pasta_nome
+      }
+    }
+
     // 5. Aplica o limite do plano: publica os primeiros N (na ordem extraída),
     // marca o excedente como pendente_upgrade. Produtos com extração
     // incompleta nunca contam pro limite nem publicam automaticamente.
-    const usuarios = await supabaseRequest(`users?id=eq.${userId}&select=plano`)
-    const planoSlug = usuarios[0]?.plano || 'free'
+    // Admin (viniciusbirnecker@gmail.com) pula o limite — publica tudo.
+    const usuarios = await supabaseRequest(`users?id=eq.${userId}&select=plano,email`)
+    const isAdmin = usuarios[0]?.email === 'viniciusbirnecker@gmail.com'
+    const planoSlug = isAdmin ? 'ultra' : (usuarios[0]?.plano || 'free')
     const planos = await supabaseRequest(`planos?slug=eq.${planoSlug}&select=limite_produtos`)
-    const limite = planos[0]?.limite_produtos // null = ilimitado
+    const limite = planos[0]?.limite_produtos // null = ilimitado (Ultra é ilimitado)
 
     const totalExistente = await supabaseRequest(`produtos?loja_id=eq.${lojaId}&select=id`)
     let slotsRestantes = limite === null || limite === undefined ? Infinity : Math.max(0, limite - totalExistente.length)

@@ -263,8 +263,12 @@
     <div class="modal-box">
       <h3>📦 Transferir loja</h3>
       <p class="modal-sub" id="modalTransferirNomeLoja">Loja: —</p>
-      <label>Email do destinatário</label>
-      <input id="transferirEmail" type="email" placeholder="exemplo@email.com" />
+      <label>Destinatário</label>
+      <input id="transferirBusca" type="text" placeholder="🔍 Filtrar por nome ou email..." style="margin-bottom:6px;" oninput="filtrarUsuariosTransferir()" />
+      <select id="transferirUserId" size="6" style="width:100%; padding:6px; border:1px solid var(--line); border-radius:8px; font-size:13px; overflow-y:auto;">
+        <option value="">Carregando usuários...</option>
+      </select>
+      <input id="transferirEmailManual" type="email" placeholder="Ou digite o email (se não estiver na lista)" style="margin-top:8px;" />
       <label>Plano patrocinado</label>
       <select id="transferirPlano">
         <option value="">Sem patrocínio (manter free)</option>
@@ -281,6 +285,33 @@
       <div class="modal-actions">
         <button class="btn-cancelar" onclick="fecharModalTransferir()">Cancelar</button>
         <button class="btn-transferir" onclick="executarTransferencia()">Transferir</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL DE IMPORTAÇÃO ===== -->
+  <div class="modal-overlay" id="modalImportar">
+    <div class="modal-box" style="max-width:500px;">
+      <h3>📥 Importar produtos</h3>
+      <p class="modal-sub" id="modalImportarNomeLoja">Loja: —</p>
+      <label>URL da loja no Artesanou</label>
+      <input id="importarUrlLoja" type="url" placeholder="https://artesanou.com.br/loja/nome-da-loja" />
+      <div style="margin-top:12px; font-size:12px; color:var(--ink-soft); line-height:1.6;">
+        <p>⚠️ Ao importar, você declara que:</p>
+        <ul style="padding-left:18px; margin:4px 0;">
+          <li>Os produtos são de sua autoria ou você tem autorização</li>
+          <li>As imagens importadas são de sua propriedade</li>
+          <li>Dados de frete (peso/dimensões) precisarão ser preenchidos depois</li>
+        </ul>
+      </div>
+      <label style="margin-top:12px;">
+        <input id="importarAceiteTermos" type="checkbox" /> Aceito os termos e autorizo a importação
+      </label>
+      <div id="importarStatus" style="margin-top:8px; font-size:13px;"></div>
+      <div id="importarResumo" style="margin-top:8px; font-size:13px;"></div>
+      <div class="modal-actions">
+        <button class="btn-cancelar" onclick="fecharModalImportar()">Cancelar</button>
+        <button class="btn-transferir" id="importarBtn" onclick="executarImportacao()">📥 Importar produtos</button>
       </div>
     </div>
   </div>
@@ -585,6 +616,7 @@
             <p>📝 ${esc((loja.descricao || '').substring(0, 100))}${(loja.descricao || '').length > 100 ? '...' : ''}</p>
           </div>
           <div class="loja-actions">
+            <button class="btn-aprovar" onclick="abrirModalImportar('${loja.id}','${esc(loja.nome_loja || '').replace(/'/g, "\\'")}')">📥 Importar</button>
             <button class="btn-aprovar" onclick="abrirModalTransferir('${loja.id}','${esc(loja.nome_loja || '').replace(/'/g, "\\'")}')">📤 Transferir</button>
             <button class="btn-recusar" onclick="excluirLojaAdmin('${loja.id}')">🗑️ Excluir</button>
           </div>
@@ -627,13 +659,56 @@
 
     let __transferindoLojaId = null
 
-    function abrirModalTransferir(lojaId, nomeLoja) {
+    async function abrirModalTransferir(lojaId, nomeLoja) {
       __transferindoLojaId = lojaId
       document.getElementById('modalTransferirNomeLoja').textContent = 'Loja: ' + nomeLoja
-      document.getElementById('transferirEmail').value = ''
       document.getElementById('transferirPlano').value = 'pro'
       document.getElementById('transferirMeses').value = '3'
+      document.getElementById('transferirEmailManual').value = ''
       document.getElementById('modalTransferir').classList.add('active')
+
+      // Carrega lista de usuários cadastrados
+      const select = document.getElementById('transferirUserId')
+      select.innerHTML = '<option value="">Carregando...</option>'
+      const { data: users } = await supabaseClient
+        .from('users')
+        .select('id, email, nome, plano')
+        .order('nome', { ascending: true })
+
+      if (!users || users.length === 0) {
+        select.innerHTML = '<option value="">Nenhum usuário encontrado</option>'
+        return
+      }
+
+      select.innerHTML = '<option value="">Selecione um usuário...</option>' +
+        users.map(u => `<option value="${u.id}|${u.email}">${esc(u.nome || u.email)} · ${esc(u.email)} · ${u.plano || 'free'}</option>`).join('')
+
+      // Guarda pra filtrar
+      window.__usuariosCache = users
+      document.getElementById('transferirBusca').value = ''
+    }
+
+    function filtrarUsuariosTransferir() {
+      const termo = document.getElementById('transferirBusca').value.toLowerCase()
+      const users = window.__usuariosCache || []
+      const select = document.getElementById('transferirUserId')
+
+      if (!termo) {
+        select.innerHTML = '<option value="">Selecione um usuário...</option>' +
+          users.map(u => `<option value="${u.id}|${u.email}">${esc(u.nome || u.email)} · ${esc(u.email)} · ${u.plano || 'free'}</option>`).join('')
+        return
+      }
+
+      const filtrados = users.filter(u =>
+        (u.nome || '').toLowerCase().includes(termo) ||
+        (u.email || '').toLowerCase().includes(termo)
+      )
+
+      if (filtrados.length === 0) {
+        select.innerHTML = '<option value="">Nenhum usuário encontrado</option>'
+      } else {
+        select.innerHTML = filtrados.map(u => `<option value="${u.id}|${u.email}">${esc(u.nome || u.email)} · ${esc(u.email)} · ${u.plano || 'free'}</option>`).join('')
+      }
     }
 
     function fecharModalTransferir() {
@@ -644,8 +719,15 @@
     async function executarTransferencia() {
       if (!__transferindoLojaId) return
 
-      const email = document.getElementById('transferirEmail').value.trim()
-      if (!email) { alert('Informe o email do destinatário.'); return }
+      // Pega email: primeiro tenta do select, depois do campo manual
+      const selectVal = document.getElementById('transferirUserId').value
+      let email = ''
+      if (selectVal && selectVal.includes('|')) {
+        email = selectVal.split('|')[1]
+      } else {
+        email = document.getElementById('transferirEmailManual').value.trim()
+      }
+      if (!email) { alert('Selecione um usuário ou digite um email.'); return }
 
       const plano = document.getElementById('transferirPlano').value
       const meses = parseInt(document.getElementById('transferirMeses').value) || 0
@@ -674,6 +756,111 @@
       fecharModalTransferir()
       await carregarMinhasLojas()
       await carregarTodasLojas()
+    }
+
+    // ============================================
+    // IMPORTAÇÃO DE PRODUTOS (ARTESANOU)
+    // ============================================
+
+    let __importandoLojaId = null
+    let __importandoTimer = null
+
+    function abrirModalImportar(lojaId, nomeLoja) {
+      __importandoLojaId = lojaId
+      document.getElementById('modalImportarNomeLoja').textContent = 'Loja: ' + nomeLoja
+      document.getElementById('importarUrlLoja').value = ''
+      document.getElementById('importarAceiteTermos').checked = false
+      document.getElementById('importarStatus').textContent = ''
+      document.getElementById('importarResumo').textContent = ''
+      document.getElementById('importarBtn').disabled = false
+      document.getElementById('importarBtn').textContent = '📥 Importar produtos'
+      document.getElementById('modalImportar').classList.add('active')
+    }
+
+    function fecharModalImportar() {
+      document.getElementById('modalImportar').classList.remove('active')
+      __importandoLojaId = null
+      if (__importandoTimer) { clearInterval(__importandoTimer); __importandoTimer = null }
+    }
+
+    async function executarImportacao() {
+      if (!__importandoLojaId) return
+
+      const url = document.getElementById('importarUrlLoja').value.trim()
+      if (!url) { alert('Cole a URL da loja no Artesanou.'); return }
+
+      if (!document.getElementById('importarAceiteTermos').checked) {
+        alert('Você precisa aceitar os termos de importação.'); return
+      }
+
+      const statusEl = document.getElementById('importarStatus')
+      const resumoEl = document.getElementById('importarResumo')
+      const btn = document.getElementById('importarBtn')
+      btn.disabled = true
+      btn.textContent = '⏳ Iniciando...'
+      statusEl.textContent = '⏳ Iniciando importação...'
+      resumoEl.textContent = ''
+
+      // Chama a Netlify Function de importação (mesma usada pelo dashboard)
+      const result = await callNetlifyFunction('importar-loja-iniciar', {
+        userId: (await getCurrentUser()).id,
+        urlLoja: url,
+        aceiteTermos: true,
+        lojaId: __importandoLojaId
+      })
+
+      if (result.error) {
+        statusEl.textContent = '❌ ' + result.error
+        btn.disabled = false
+        btn.textContent = '📥 Importar produtos'
+        return
+      }
+
+      // Polling: acompanha o status da importação
+      const importacaoId = result.importacaoId
+      statusEl.textContent = '⏳ Extraindo produtos... aguarde (pode levar alguns minutos)'
+      btn.textContent = '⏳ Importando...'
+
+      let tentativas = 0
+      __importandoTimer = setInterval(async () => {
+        tentativas++
+        const { data } = await supabaseClient
+          .from('importacoes_lojas')
+          .select('status, resumo, erro_mensagem')
+          .eq('id', importacaoId)
+          .maybeSingle()
+
+        if (!data) return
+
+        if (data.status === 'concluida') {
+          clearInterval(__importandoTimer)
+          __importandoTimer = null
+          const r = data.resumo || {}
+          statusEl.textContent = '✅ Importação concluída!'
+          resumoEl.innerHTML = `
+            <strong>Resultado:</strong><br>
+            📦 ${r.publicados || 0} produtos publicados<br>
+            ${r.pendenteUpgrade ? '⏫ ' + r.pendenteUpgrade + ' aguardando upgrade de plano<br>' : ''}
+            ${r.pendenteDadosFrete ? '📏 ' + r.pendenteDadosFrete + ' precisam de dados de frete<br>' : ''}
+            ${r.pendenteImagens ? '🖼️ ' + r.pendenteImagens + ' com imagens pendentes<br>' : ''}
+          `
+          btn.textContent = '✅ Concluído'
+          await carregarMinhasLojas()
+          await carregarTodasLojas()
+        } else if (data.status === 'erro') {
+          clearInterval(__importandoTimer)
+          __importandoTimer = null
+          statusEl.textContent = '❌ Erro: ' + (data.erro_mensagem || 'desconhecido')
+          btn.disabled = false
+          btn.textContent = '📥 Tentar novamente'
+        } else if (tentativas > 300) {
+          clearInterval(__importandoTimer)
+          __importandoTimer = null
+          statusEl.textContent = '⚠️ Tempo limite. Verifique a loja mais tarde.'
+          btn.disabled = false
+          btn.textContent = '📥 Importar produtos'
+        }
+      }, 5000)
     }
 
   async function carregarSuporte() {

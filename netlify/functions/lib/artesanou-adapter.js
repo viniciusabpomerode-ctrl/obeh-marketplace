@@ -95,7 +95,8 @@ function extrairUltimaPagina($) {
 
 function parsePrecoBRL(texto) {
   if (!texto) return null
-  const limpo = texto.replace(/[^\d,]/g, '').replace(',', '.')
+  // Remove tudo que não for dígito ou vírgula, depois troca vírgula (decimal BR) por ponto
+  const limpo = texto.replace(/[^\d,]/g, '').replace(/,/g, '.')
   const valor = Number(limpo)
   return Number.isFinite(valor) && valor > 0 ? valor : null
 }

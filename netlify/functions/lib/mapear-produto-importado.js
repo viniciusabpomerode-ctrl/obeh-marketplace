@@ -79,6 +79,7 @@ function mapearProdutoImportado(extraido, { categoriasObeh, plataforma }) {
     largura_cm,
     comprimento_cm,
     imagensOrigem: imagens, // urls ainda não enviadas ao R2 — quem chama esta função sobe as imagens depois
+    pasta_nome: extraido.pastaOrigemTexto || null, // nome da pasta na loja de origem
 
     // Metadados de controle da importação
     url_origem: extraido.urlOrigem,
