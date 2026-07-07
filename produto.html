@@ -336,7 +336,7 @@
   <div id="cartModal">
     <div class="cart-box">
       <div class="cart-header">
-        <h3>🛒 Seu carrinho</h3>
+        <h3>Seu carrinho</h3>
         <button class="close-cart" id="closeCart">✕</button>
       </div>
       <div id="cartItems">
@@ -347,7 +347,7 @@
         <span>R$ 0,00</span>
       </div>
       <button class="btn btn-primary btn-lg" id="checkoutBtn">Finalizar compra</button>
-      <p class="secure-note" style="justify-content:center;"><span class="secure-icon" aria-hidden="true">🔒</span> Pagamento seguro pelo Mercado Pago</p>
+      <p class="secure-note" style="justify-content:center;"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-lock"></use></svg> Pagamento seguro pelo Mercado Pago</p>
     </div>
   </div>
 
@@ -811,12 +811,37 @@
           <h3>${esc(nomeLoja)}</h3>
           <p>${lojaData?.nota_media ? `⭐ ${Number(lojaData.nota_media).toFixed(1)} de 5 · ${lojaData.total_avaliacoes || 0} avaliação(ões) de compradores` : 'Ateliê novo na Obeh — ainda sem avaliações'}</p>
         </div>
-        <button class="btn btn-ghost" onclick="abrirChat()">💬 Conversar com o artesão</button>
-        <button class="btn btn-outline" onclick="window.location.href='loja.html?id=${lojaData?.id}'">🏪 Ver a loja</button>
+        <button class="btn btn-ghost" onclick="abrirChat()"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-chat"></use></svg> Conversar com o artesão</button>
+        <button class="btn btn-outline" onclick="window.location.href='loja.html?id=${lojaData?.id}'"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-store"></use></svg> Ver a loja</button>
       `
 
       // SEO: injeta dados estruturados (Product + Breadcrumb) e canonical dinâmico
       injetarSeoProduto(p)
+    }
+
+    // ===== BARRA FIXA DE COMPRA (mobile) =====
+    // Mantém preço + "Comprar agora" sempre visíveis no celular.
+    function montarBarraFixaCompra(p, parcelamentoHtml) {
+      let bar = document.getElementById('stickyBuyBar')
+      if (!bar) {
+        bar = document.createElement('div')
+        bar.id = 'stickyBuyBar'
+        bar.className = 'sticky-buy-bar'
+        document.body.appendChild(bar)
+      }
+
+      const disponivel = p.status === 'ativo' && Number(p.estoque) > 0
+      bar.innerHTML = `
+        <div class="sbb-price">
+          <span class="price">R$ ${Number(p.preco).toFixed(2).replace('.', ',')}</span>
+          ${Number(p.preco) >= 30 ? `<span class="installments">até 12x de R$ ${(Number(p.preco) / 12).toFixed(2).replace('.', ',')}</span>` : ''}
+        </div>
+        <button class="btn btn-primary" onclick="comprarAgora()" ${disponivel ? '' : 'disabled style="opacity:0.5;"'}>
+          ${disponivel ? 'Comprar agora' : 'Indisponível'}
+        </button>
+      `
+      bar.classList.add('active')
+      document.body.classList.add('has-sticky-buy')
     }
 
     // ===== SEO: JSON-LD + canonical (apenas leitura dos dados já carregados) =====
@@ -968,15 +993,16 @@
       // Feedback visual no botão correto (Adicionar ao carrinho)
       const btn = document.querySelector('.produto-actions .btn-outline')
       if (btn) {
-        btn.textContent = '✅ Adicionado ao carrinho!'
-        btn.style.background = 'var(--olive)'
-        btn.style.borderColor = 'var(--olive)'
+        const htmlOriginal = btn.innerHTML
+        btn.innerHTML = '<svg class="icon" aria-hidden="true"><use href="#i-check"></use></svg> Adicionado!'
+        btn.style.background = 'var(--green)'
+        btn.style.borderColor = 'var(--green)'
         btn.style.color = 'white'
         setTimeout(() => {
-          btn.textContent = '🛒 Adicionar ao carrinho'
-          btn.style.background = 'transparent'
-          btn.style.borderColor = 'var(--line)'
-          btn.style.color = 'var(--ink)'
+          btn.innerHTML = htmlOriginal
+          btn.style.background = ''
+          btn.style.borderColor = ''
+          btn.style.color = ''
         }, 2000)
       }
     }

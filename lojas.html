@@ -130,6 +130,14 @@
 </head>
 <body>
 
+  <!-- ===== ÍCONES DE INTERFACE ===== -->
+  <svg style="position:absolute; width:0; height:0; overflow:hidden;" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <defs>
+      <symbol id="i-arrow-left" viewBox="0 0 24 24"><path d="M19 12H5"/><polyline points="12 19 5 12 12 5"/></symbol>
+      <symbol id="i-store" viewBox="0 0 24 24"><path d="M3 9l1.2-5h15.6L21 9"/><path d="M3 9c0 1.5 1.3 3 3 3s3-1.5 3-3c0 1.5 1.3 3 3 3s3-1.5 3-3c0 1.5 1.3 3 3 3s3-1.5 3-3"/><path d="M4.5 12v8h15v-8"/><path d="M9.5 20v-5h5v5"/></symbol>
+    </defs>
+  </svg>
+
   <!-- ===== HEADER ===== -->
   <header>
     <div class="wrap nav">
@@ -137,14 +145,14 @@
         <img src="https://i.postimg.cc/gjpXKcn5/imagem-2026-07-01-110451621.png" alt="Obeh Logo" style="height:40px;" />
       </a>
       <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
-        <a href="index.html" class="btn btn-ghost">← Voltar ao início</a>
+        <a href="index.html" class="btn btn-ghost"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-arrow-left"></use></svg> Voltar ao início</a>
       </div>
     </div>
   </header>
 
   <div class="lojas-hero">
-    <p style="font-family:'Space Mono', monospace; font-size:11px; text-transform:uppercase; color:var(--olive); margin-bottom:8px;">🏪 Ateliês do Obeh</p>
-    <h1>Conheça as lojas dos nossos artesãos</h1>
+    <p style="font-family:'Space Mono', monospace; font-size:12px; text-transform:uppercase; letter-spacing:0.08em; color:var(--olive); margin-bottom:8px;">Ateliês do Obeh</p>
+    <h1 style="text-wrap:balance;">Conheça as lojas dos nossos artesãos</h1>
     <p>Cada loja é feita por um artesão de verdade. Filtre por categoria e descubra novos ateliês.</p>
   </div>
 
@@ -209,7 +217,11 @@
           <div class="loja-nome">${esc(l.nome_loja)}</div>
           ${l.categoria ? `<div class="loja-categoria">${esc(l.categoria)}</div>` : ''}
           ${l.descricao ? `<div class="loja-desc">${esc(l.descricao)}</div>` : ''}
-          <div class="loja-nota">⭐ ${Number(l.nota_media || 5).toFixed(1)} ${l.total_avaliacoes ? `(${l.total_avaliacoes})` : ''}</div>
+          <div class="loja-nota rating-stars" style="justify-content:center; margin-top:10px;">
+            <svg class="star" viewBox="0 0 24 24" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26"/></svg>
+            <span class="rating-num">${Number(l.nota_media || 5).toFixed(1)}</span> ${l.total_avaliacoes ? `<span>(${l.total_avaliacoes})</span>` : ''}
+          </div>
+          <span class="btn btn-outline" style="margin-top:12px; width:100%; min-height:42px; font-size:14px;">Visitar loja</span>
         </div>
       `).join('')
     }

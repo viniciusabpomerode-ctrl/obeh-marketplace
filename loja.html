@@ -221,6 +221,17 @@
 </head>
 <body>
 
+  <!-- ===== ÍCONES DE INTERFACE ===== -->
+  <svg style="position:absolute; width:0; height:0; overflow:hidden;" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <defs>
+      <symbol id="i-cart" viewBox="0 0 24 24"><circle cx="9" cy="20" r="1.6"/><circle cx="18" cy="20" r="1.6"/><path d="M2 3h2.5l2.4 11.2a2 2 0 0 0 2 1.6h8.3a2 2 0 0 0 1.95-1.55L21 7H5.3"/></symbol>
+      <symbol id="i-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+      <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></symbol>
+      <symbol id="i-arrow-left" viewBox="0 0 24 24"><path d="M19 12H5"/><polyline points="12 19 5 12 12 5"/></symbol>
+      <symbol id="i-star" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26"/></symbol>
+    </defs>
+  </svg>
+
   <!-- ===== HEADER ===== -->
   <header>
     <div class="wrap nav">
@@ -228,9 +239,9 @@
         <img src="https://i.postimg.cc/gjpXKcn5/imagem-2026-07-01-110451621.png" alt="Obeh Logo" style="height:40px;" />
       </a>
       <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
-        <a href="index.html" class="btn btn-ghost">← Voltar ao início</a>
+        <a href="index.html" class="btn btn-ghost"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-arrow-left"></use></svg> Voltar ao início</a>
         <button class="cart-btn" id="cartToggle" title="Carrinho" aria-label="Abrir carrinho">
-          🛒 <span class="cart-btn-text">Carrinho</span> <span id="cartCount">0</span>
+          <svg class="icon icon-lg" aria-hidden="true"><use href="#i-cart"></use></svg> <span class="cart-btn-text">Carrinho</span> <span id="cartCount">0</span>
         </button>
       </div>
     </div>
@@ -252,7 +263,7 @@
           <h1 id="lojaNome">Nome da Loja</h1>
           <p class="desc" id="lojaDescricao">Descrição da loja...</p>
         <div id="lojaCategoriasPills" style="display:flex; gap:8px; flex-wrap:wrap; margin:10px 0;"></div>
-          <button class="btn btn-primary btn-chat" id="btnChat" onclick="abrirChat()">💬 Conversar com artesão</button>
+          <button class="btn btn-primary btn-chat" id="btnChat" onclick="abrirChat()"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-chat"></use></svg> Conversar com artesão</button>
         </div>
       </div>
 
@@ -276,7 +287,7 @@
   <div id="lojaPastasLista" style="display:flex; gap:14px; overflow-x:auto; padding-bottom:6px;"></div>
 </div>
 <!-- ===== PRODUTOS ===== -->
-    <h2 style="font-size:22px; margin-bottom:12px;">🧶 Produtos da loja</h2>
+    <h2 style="font-size:24px; margin-bottom:12px;">Produtos da loja</h2>
     <div style="margin-bottom:16px; max-width:340px;">
       <input type="text" id="lojaBuscaInput" placeholder="Buscar produtos desta loja..." oninput="buscarProdutosDaLoja(this.value)" style="width:100%;" />
     </div>
@@ -286,7 +297,7 @@
 
     <!-- ===== CURSOS ===== -->
     <div id="lojaCursosSection" style="display:none; margin-top:40px;">
-      <h2 style="font-size:22px; margin-bottom:16px;">🎓 Cursos da loja</h2>
+      <h2 style="font-size:24px; margin-bottom:16px;">Cursos da loja</h2>
       <div class="loja-produtos-grid" id="lojaCursos">
         <!-- Injetado via JS -->
       </div>
@@ -294,7 +305,7 @@
 
     <!-- ===== AVALIAÇÕES IMPORTADAS (separadas das avaliações feitas na Obeh) ===== -->
     <div id="lojaAvaliacoesImportadasSection" style="display:none; margin-top:40px;">
-      <h2 style="font-size:22px; margin-bottom:6px;">⭐ Avaliações de antes da Obeh</h2>
+      <h2 style="font-size:24px; margin-bottom:6px;">Avaliações de antes da Obeh</h2>
       <p style="font-size:13px; color:var(--ink-soft); margin-bottom:16px;">Avaliações trazidas da loja de origem do artesão, de antes de vender na Obeh — não são de compras feitas por aqui.</p>
       <div id="lojaAvaliacoesImportadasLista" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:14px;">
         <!-- Injetado via JS -->
@@ -306,8 +317,8 @@
   <div id="cartModal">
     <div class="cart-box">
       <div class="cart-header">
-        <h3>🛒 Seu carrinho</h3>
-        <button class="close-cart" id="closeCart">✕</button>
+        <h3>Seu carrinho</h3>
+        <button class="close-cart" id="closeCart" aria-label="Fechar carrinho">✕</button>
       </div>
       <div id="cartItems">
         <p class="empty">Seu carrinho está vazio</p>
@@ -317,7 +328,7 @@
         <span>R$ 0,00</span>
       </div>
       <button class="btn btn-primary btn-lg" id="checkoutBtn">Finalizar compra</button>
-      <p class="secure-note" style="justify-content:center;"><span class="secure-icon" aria-hidden="true">🔒</span> Pagamento seguro pelo Mercado Pago</p>
+      <p class="secure-note" style="justify-content:center;"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-lock"></use></svg> Pagamento seguro pelo Mercado Pago</p>
     </div>
   </div>
 
@@ -711,11 +722,14 @@ function renderProdutosLoja(lista) {
 
       const ordenada = ordenarPorDestaque(lista)
 
-      container.innerHTML = ordenada.map(p => `
+      container.innerHTML = ordenada.map(p => {
+            const preco = Number(p.preco)
+            const parcelamento = preco >= 30 ? `<div class="installments">ou até 12x de R$ ${(preco / 12).toFixed(2).replace('.', ',')}</div>` : ''
+            return `
             <div class="card" onclick="window.location.href='produto.html?id=${p.id}'">
-              <div class="card-media" style="background:#E9DFC7;">
-                ${p.em_promocao ? '<span class="card-badge" style="position:absolute; top:10px; left:10px; background:var(--clay); color:#fff; font-size:11px; font-weight:700; padding:3px 10px; border-radius:999px;">🔥 Promoção</span>' : ''}
-                <button class="card-fav" data-produto-id="${p.id}" onclick="event.stopPropagation(); toggleFavoritoCard('${p.id}', this)" title="Favoritar">🤍</button>
+              <div class="card-media">
+                ${p.em_promocao ? '<span class="promo-badge">Promoção</span>' : ''}
+                <button class="card-fav" data-produto-id="${p.id}" onclick="event.stopPropagation(); toggleFavoritoCard('${p.id}', this)" title="Favoritar" aria-label="Favoritar">🤍</button>
                 ${p.fotos && p.fotos.length > 0
                   ? `<img src="${p.fotos[0]}" alt="${esc(p.nome)}" loading="lazy" />`
                   : `<span class="placeholder">🧵</span>`
@@ -725,16 +739,19 @@ function renderProdutosLoja(lista) {
                 <div class="card-cat">${p.categorias?.nome || 'Artesanato'}</div>
                 <div class="card-title">${esc(p.nome)}</div>
                 <div class="card-maker">${lojaData?.nome_loja || 'Artesão'}</div>
-                ${p.sob_encomenda ? `<div style="font-size:11px; color:var(--olive); font-weight:600; margin-top:2px;">📦 Sob encomenda${p.prazo_producao_dias ? ` — ${p.prazo_producao_dias} dia(s)` : ''}</div>` : ''}
+                ${p.sob_encomenda ? `<div style="font-size:12px; color:var(--olive); font-weight:600; margin-top:4px;">Sob encomenda${p.prazo_producao_dias ? ` — ${p.prazo_producao_dias} dia(s)` : ''}</div>` : ''}
                 <div class="card-foot">
-                  ${renderPrecoCard(p)}
-                  <button class="card-add" onclick="event.stopPropagation(); adicionarAoCarrinhoClique('${p.id}')">
+                  <div class="price-block">
+                    ${renderPrecoCard(p)}
+                    ${parcelamento}
+                  </div>
+                  <button class="card-add" onclick="event.stopPropagation(); adicionarAoCarrinhoClique('${p.id}')" aria-label="Adicionar ao carrinho">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
                   </button>
                 </div>
               </div>
             </div>
-          `).join('')
+          `}).join('')
 
       marcarFavoritosNaGrade(ordenada.map(p => p.id))
     }

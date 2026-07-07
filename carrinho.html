@@ -16,14 +16,41 @@
   <link rel="stylesheet" href="css/style.css" />
   <style>
     .carrinho-container {
-      max-width: 900px;
+      max-width: 1080px;
       margin: 0 auto;
       padding: 0 28px 40px;
     }
 
     .carrinho-container h1 {
-      font-size: 32px;
-      margin: 32px 0 24px;
+      font-size: 34px;
+      margin: 32px 0 20px;
+      letter-spacing: -0.01em;
+    }
+
+    /* Layout em 2 colunas: itens à esquerda, resumo sticky à direita */
+    .carrinho-grid {
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 24px;
+      align-items: start;
+    }
+
+    .carrinho-resumo {
+      position: sticky;
+      top: 90px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    @media (max-width: 900px) {
+      .carrinho-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .carrinho-resumo {
+        position: static;
+      }
     }
 
     .carrinho-confianca {
@@ -165,10 +192,11 @@
     }
 
     .carrinho-total .total-value {
-      font-family: 'Space Mono', monospace;
-      font-size: 28px;
+      font-family: 'Fraunces', serif;
+      font-size: 30px;
       font-weight: 700;
-      color: var(--clay);
+      color: var(--ink);
+      letter-spacing: -0.02em;
     }
 
     .carrinho-total .btn {
@@ -227,6 +255,21 @@
 </head>
 <body>
 
+  <!-- ===== ÍCONES DE INTERFACE ===== -->
+  <svg style="position:absolute; width:0; height:0; overflow:hidden;" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <defs>
+      <symbol id="i-cart" viewBox="0 0 24 24"><circle cx="9" cy="20" r="1.6"/><circle cx="18" cy="20" r="1.6"/><path d="M2 3h2.5l2.4 11.2a2 2 0 0 0 2 1.6h8.3a2 2 0 0 0 1.95-1.55L21 7H5.3"/></symbol>
+      <symbol id="i-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+      <symbol id="i-zap" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10"/></symbol>
+      <symbol id="i-card" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></symbol>
+      <symbol id="i-truck" viewBox="0 0 24 24"><path d="M1 4h14v12H1z"/><path d="M15 8h4l4 4v4h-8"/><circle cx="5.5" cy="18.5" r="2"/><circle cx="18.5" cy="18.5" r="2"/></symbol>
+      <symbol id="i-tag" viewBox="0 0 24 24"><path d="M20.59 13.41 11 3.83A2 2 0 0 0 9.59 3H4a1 1 0 0 0-1 1v5.59A2 2 0 0 0 3.83 11l9.58 9.59a2 2 0 0 0 2.83 0l4.35-4.35a2 2 0 0 0 0-2.83z"/><circle cx="7.5" cy="7.5" r="1.2"/></symbol>
+      <symbol id="i-store" viewBox="0 0 24 24"><path d="M3 9l1.2-5h15.6L21 9"/><path d="M3 9c0 1.5 1.3 3 3 3s3-1.5 3-3c0 1.5 1.3 3 3 3s3-1.5 3-3c0 1.5 1.3 3 3 3s3-1.5 3-3"/><path d="M4.5 12v8h15v-8"/><path d="M9.5 20v-5h5v5"/></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></symbol>
+      <symbol id="i-arrow-left" viewBox="0 0 24 24"><path d="M19 12H5"/><polyline points="12 19 5 12 12 5"/></symbol>
+    </defs>
+  </svg>
+
   <!-- ===== HEADER ===== -->
   <header>
     <div class="wrap nav">
@@ -234,16 +277,16 @@
         <img src="https://i.postimg.cc/gjpXKcn5/imagem-2026-07-01-110451621.png" alt="Obeh Logo" style="height:40px;" />
       </a>
       <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
-        <a href="index.html" class="btn btn-ghost">← Continuar comprando</a>
+        <a href="index.html" class="btn btn-ghost"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-arrow-left"></use></svg> Continuar comprando</a>
         <button class="cart-btn" id="cartToggle" title="Carrinho" aria-label="Carrinho">
-          🛒 <span class="cart-btn-text">Carrinho</span> <span id="cartCount">0</span>
+          <svg class="icon icon-lg" aria-hidden="true"><use href="#i-cart"></use></svg> <span class="cart-btn-text">Carrinho</span> <span id="cartCount">0</span>
         </button>
       </div>
     </div>
   </header>
 
   <div class="carrinho-container">
-    <h1>🛒 Seu carrinho</h1>
+    <h1>Seu carrinho</h1>
 
     <div class="steps-indicator" aria-label="Etapas da compra">
       <span class="step-item active"><span class="step-circle">1</span> Carrinho</span>
@@ -268,7 +311,7 @@
           <circle cx="150" cy="140" r="34" />
         </g>
       </svg>
-      <span>🔒 Compra segura, direto com quem faz — cada loja recebe na própria conta, sem intermediário.</span>
+      <span style="display:inline-flex; align-items:center; gap:6px; flex-wrap:wrap;"><svg class="icon icon-sm" style="color:var(--olive);" aria-hidden="true"><use href="#i-lock"></use></svg> Compra segura, direto com quem faz — cada loja recebe na própria conta, sem intermediário.</span>
     </div>
     <div class="carrinho-card">
       <div id="carrinhoContent">
@@ -385,7 +428,7 @@
       if (carrinho.length === 0) {
         container.innerHTML = `
               <div class="carrinho-vazio">
-                <div class="icon">🛒</div>
+                <svg style="width:64px; height:64px; color:var(--line); stroke:var(--ink-soft); fill:none; stroke-width:1.4; stroke-linecap:round; stroke-linejoin:round; margin-bottom:16px;" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="20" r="1.6"/><circle cx="18" cy="20" r="1.6"/><path d="M2 3h2.5l2.4 11.2a2 2 0 0 0 2 1.6h8.3a2 2 0 0 0 1.95-1.55L21 7H5.3"/></svg>
                 <p style="font-size:20px; font-weight:600;">Seu carrinho está vazio</p>
                 <p style="font-size:16px; margin-top:8px;">Que tal explorar as peças feitas à mão pelos nossos artesãos?</p>
                 <a href="index.html" class="btn btn-primary btn-lg" style="margin-top:16px;">Ver as peças</a>
@@ -421,97 +464,102 @@
       const grupoAtivo = gruposVisuais.find(g => g.lojaId === lojaAtivaId)
 
       container.innerHTML = `
-            <div style="display:flex; gap:8px; overflow-x:auto; padding-bottom:12px; margin-bottom:16px; border-bottom:1px solid var(--line);">
+            ${gruposVisuais.length > 1 ? `
+            <div style="display:flex; gap:8px; overflow-x:auto; padding-bottom:12px; margin-bottom:20px; border-bottom:1px solid var(--line);">
               ${gruposVisuais.map(grupo => `
-                <button onclick="mostrarLojaCarrinho('${grupo.lojaId}')" style="flex-shrink:0; padding:12px 18px; min-height:46px; border-radius:8px; border:1px solid var(--line); font-size:15px; font-weight:600; cursor:pointer; white-space:nowrap; ${grupo.lojaId === lojaAtivaId ? 'background:var(--clay); color:#fff; border-color:var(--clay);' : 'background:transparent; color:var(--ink);'}">
-                  🏪 ${grupo.nomeLoja} (${grupo.itensCompletos.length})
+                <button onclick="mostrarLojaCarrinho('${grupo.lojaId}')" style="flex-shrink:0; display:inline-flex; align-items:center; gap:8px; padding:12px 18px; min-height:46px; border-radius:999px; border:1.5px solid ${grupo.lojaId === lojaAtivaId ? 'var(--clay)' : 'var(--line)'}; font-size:15px; font-weight:600; cursor:pointer; white-space:nowrap; ${grupo.lojaId === lojaAtivaId ? 'background:var(--clay); color:#fff;' : 'background:var(--bg-card); color:var(--ink);'}">
+                  <svg class="icon icon-sm" aria-hidden="true"><use href="#i-store"></use></svg> ${grupo.nomeLoja} (${grupo.itensCompletos.length})
                 </button>
               `).join('')}
             </div>
+            ` : ''}
 
-            <div style="border:1px solid var(--line); border-radius:8px; overflow:hidden;">
-              ${grupoAtivo.itensCompletos.map(item => `
-                <div class="carrinho-item" style="border:none; border-radius:0; border-bottom:1px solid var(--line); margin-bottom:0;">
-                  <div class="thumb">
-                    ${item.fotos && item.fotos.length > 0
-                      ? `<img src="${item.fotos[0]}" alt="${item.nome}" />`
-                      : '🧵'
-                    }
+            <div class="carrinho-grid">
+              <!-- COLUNA ESQUERDA: itens + frete + cupom -->
+              <div style="display:flex; flex-direction:column; gap:16px;">
+                <div style="border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; background:var(--bg-card);">
+                  <div style="display:flex; align-items:center; gap:8px; padding:14px 20px; border-bottom:1px solid var(--line); font-weight:600; font-size:15px;">
+                    <svg class="icon icon-sm" style="color:var(--olive);" aria-hidden="true"><use href="#i-store"></use></svg> ${grupoAtivo.nomeLoja}
                   </div>
-                  <div class="info">
-                    <div class="nome">${item.nome}</div>
-                    <div class="preco">R$ ${Number(item.preco).toFixed(2).replace('.', ',')}</div>
+                  ${grupoAtivo.itensCompletos.map(item => `
+                    <div class="carrinho-item" style="border:none; border-radius:0; border-bottom:1px solid var(--line); margin-bottom:0;">
+                      <div class="thumb">
+                        ${item.fotos && item.fotos.length > 0
+                          ? `<img src="${item.fotos[0]}" alt="${item.nome}" />`
+                          : '🧵'
+                        }
+                      </div>
+                      <div class="info">
+                        <div class="nome">${item.nome}</div>
+                        <div class="preco">R$ ${Number(item.preco).toFixed(2).replace('.', ',')}</div>
+                      </div>
+                      <div class="quantidade">
+                        <button onclick="alterarQuantidade('${item.id}', -1)" aria-label="Diminuir quantidade">−</button>
+                        <span>${item.quantidade}</span>
+                        <button onclick="alterarQuantidade('${item.id}', 1)" aria-label="Aumentar quantidade">+</button>
+                      </div>
+                      <button class="remover" onclick="removerItem('${item.id}')" aria-label="Remover item" title="Remover item">✕</button>
+                    </div>
+                  `).join('')}
+                  <div id="pixResultado-${grupoAtivo.lojaId}" style="padding:0 16px;">${pixResultadoPorLoja[grupoAtivo.lojaId] || ''}</div>
+                  <div id="cartaoResultado-${grupoAtivo.lojaId}" style="padding:0 16px;"></div>
+                </div>
+
+                <div style="border:1px solid var(--line); border-radius:var(--radius); padding:18px 20px; background:var(--bg-card);">
+                  <div style="display:flex; align-items:center; gap:8px; font-weight:600; margin-bottom:10px;"><svg class="icon icon-sm" style="color:var(--olive);" aria-hidden="true"><use href="#i-truck"></use></svg> Calcular frete — ${grupoAtivo.nomeLoja}</div>
+                  <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                    <input type="text" id="freteCep" placeholder="Seu CEP (00000-000)" maxlength="9" value="${cepSalvo}" oninput="cepSalvo=this.value" style="flex:1; min-width:160px;" />
+                    <button class="btn btn-ghost" onclick="calcularFrete('${grupoAtivo.lojaId}')">Calcular</button>
                   </div>
-                  <div class="quantidade">
-                    <button onclick="alterarQuantidade('${item.id}', -1)" aria-label="Diminuir quantidade">−</button>
-                    <span>${item.quantidade}</span>
-                    <button onclick="alterarQuantidade('${item.id}', 1)" aria-label="Aumentar quantidade">+</button>
+                  <div id="freteResultado" style="margin-top:10px; font-size:14px;">${freteResultadoHtmlPorLoja[grupoAtivo.lojaId] || ''}</div>
+                </div>
+
+                <div style="border:1px solid var(--line); border-radius:var(--radius); padding:18px 20px; background:var(--bg-card);">
+                  <div style="display:flex; align-items:center; gap:8px; font-weight:600; margin-bottom:10px;"><svg class="icon icon-sm" style="color:var(--olive);" aria-hidden="true"><use href="#i-tag"></use></svg> Cupom de desconto</div>
+                  <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                    <input type="text" id="cupomInput" placeholder="Código do cupom" style="flex:1; min-width:160px; text-transform:uppercase;" value="${cupomAplicado || ''}" />
+                    <button class="btn btn-ghost" onclick="aplicarCupom()">Aplicar</button>
                   </div>
-                  <button class="remover" onclick="removerItem('${item.id}')" aria-label="Remover item" title="Remover item">✕</button>
+                  <div id="cupomResultado" style="margin-top:10px; font-size:14px;"></div>
                 </div>
-              `).join('')}
-              <div style="padding:16px; display:flex; flex-direction:column; gap:8px; background:var(--bg-card);">
-                <div style="display:flex; justify-content:space-between; font-size:15px; color:var(--ink-soft);">
-                  <span>Produtos</span><span>R$ ${grupoAtivo.subtotal.toFixed(2).replace('.', ',')}</span>
+              </div>
+
+              <!-- COLUNA DIREITA: resumo do pedido (sticky no desktop) -->
+              <div class="carrinho-resumo">
+                <div style="border:1px solid var(--line); border-radius:var(--radius); padding:24px; background:var(--bg-card); box-shadow:var(--shadow);">
+                  <h2 style="font-size:20px; margin-bottom:16px;">Resumo do pedido</h2>
+                  <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:14px;">
+                    <div style="display:flex; justify-content:space-between; font-size:15px; color:var(--ink-soft);">
+                      <span>Produtos</span><span>R$ ${grupoAtivo.subtotal.toFixed(2).replace('.', ',')}</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; font-size:15px; color:var(--ink-soft);">
+                      <span>Frete</span><span>${grupoAtivo.frete > 0 ? `R$ ${grupoAtivo.frete.toFixed(2).replace('.', ',')}` : 'calcule ao lado'}</span>
+                    </div>
+                  </div>
+                  <div style="display:flex; justify-content:space-between; align-items:baseline; padding-top:14px; border-top:1px solid var(--line); margin-bottom:4px;">
+                    <span style="font-weight:600; font-size:16px;">Total desta loja</span>
+                    <span class="total-value" style="font-family:'Fraunces', serif; font-size:28px; font-weight:700; letter-spacing:-0.02em;">R$ ${grupoAtivo.totalComFrete.toFixed(2).replace('.', ',')}</span>
+                  </div>
+                  ${grupoAtivo.temDescontoPix ? `<div style="font-size:14px; color:var(--green); font-weight:600; margin-bottom:8px; display:flex; align-items:center; gap:6px;"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-zap"></use></svg> Sai por R$ ${grupoAtivo.totalComFreteEPix.toFixed(2).replace('.', ',')} pagando com Pix</div>` : ''}
+                  <div style="display:flex; flex-direction:column; gap:10px; margin-top:16px;">
+                    <button class="btn btn-primary btn-lg" onclick="finalizarCompra('${grupoAtivo.lojaId}', this)" style="width:100%;">Finalizar esta loja</button>
+                    <div style="display:flex; gap:10px;">
+                      <button class="btn btn-outline" onclick="pagarComPix('${grupoAtivo.lojaId}')" style="flex:1;"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-zap"></use></svg> Pix</button>
+                      <button class="btn btn-outline" onclick="abrirPagamentoCartao('${grupoAtivo.lojaId}')" style="flex:1;"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-card"></use></svg> Cartão</button>
+                    </div>
+                  </div>
+                  <p class="secure-note" style="padding:12px 0 0; font-size:13px;"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-lock"></use></svg> Pagamento processado pelo Mercado Pago — seus dados de cartão nunca passam pela Obeh.</p>
+                  ${gruposVisuais.length > 1 ? `<p style="font-size:13.5px; color:var(--ink-soft); line-height:1.5; margin-top:12px; padding-top:12px; border-top:1px dashed var(--line);">Você tem peças de ${gruposVisuais.length} lojas. Cada loja é cobrada separadamente — troque de aba acima e finalize cada uma.</p>` : ''}
+                  <button class="btn btn-ghost" onclick="limparCarrinho()" style="width:100%; margin-top:12px; font-size:14px;">Limpar carrinho</button>
                 </div>
-                <div style="display:flex; justify-content:space-between; font-size:15px; color:var(--ink-soft);">
-                  <span>Frete</span><span>${grupoAtivo.frete > 0 ? `R$ ${grupoAtivo.frete.toFixed(2).replace('.', ',')}` : 'calcule abaixo'}</span>
-                </div>
-                <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; padding-top:10px; border-top:1px solid var(--line);">
+
+                <div class="help-box" style="margin-top:0;">
+                  <span class="help-icon" aria-hidden="true">🐑</span>
                   <div>
-                    <span style="font-weight:700; font-size:18px;">Total desta loja: R$ ${grupoAtivo.totalComFrete.toFixed(2).replace('.', ',')}</span>
-                    ${grupoAtivo.temDescontoPix ? `<div style="font-size:14.5px; color:#2f7a4d; font-weight:600;">💠 Sai por R$ ${grupoAtivo.totalComFreteEPix.toFixed(2).replace('.', ',')} pagando com Pix</div>` : ''}
-                  </div>
-                  <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                    <button class="btn btn-outline" onclick="pagarComPix('${grupoAtivo.lojaId}')">💠 Pagar com Pix</button>
-                    <button class="btn btn-outline" onclick="abrirPagamentoCartao('${grupoAtivo.lojaId}')">💳 Pagar com cartão</button>
-                    <button class="btn btn-primary" onclick="finalizarCompra('${grupoAtivo.lojaId}', this)">Finalizar esta loja</button>
+                    <strong>Ficou com alguma dúvida?</strong>
+                    Você paga com Pix ou cartão pelo Mercado Pago, e o dinheiro vai direto pra conta do artesão. Se algo der errado com o pedido, é só conversar com a loja pelo chat.
                   </div>
                 </div>
-                <p class="secure-note" style="padding:4px 0 0;"><span class="secure-icon" aria-hidden="true">🔒</span> Pagamento processado pelo Mercado Pago — seus dados de cartão nunca passam pela Obeh.</p>
-              </div>
-              <div id="pixResultado-${grupoAtivo.lojaId}" style="padding:0 16px 16px;">${pixResultadoPorLoja[grupoAtivo.lojaId] || ''}</div>
-              <div id="cartaoResultado-${grupoAtivo.lojaId}" style="padding:0 16px 16px;"></div>
-            </div>
-
-            <div style="border:1px solid var(--line); border-radius:8px; padding:16px; margin-bottom:16px;">
-        <div style="font-weight:500; margin-bottom:8px;">📦 Calcular frete — ${grupoAtivo.nomeLoja}</div>
-        <div style="display:flex; gap:8px; flex-wrap:wrap;">
-          <input type="text" id="freteCep" placeholder="Seu CEP (00000-000)" maxlength="9" value="${cepSalvo}" oninput="cepSalvo=this.value" style="flex:1; min-width:160px;" />
-          <button class="btn btn-ghost" onclick="calcularFrete('${grupoAtivo.lojaId}')">Calcular</button>
-        </div>
-        <div id="freteResultado" style="margin-top:10px; font-size:14px;">${freteResultadoHtmlPorLoja[grupoAtivo.lojaId] || ''}</div>
-      </div>
-
-      <div style="border:1px solid var(--line); border-radius:8px; padding:16px; margin-bottom:16px;">
-        <div style="font-weight:500; margin-bottom:8px;">🏷️ Cupom de desconto</div>
-        <div style="display:flex; gap:8px; flex-wrap:wrap;">
-          <input type="text" id="cupomInput" placeholder="Código do cupom" style="flex:1; min-width:160px; text-transform:uppercase;" value="${cupomAplicado || ''}" />
-          <button class="btn btn-ghost" onclick="aplicarCupom()">Aplicar</button>
-        </div>
-        <div id="cupomResultado" style="margin-top:10px; font-size:14px;"></div>
-      </div>
-
-      <div class="carrinho-total">
-              ${gruposVisuais.length === 1 ? `
-              <div>
-                <div class="total-label">Total (produtos + frete)</div>
-                <div class="total-value">R$ ${grupoAtivo.totalComFrete.toFixed(2).replace('.', ',')}</div>
-                ${grupoAtivo.temDescontoPix ? `<div style="font-size:14.5px; color:#2f7a4d; font-weight:600; margin-top:2px;">💠 Sai por R$ ${grupoAtivo.totalComFreteEPix.toFixed(2).replace('.', ',')} pagando com Pix</div>` : ''}
-              </div>
-              ` : `
-              <div style="font-size:15px; color:var(--ink-soft); line-height:1.5;">Você tem peças de ${gruposVisuais.length} lojas. Cada loja é cobrada separadamente — troque de aba acima e clique em "Finalizar esta loja" em cada uma.</div>
-              `}
-              <div style="display:flex; gap:12px; flex-wrap:wrap;">
-                <button class="btn btn-ghost" onclick="limparCarrinho()">Limpar carrinho</button>
-              </div>
-            </div>
-
-            <div class="help-box" style="margin-top:16px;">
-              <span class="help-icon" aria-hidden="true">🐑</span>
-              <div>
-                <strong>Ficou com alguma dúvida?</strong>
-                Você paga com Pix ou cartão pelo Mercado Pago, e o dinheiro vai direto pra conta do artesão. Se algo der errado com o pedido, é só conversar com a loja pelo chat.
               </div>
             </div>
           `
