@@ -1256,15 +1256,38 @@
         return
       }
 
-      const { error } = await supabaseClient.from('lojas').update({ superfrete_token: tokenLimpo }).eq('id', lojaData.id)
+      // O SuperFrete só funciona se a loja tiver "CEP de origem" salvo no
+      // banco — era o bug: o vendedor conectava o token, mas o CEP digitado
+      // no formulário só era salvo ao clicar em "Salvar loja" lá embaixo,
+      // então o banco ficava com cep_origem vazio e o cálculo pulava o
+      // SuperFrete silenciosamente. Agora o CEP é salvo JUNTO com o token.
+      const updates = { superfrete_token: tokenLimpo }
+      let cepLimpo = (document.getElementById('lojaCepOrigem')?.value || '').replace(/\D/g, '')
+      if (cepLimpo.length !== 8) cepLimpo = (lojaData.cep_origem || '').replace(/\D/g, '')
+      if (cepLimpo.length !== 8) {
+        const cepDigitado = prompt('Qual o CEP de origem dos seus envios? (o CEP de onde os produtos saem)\n\nSem ele o SuperFrete não consegue calcular o frete.')
+        if (cepDigitado !== null) cepLimpo = cepDigitado.replace(/\D/g, '')
+      }
+      if (cepLimpo.length === 8) {
+        updates.cep_origem = cepLimpo
+      }
+
+      const { error } = await supabaseClient.from('lojas').update(updates).eq('id', lojaData.id)
       if (error) {
         statusEl.textContent = '❌ Erro ao salvar: ' + error.message
         return
       }
       lojaData.superfrete_token = tokenLimpo
+      if (updates.cep_origem) {
+        lojaData.cep_origem = updates.cep_origem
+        const cepInput = document.getElementById('lojaCepOrigem')
+        if (cepInput) cepInput.value = updates.cep_origem
+      }
       atualizarStatusSuperfrete(tokenLimpo)
-      statusEl.textContent = '✅ Token conectado.'
-      setTimeout(() => { statusEl.textContent = '' }, 2500)
+      statusEl.textContent = updates.cep_origem
+        ? '✅ Token conectado e CEP de origem salvo.'
+        : '⚠️ Token salvo, mas SEM CEP de origem — o SuperFrete não vai calcular até você preencher o CEP de origem.'
+      setTimeout(() => { statusEl.textContent = '' }, 5000)
     }
 
     async function desconectarSuperfrete() {
