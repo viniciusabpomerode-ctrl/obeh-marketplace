@@ -52,10 +52,9 @@ exports.handler = async (event) => {
     }
 
     // Buscar imagens antes de deletar
-    const [loja, produtos, cursos] = await Promise.all([
+    const [loja, produtos] = await Promise.all([
       supabaseFetch(`lojas?id=eq.${loja_id}&select=logo,banner`),
-      supabaseFetch(`produtos?loja_id=eq.${loja_id}&select=id,fotos`),
-      supabaseFetch(`cursos?loja_id=eq.${loja_id}&select=capa_url`)
+      supabaseFetch(`produtos?loja_id=eq.${loja_id}&select=id,fotos`)
     ])
 
     // Deletar a loja (cascade deve limpar produtos, cursos, etc)
@@ -67,8 +66,7 @@ exports.handler = async (event) => {
     const lojaData = loja?.[0]
     const imagens = [
       lojaData?.logo, lojaData?.banner,
-      ...(produtos || []).flatMap(p => (p.fotos || []).filter(Boolean)),
-      ...(cursos || []).map(c => c.capa_url).filter(Boolean)
+      ...(produtos || []).flatMap(p => (p.fotos || []).filter(Boolean))
     ].filter(Boolean)
 
     if (imagens.length > 0) {
