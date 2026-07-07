@@ -58,9 +58,46 @@ exports.handler = async (event) => {
       supabaseFetch(`cursos?loja_id=eq.${loja_id}&select=capa_url`)
     ])
 
-    // Deletar produtos, cursos, loja
-    await supabaseFetch(`produtos?loja_id=eq.${loja_id}`, { method: 'DELETE' })
-    await supabaseFetch(`cursos?loja_id=eq.${loja_id}`, { method: 'DELETE' })
+    // Limpar tudo que referencia a loja (ordem importa por causa das FKs)
+    const tabelas = [
+      'avaliacoes',
+      'avaliacoes_importadas', 
+      'favoritos',
+      'cupons',
+      'advertencias',
+      'loja_categorias',
+      'fretes_regiao',
+      'apoiadores',
+      'apoio_beneficios',
+      'conteudo_apoiadores',
+      'pastas',
+      'importacoes_lojas',
+      'produtos',
+      'cursos'
+    ]
+
+    for (const tabela of tabelas) {
+      try {
+        await supabaseFetch(`${tabela}?loja_id=eq.${loja_id}`, { method: 'DELETE' })
+      } catch (e) {
+        // Tabela pode não existir ou não ter a coluna — segue
+        console.warn(`admin-excluir-loja: ${tabela}:`, e.message)
+      }
+    }
+
+    // Deletar vendas que referenciam produtos dessa loja (não tem loja_id direto)
+    if (produtos?.length) {
+      const produtoIds = produtos.map(p => p.id).filter(Boolean)
+      if (produtoIds.length > 0) {
+        try {
+          await supabaseFetch(`vendas?produto_id=in.(${produtoIds.join(',')})`, { method: 'DELETE' })
+        } catch (e) {
+          console.warn('admin-excluir-loja: vendas:', e.message)
+        }
+      }
+    }
+
+    // Finalmente deletar a loja
     await supabaseFetch(`lojas?id=eq.${loja_id}`, { method: 'DELETE' })
 
     // Deletar imagens do R2

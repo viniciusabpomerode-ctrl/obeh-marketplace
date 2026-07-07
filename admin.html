@@ -462,13 +462,10 @@
         ativa: document.getElementById(`edAtiva-${id}`).checked
       }
 
-      const { error } = await supabaseClient
-        .from('lojas')
-        .update(updates)
-        .eq('id', id)
+      const result = await callNetlifyFunction('admin-editar-loja', { loja_id: id, updates })
 
-      if (error) {
-        alert('❌ Erro ao salvar: ' + error.message)
+      if (result.error) {
+        alert('❌ Erro ao salvar: ' + result.error)
         return
       }
 
@@ -542,13 +539,14 @@
 
     async function excluirProdutoAdmin(produtoId, lojaId) {
       if (!confirm('Excluir este produto?')) return
-      const { data: produto } = await supabaseClient.from('produtos').select('fotos').eq('id', produtoId).maybeSingle()
-      const { error } = await supabaseClient.from('produtos').delete().eq('id', produtoId)
-      if (error) {
-        alert('❌ Erro ao excluir produto: ' + error.message)
+
+      const result = await callNetlifyFunction('admin-editar-loja', { produto_id: produtoId, excluir_produto: true })
+
+      if (result.error) {
+        alert('❌ Erro ao excluir produto: ' + result.error)
         return
       }
-      if (produto?.fotos?.length) await deletarImagensR2(produto.fotos)
+
       await carregarProdutosLojaAdmin(lojaId)
     }
 
