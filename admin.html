@@ -119,6 +119,56 @@
       padding: 2px 10px;
       border-radius: 999px;
     }
+    /* Modal de transferência */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 999;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal-box {
+      background: #fff;
+      border-radius: 16px;
+      padding: 28px 24px;
+      max-width: 460px;
+      width: 90%;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    }
+    .modal-box h3 { font-size: 20px; margin-bottom: 6px; }
+    .modal-box .modal-sub { font-size: 13px; color: var(--ink-soft); margin-bottom: 18px; }
+    .modal-box label { font-size: 12.5px; font-weight: 600; display: block; margin: 12px 0 4px; color: var(--ink-soft); }
+    .modal-box input, .modal-box select {
+      width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; font-size: 14px;
+    }
+    .modal-actions { display: flex; gap: 8px; margin-top: 20px; justify-content: flex-end; }
+    .btn-transferir {
+      background: #B5502F; color: #fff; border: none; padding: 10px 20px;
+      border-radius: 8px; font-size: 14px; cursor: pointer; font-weight: 600;
+    }
+    .btn-nova-loja {
+      background: #2f7a4d; color: #fff; border: none; padding: 10px 20px;
+      border-radius: 8px; font-size: 14px; cursor: pointer; font-weight: 600;
+    }
+    .btn-cancelar {
+      background: none; border: 1px solid var(--line); color: var(--ink-soft);
+      padding: 10px 20px; border-radius: 8px; font-size: 14px; cursor: pointer;
+    }
+    .alert-merge {
+      background: #fff8e6; border: 1px solid #e6b800; border-radius: 8px;
+      padding: 10px 14px; font-size: 13px; color: #7a6200; margin-top: 12px;
+    }
+    .loja-admin-card {
+      border: 1px dashed #B5502F; border-radius: 12px; padding: 16px 18px;
+      margin-bottom: 10px; display: flex; justify-content: space-between;
+      align-items: center; gap: 12px; flex-wrap: wrap; background: #fef9f6;
+    }
+    .loja-admin-card .info h3 { font-size: 16px; margin-bottom: 3px; }
+    .loja-admin-card .info p { font-size: 12.5px; color: var(--ink-soft); margin: 1px 0; }
+    .badge-oculta { background: #666; color: #fff; font-size: 11px; padding: 2px 8px; border-radius: 999px; }
   </style>
 </head>
 <body>
@@ -141,6 +191,51 @@
   </div>
 
   <div class="admin-wrap" id="adminArea" style="display:none;">
+    <!-- ===== MINHAS LOJAS (CRIADAS PELO ADMIN) ===== -->
+    <div class="admin-section-head">
+      <h1 style="margin:0;">🏗️ Minhas lojas (criadas por você)</h1>
+      <span class="contador" id="contadorMinhasLojas">—</span>
+    </div>
+    <p class="admin-sub">Lojas que você criou e ainda não foram transferidas. Elas ficam ocultas até você enviar para alguém.</p>
+    <div id="listaMinhasLojas">
+      <p style="color:var(--ink-soft); font-size:14px;">Carregando...</p>
+    </div>
+    <button class="btn-nova-loja" onclick="abrirFormCriarLoja()" style="margin-top:12px;">➕ Criar nova loja</button>
+
+    <!-- Form de criação (inline, hidden) -->
+    <div id="formCriarLoja" style="display:none; margin-top:14px; border:1px solid var(--line); border-radius:12px; padding:20px;">
+      <h3 style="margin:0 0 14px;">Nova loja</h3>
+      <div class="admin-edit-grid">
+        <div class="admin-field" style="grid-column:1/-1;">
+          <label>Nome da loja *</label>
+          <input id="novaLojaNome" type="text" placeholder="Ex: Artesanato da Maria" />
+        </div>
+        <div class="admin-field">
+          <label>Categoria</label>
+          <input id="novaLojaCategoria" type="text" placeholder="Ex: Decoração" />
+        </div>
+        <div class="admin-field">
+          <label>Instagram</label>
+          <input id="novaLojaInsta" type="text" placeholder="@loja" />
+        </div>
+        <div class="admin-field">
+          <label>WhatsApp</label>
+          <input id="novaLojaWhats" type="text" placeholder="(11) 99999-9999" />
+        </div>
+        <div class="admin-field" style="grid-column:1/-1;">
+          <label>Descrição</label>
+          <textarea id="novaLojaDesc" style="min-height:70px; width:100%; padding:8px 12px; border:1px solid var(--line); border-radius:8px;" placeholder="Sobre a loja..."></textarea>
+        </div>
+      </div>
+      <div style="display:flex; gap:8px; margin-top:14px;">
+        <button class="btn-aprovar" onclick="criarNovaLoja()">💾 Criar loja</button>
+        <button class="btn-cancelar" onclick="document.getElementById('formCriarLoja').style.display='none'">Cancelar</button>
+      </div>
+    </div>
+
+    <hr style="margin:40px 0; border:none; border-top:1px solid var(--line);" />
+
+    <!-- ===== TODAS AS LOJAS ===== -->
     <div class="admin-section-head">
       <h1 style="margin:0;">🏬 Todas as lojas</h1>
       <span class="contador" id="contadorLojas">—</span>
@@ -163,6 +258,33 @@
     </div>
   </div>
 
+  <!-- ===== MODAL DE TRANSFERÊNCIA ===== -->
+  <div class="modal-overlay" id="modalTransferir">
+    <div class="modal-box">
+      <h3>📦 Transferir loja</h3>
+      <p class="modal-sub" id="modalTransferirNomeLoja">Loja: —</p>
+      <label>Email do destinatário</label>
+      <input id="transferirEmail" type="email" placeholder="exemplo@email.com" />
+      <label>Plano patrocinado</label>
+      <select id="transferirPlano">
+        <option value="">Sem patrocínio (manter free)</option>
+        <option value="free">Free</option>
+        <option value="basic">Basic</option>
+        <option value="pro" selected>Pro</option>
+        <option value="ultra">Ultra</option>
+      </select>
+      <label>Duração (meses)</label>
+      <input id="transferirMeses" type="number" value="3" min="1" max="24" />
+      <div class="alert-merge">
+        ⚠️ Se o usuário já tiver loja, os produtos serão mesclados e o <strong>logo/banner/cabeçalho</strong> dele serão preservados.
+      </div>
+      <div class="modal-actions">
+        <button class="btn-cancelar" onclick="fecharModalTransferir()">Cancelar</button>
+        <button class="btn-transferir" onclick="executarTransferencia()">Transferir</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ===== SCRIPTS ===== -->
   <script src="js/supabase.js"></script>
   <script src="js/upload-r2.js"></script>
@@ -180,6 +302,7 @@
 
       document.getElementById('userEmail').textContent = user.email
       document.getElementById('adminArea').style.display = 'block'
+      await carregarMinhasLojas()
       await carregarTodasLojas()
       await carregarSuporte()
     })
@@ -420,6 +543,115 @@
       )
       renderTodasLojas(filtradas)
     }
+
+    // ============================================
+    // MINHAS LOJAS (CRIADAS PELO ADMIN)
+    // ============================================
+
+    async function carregarMinhasLojas() {
+      const container = document.getElementById('listaMinhasLojas')
+      const data = await getLojasAdmin()
+
+      document.getElementById('contadorMinhasLojas').textContent = (data || []).length
+      window.__minhasLojasCache = data || []
+
+      if (!data || data.length === 0) {
+        container.innerHTML = '<div class="empty-state"><p>Você ainda não criou nenhuma loja. Clique em "Criar nova loja" para começar.</p></div>'
+        return
+      }
+
+      container.innerHTML = data.map(loja => `
+        <div class="loja-admin-card">
+          <div class="info">
+            <h3>${esc(loja.nome_loja || 'Sem nome')} <span class="badge-oculta">🔒 Oculta</span></h3>
+            <p>📂 Categoria: ${esc(loja.categoria || '—')} · Slug: ${esc(loja.slug || '—')}</p>
+            <p>📝 ${esc((loja.descricao || '').substring(0, 100))}${(loja.descricao || '').length > 100 ? '...' : ''}</p>
+          </div>
+          <div class="loja-actions">
+            <button class="btn-aprovar" onclick="abrirModalTransferir('${loja.id}','${esc(loja.nome_loja || '').replace(/'/g, "\\'")}')">📤 Transferir</button>
+            <button class="btn-recusar" onclick="excluirLojaAdmin('${loja.id}')">🗑️ Excluir</button>
+          </div>
+        </div>
+      `).join('')
+    }
+
+    function abrirFormCriarLoja() {
+      document.getElementById('formCriarLoja').style.display = 'block'
+    }
+
+    async function criarNovaLoja() {
+      const nome = document.getElementById('novaLojaNome').value.trim()
+      if (!nome) { alert('Nome da loja é obrigatório.'); return }
+
+      const loja = await criarLojaAdmin({
+        nome_loja: nome,
+        categoria: document.getElementById('novaLojaCategoria').value.trim(),
+        instagram: document.getElementById('novaLojaInsta').value.trim(),
+        whatsapp: document.getElementById('novaLojaWhats').value.trim(),
+        descricao: document.getElementById('novaLojaDesc').value.trim()
+      })
+
+      if (!loja) { alert('Erro ao criar loja.'); return }
+
+      alert('✅ Loja criada com sucesso! Ela está oculta até você transferi-la.')
+      document.getElementById('formCriarLoja').style.display = 'none'
+      document.getElementById('novaLojaNome').value = ''
+      document.getElementById('novaLojaCategoria').value = ''
+      document.getElementById('novaLojaInsta').value = ''
+      document.getElementById('novaLojaWhats').value = ''
+      document.getElementById('novaLojaDesc').value = ''
+      await carregarMinhasLojas()
+    }
+
+    // ============================================
+    // TRANSFERÊNCIA DE LOJA
+    // ============================================
+
+    let __transferindoLojaId = null
+
+    function abrirModalTransferir(lojaId, nomeLoja) {
+      __transferindoLojaId = lojaId
+      document.getElementById('modalTransferirNomeLoja').textContent = 'Loja: ' + nomeLoja
+      document.getElementById('transferirEmail').value = ''
+      document.getElementById('transferirPlano').value = 'pro'
+      document.getElementById('transferirMeses').value = '3'
+      document.getElementById('modalTransferir').classList.add('active')
+    }
+
+    function fecharModalTransferir() {
+      document.getElementById('modalTransferir').classList.remove('active')
+      __transferindoLojaId = null
+    }
+
+    async function executarTransferencia() {
+      if (!__transferindoLojaId) return
+
+      const email = document.getElementById('transferirEmail').value.trim()
+      if (!email) { alert('Informe o email do destinatário.'); return }
+
+      const plano = document.getElementById('transferirPlano').value
+      const meses = parseInt(document.getElementById('transferirMeses').value) || 0
+
+      const btn = document.querySelector('.btn-transferir')
+      btn.disabled = true
+      btn.textContent = 'Transferindo...'
+
+      const result = await transferirLoja(__transferindoLojaId, email, plano || null, meses)
+
+      btn.disabled = false
+      btn.textContent = 'Transferir'
+
+      if (!result.success) {
+        alert('❌ ' + result.error)
+        return
+      }
+
+      alert('✅ ' + result.mensagem)
+      fecharModalTransferir()
+      await carregarMinhasLojas()
+      await carregarTodasLojas()
+    }
+
   async function carregarSuporte() {
     const container = document.getElementById('listaSuporte')
     const { data, error } = await supabaseClient

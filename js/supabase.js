@@ -93,6 +93,7 @@ async function login(email, password) {
   }
   if (data?.user?.id) {
     await registrarPrimeiroLogin(data.user.id)
+    await verificarExpiracaoPlano(data.user.id)
   }
   window.location.href = getRetornoUrlComCheckPerfil()
   return true
@@ -150,15 +151,36 @@ async function cadastrarUsuario(email, password, nome, telefone, dadosEndereco =
   if (data.user) {
     // 2. Salva endereço/CPF no perfil (colunas extras que o trigger não preenche)
     const { cpf, cep, rua, numero, bairro, cidade, estado } = dadosEndereco
-    if (cpf || cep || rua || numero || bairro || cidade || estado) {
-      const { error: perfilError } = await supabaseClient
-        .from('users')
-        .update({ cpf, cep, rua, numero, bairro, cidade, estado })
-        .eq('id', data.user.id)
 
-      if (perfilError) {
-        console.error('Erro ao salvar endereço do usuário:', perfilError)
-      }
+    // 3. Promoção: 45 dias de plano Pro grátis (válida até 15/08/2026)
+    const dataLimitePromo = new Date('2026-08-15T23:59:59-03:00')
+    const agora = new Date()
+    let planoInicial = 'free'
+    let planoPatrocinado = null
+    let planoExpiracao = null
+
+    if (agora < dataLimitePromo) {
+      planoInicial = 'pro'
+      planoPatrocinado = 'pro'
+      const expiracao = new Date(agora)
+      expiracao.setDate(expiracao.getDate() + 45)
+      planoExpiracao = expiracao.toISOString()
+    }
+
+    const perfilUpdate = {
+      cpf, cep, rua, numero, bairro, cidade, estado,
+      plano: planoInicial,
+      plano_patrocinado: planoPatrocinado,
+      plano_patrocinado_expiracao: planoExpiracao
+    }
+
+    const { error: perfilError } = await supabaseClient
+      .from('users')
+      .update(perfilUpdate)
+      .eq('id', data.user.id)
+
+    if (perfilError) {
+      console.error('Erro ao salvar perfil do usuário:', perfilError)
     }
 
     alert('✅ Cadastro realizado com sucesso! Faça login para continuar.')
@@ -335,6 +357,21 @@ async function ensureUserAndLoja(user) {
   }
 
   if (!perfilExistente) {
+    // Promoção: 45 dias de Pro grátis (válida até 15/08/2026)
+    const dataLimitePromo = new Date('2026-08-15T23:59:59-03:00')
+    const agora = new Date()
+    let planoInicial = 'free'
+    let planoPatrocinado = null
+    let planoExpiracao = null
+
+    if (agora < dataLimitePromo) {
+      planoInicial = 'pro'
+      planoPatrocinado = 'pro'
+      const expiracao = new Date(agora)
+      expiracao.setDate(expiracao.getDate() + 45)
+      planoExpiracao = expiracao.toISOString()
+    }
+
     const { error: perfilError } = await supabaseClient
       .from('users')
       .insert({
@@ -342,7 +379,9 @@ async function ensureUserAndLoja(user) {
         email: user.email,
         nome: user.user_metadata?.nome || user.email,
         telefone: user.user_metadata?.telefone || null,
-        plano: 'free'
+        plano: planoInicial,
+        plano_patrocinado: planoPatrocinado,
+        plano_patrocinado_expiracao: planoExpiracao
       })
 
     if (perfilError) {
@@ -784,6 +823,195 @@ async function toggleFavoritoCard(produtoId, btnEl) {
 }
 
 // ============================================
+// ADMIN: LOJAS CRIADAS PELO ADMIN
+// ============================================
+
+// Busca todas as lojas criadas pelo admin (criada_por_admin = true)
+async function getLojasAdmin() {
+  const { data, error } = await supabaseClient
+    .from('lojas')
+    .select('*')
+    .eq('criada_por_admin', true)
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error('Erro ao buscar lojas do admin:', error)
+    return []
+  }
+  return data
+}
+
+// Admin cria uma nova loja (oculta, atrelada ao admin)
+async function criarLojaAdmin(dados) {
+  const user = await getCurrentUser()
+  if (!user) return null
+
+  const slug = (dados.nome_loja || 'loja').toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    + '-' + Date.now().toString(36)
+
+  const { data, error } = await supabaseClient
+    .from('lojas')
+    .insert({
+      user_id: user.id,
+      nome_loja: dados.nome_loja || 'Nova loja',
+      slug,
+      descricao: dados.descricao || '',
+      categoria: dados.categoria || '',
+      instagram: dados.instagram || '',
+      whatsapp: dados.whatsapp || '',
+      ativa: false,
+      criada_por_admin: true
+    })
+    .select()
+    .single()
+
+  if (error) {
+    console.error('Erro ao criar loja admin:', error)
+    return null
+  }
+  return data
+}
+
+// Admin transfere uma loja para um usuário (com merge se necessário)
+// Retorna: { success, merged, loja_id, mensagem }
+async function transferirLoja(lojaId, emailDestino, plano, meses) {
+  // 1. Buscar usuário destino pelo email
+  const { data: userDestino, error: userError } = await supabaseClient
+    .from('users')
+    .select('id, email, nome')
+    .eq('email', emailDestino.toLowerCase().trim())
+    .maybeSingle()
+
+  if (userError || !userDestino) {
+    return { success: false, error: 'Usuário não encontrado com esse email.' }
+  }
+
+  // 2. Buscar a loja admin
+  const { data: lojaAdmin, error: lojaError } = await supabaseClient
+    .from('lojas')
+    .select('*')
+    .eq('id', lojaId)
+    .eq('criada_por_admin', true)
+    .single()
+
+  if (lojaError || !lojaAdmin) {
+    return { success: false, error: 'Loja não encontrada.' }
+  }
+
+  // 3. Verificar se destino já tem loja
+  const { data: lojaDestino } = await supabaseClient
+    .from('lojas')
+    .select('*')
+    .eq('user_id', userDestino.id)
+    .maybeSingle()
+
+  const adminUser = await getCurrentUser()
+
+  if (lojaDestino) {
+    // ===== MERGE =====
+    // Mover produtos
+    await supabaseClient.from('produtos')
+      .update({ loja_id: lojaDestino.id, user_id: userDestino.id })
+      .eq('loja_id', lojaAdmin.id)
+
+    // Mover cursos
+    await supabaseClient.from('cursos')
+      .update({ loja_id: lojaDestino.id })
+      .eq('loja_id', lojaAdmin.id)
+
+    // Atualizar loja destino (preserva logo, banner, cores, css do usuário)
+    await supabaseClient.from('lojas')
+      .update({
+        nome_loja: lojaDestino.nome_loja || lojaAdmin.nome_loja,
+        descricao: (lojaDestino.descricao && lojaDestino.descricao.trim()) ? lojaDestino.descricao : lojaAdmin.descricao,
+        categoria: lojaDestino.categoria || lojaAdmin.categoria,
+        instagram: lojaDestino.instagram || lojaAdmin.instagram,
+        whatsapp: lojaDestino.whatsapp || lojaAdmin.whatsapp,
+        ativa: true
+      })
+      .eq('id', lojaDestino.id)
+
+    // Deletar loja admin
+    await supabaseClient.from('lojas').delete().eq('id', lojaAdmin.id)
+
+    // Aplicar plano patrocinado
+    if (plano && plano !== 'free' && meses > 0) {
+      await aplicarPlanoPatrocinado(userDestino.id, lojaDestino.id, adminUser.id, plano, meses)
+    }
+
+    return { success: true, merged: true, loja_id: lojaDestino.id, mensagem: 'Loja mesclada! Produtos transferidos, branding preservado.' }
+  } else {
+    // ===== TRANSFERÊNCIA DIRETA =====
+    await supabaseClient.from('lojas')
+      .update({ user_id: userDestino.id, criada_por_admin: false, ativa: true })
+      .eq('id', lojaAdmin.id)
+
+    await supabaseClient.from('produtos')
+      .update({ user_id: userDestino.id })
+      .eq('loja_id', lojaAdmin.id)
+
+    // Aplicar plano patrocinado
+    if (plano && plano !== 'free' && meses > 0) {
+      await aplicarPlanoPatrocinado(userDestino.id, lojaAdmin.id, adminUser.id, plano, meses)
+    }
+
+    return { success: true, merged: false, loja_id: lojaAdmin.id, mensagem: 'Loja transferida com sucesso!' }
+  }
+}
+
+// Aplica plano patrocinado a um usuário
+async function aplicarPlanoPatrocinado(userId, lojaId, adminId, plano, meses) {
+  const expiracao = new Date()
+  expiracao.setMonth(expiracao.getMonth() + meses)
+
+  await supabaseClient.from('users').update({
+    plano: plano,
+    plano_patrocinado: plano,
+    plano_patrocinado_expiracao: expiracao.toISOString()
+  }).eq('id', userId)
+
+  await supabaseClient.from('patrocinios').insert({
+    loja_id: lojaId,
+    user_id: userId,
+    admin_id: adminId,
+    plano,
+    meses
+  })
+}
+
+// ============================================
+// VERIFICA EXPIRAÇÃO DE PLANO PATROCINADO
+// Deve ser chamado no login e ao carregar páginas protegidas
+// ============================================
+
+async function verificarExpiracaoPlano(userId) {
+  const { data, error } = await supabaseClient
+    .from('users')
+    .select('plano, plano_patrocinado, plano_patrocinado_expiracao')
+    .eq('id', userId)
+    .maybeSingle()
+
+  if (error || !data) return
+
+  // Se tem plano patrocinado e já expirou, voltar para free
+  if (data.plano_patrocinado && data.plano_patrocinado_expiracao) {
+    const agora = new Date()
+    const expiracao = new Date(data.plano_patrocinado_expiracao)
+    if (agora > expiracao) {
+      await supabaseClient.from('users').update({
+        plano: 'free',
+        plano_patrocinado: null,
+        plano_patrocinado_expiracao: null
+      }).eq('id', userId)
+      console.log('Plano patrocinado expirado. Voltando para free.')
+    }
+  }
+}
+
+// ============================================
 // EXPORTAÇÃO DAS FUNÇÕES (para uso global)
 // ============================================
 
@@ -827,3 +1055,8 @@ window.getTotalCarrinho = getTotalCarrinho
 window.getQuantidadeCarrinho = getQuantidadeCarrinho
 window.enviarMensagem = enviarMensagem
 window.carrinho = carrinho
+window.getLojasAdmin = getLojasAdmin
+window.criarLojaAdmin = criarLojaAdmin
+window.transferirLoja = transferirLoja
+window.verificarExpiracaoPlano = verificarExpiracaoPlano
+window.aplicarPlanoPatrocinado = aplicarPlanoPatrocinado

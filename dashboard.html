@@ -12,8 +12,50 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
   </script>
   <link rel="stylesheet" href="css/style.css" />
+  <style>
+    /* Modal de boas-vindas (promoção Pro) */
+    .welcome-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55);
+      z-index: 9999; align-items: center; justify-content: center;
+    }
+    .welcome-overlay.active { display: flex; }
+    .welcome-card {
+      background: #fff; border-radius: 20px; padding: 36px 28px 28px;
+      max-width: 440px; width: 90%; text-align: center;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.2); animation: welcomePop 0.4s ease;
+    }
+    @keyframes welcomePop {
+      from { transform: scale(0.85); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    .welcome-card .welcome-emoji { font-size: 56px; margin-bottom: 8px; }
+    .welcome-card h2 { font-size: 24px; margin: 0 0 6px; color: #2f7a4d; }
+    .welcome-card .welcome-sub { font-size: 14px; color: var(--ink-soft); line-height: 1.6; margin-bottom: 8px; }
+    .welcome-card .welcome-dias { display: inline-block; background: #e8f5e9; color: #2f7a4d; font-weight: 700; font-size: 18px; padding: 6px 20px; border-radius: 999px; margin: 8px 0; }
+    .welcome-card .welcome-beneficios { text-align: left; font-size: 13px; color: var(--ink-soft); margin: 14px 0; line-height: 1.8; }
+    .welcome-card .welcome-beneficios span { margin-right: 6px; }
+    .btn-welcome { background: #B5502F; color: #fff; border: none; padding: 12px 32px; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 8px; transition: transform 0.15s; }
+    .btn-welcome:hover { transform: scale(1.04); }
+  </style>
 </head>
 <body>
+
+  <!-- ===== MODAL DE BOAS-VINDAS (PLANO PRO GRÁTIS) ===== -->
+  <div class="welcome-overlay" id="welcomeOverlay">
+    <div class="welcome-card">
+      <div class="welcome-emoji">🎁</div>
+      <h2>Parabéns! Você ganhou <span id="welcomeDias">45</span> dias de Plano Pro!</h2>
+      <p class="welcome-sub">Seja bem-vindo(a) à Obeh! Você está com acesso liberado a todos os recursos Pro.</p>
+      <div class="welcome-dias" id="welcomeValidade">Válido até —</div>
+      <div class="welcome-beneficios">
+        <p><span>✅</span> Até <strong>50 produtos</strong> na sua loja</p>
+        <p><span>✅</span> Taxa reduzida: <strong>4% por venda</strong></p>
+        <p><span>✅</span> Loja verificada com selo <strong>Pro</strong></p>
+        <p><span>✅</span> Suporte prioritário</p>
+      </div>
+      <button class="btn-welcome" onclick="fecharWelcome()">🎉 Começar a vender!</button>
+    </div>
+  </div>
 
   <!-- ===== HEADER ===== -->
   <header>
@@ -805,6 +847,12 @@
 
       // Garante que perfil e loja existem (fallback do trigger)
       await ensureUserAndLoja(user)
+
+      // Verifica se plano patrocinado expirou
+      await verificarExpiracaoPlano(user.id)
+
+      // Mostra modal de boas-vindas se tiver plano patrocinado ativo (promoção)
+      await mostrarWelcomePro(user.id)
 
       // Marca o primeiro login (usado na janela de promoção de 5h no checkout)
       await registrarPrimeiroLogin(user.id)
@@ -3092,6 +3140,42 @@ pasta_id,
     window.fecharTopicos = fecharTopicos
     window.handleTopicoSubmit = handleTopicoSubmit
     window.handleDeleteTopico = handleDeleteTopico
+
+    // ============================================
+    // MODAL DE BOAS-VINDAS (PLANO PRO GRÁTIS)
+    // ============================================
+
+    async function mostrarWelcomePro(userId) {
+      // Já mostrou antes? (localStorage por sessão)
+      if (localStorage.getItem('obeh_welcome_pro_visto')) return
+
+      const { data } = await supabaseClient
+        .from('users')
+        .select('plano_patrocinado, plano_patrocinado_expiracao')
+        .eq('id', userId)
+        .maybeSingle()
+
+      if (!data || !data.plano_patrocinado || !data.plano_patrocinado_expiracao) return
+
+      const agora = new Date()
+      const expiracao = new Date(data.plano_patrocinado_expiracao)
+      if (agora > expiracao) return // já expirou
+
+      // Calcula dias restantes
+      const diasRestantes = Math.ceil((expiracao - agora) / (1000 * 60 * 60 * 24))
+
+      document.getElementById('welcomeDias').textContent = diasRestantes
+      document.getElementById('welcomeValidade').textContent = 'Válido até ' + expiracao.toLocaleDateString('pt-BR')
+      document.getElementById('welcomeOverlay').classList.add('active')
+    }
+
+    function fecharWelcome() {
+      document.getElementById('welcomeOverlay').classList.remove('active')
+      localStorage.setItem('obeh_welcome_pro_visto', '1')
+    }
+
+    window.mostrarWelcomePro = mostrarWelcomePro
+    window.fecharWelcome = fecharWelcome
 
     console.log('✅ Dashboard Obeh carregado com sucesso!')
   </script>

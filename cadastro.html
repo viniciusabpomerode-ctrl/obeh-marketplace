@@ -25,6 +25,13 @@
 <h1>🐑 Criar conta Obeh</h1>
 <p class="sub">Comece a vender ou comprar artesanato</p>
 
+<!-- Promoção: 1 mês Pro grátis -->
+<div id="promoAlerta" style="background:#fff8e6; border:1px solid #e6b800; border-radius:12px; padding:14px 18px; margin-bottom:20px; text-align:center; line-height:1.6;">
+  <span style="font-size:20px;">🎉</span>
+  <strong style="display:block; font-size:15px; color:#7a6200; margin-top:4px;">45 dias de Plano Pro grátis!</strong>
+  <span style="font-size:13px; color:#7a6200;">Crie sua conta até 15/08 e ganhe acesso a todos os recursos Pro por 45 dias.</span>
+</div>
+
 <!-- Social Login -->
 <div class="social-login">
 <button class="btn btn-google" onclick="loginComGoogle()">
@@ -104,6 +111,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 const user = await getCurrentUser()
 if (user) {
 window.location.href = 'dashboard.html'
+}
+
+// Esconder banner da promoção se já passou de 15/08/2026
+const dataLimitePromo = new Date('2026-08-15T23:59:59-03:00')
+if (new Date() >= dataLimitePromo) {
+const banner = document.getElementById('promoAlerta')
+if (banner) banner.style.display = 'none'
 }
 })
 </script>
