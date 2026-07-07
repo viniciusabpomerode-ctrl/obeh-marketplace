@@ -30,14 +30,6 @@ const CORREIOS_DR = process.env.CORREIOS_DR
 const SUPERFRETE_BASE_URL = process.env.SUPERFRETE_BASE_URL || 'https://api.superfrete.com'
 const SUPERFRETE_CONTATO = process.env.SUPERFRETE_CONTATO || 'contato@obeh.com.br'
 
-// Token global do SuperFrete, cadastrado como variável de ambiente (JWT ou
-// SUPERFRETE_TOKEN). Serve como fallback quando a loja NÃO tem um token
-// próprio salvo no banco (lojas.superfrete_token, via dashboard). Antes,
-// só o token do banco era considerado — quem cadastrava o token apenas na
-// variável de ambiente ficava sem SuperFrete sem nenhum aviso, e o cálculo
-// caía direto pro frete manual/estimado.
-const SUPERFRETE_TOKEN_GLOBAL = process.env.JWT || process.env.SUPERFRETE_TOKEN || null
-
 // Códigos de serviço da própria SuperFrete (não são os mesmos códigos dos
 // Correios) — 1 = PAC, 2 = SEDEX, 17 = Mini Envios. O campo "services" é
 // OBRIGATÓRIO na API deles; sem ele a chamada falha com 400 e cai pro
@@ -323,15 +315,16 @@ async function calcularFretesPorLoja(cepDestino, itens) {
       }
     }
 
-    // Usa o token da loja se existir; senão, cai pro token global da
-    // variável de ambiente (JWT / SUPERFRETE_TOKEN).
-    const tokenSuperfrete = grupo.superfreteToken || SUPERFRETE_TOKEN_GLOBAL
-    if (!resultado && tokenSuperfrete) {
+    // Cada loja usa SOMENTE o próprio token cadastrado no dashboard
+    // (lojas.superfrete_token). Isso é um marketplace: NUNCA usar um token
+    // global aqui, senão o frete de todas as lojas sairia da conta
+    // SuperFrete de um único vendedor.
+    if (!resultado && grupo.superfreteToken) {
       if (!grupo.cepOrigem) {
         console.error(`SuperFrete: loja ${grupo.lojaId} tem token mas está SEM "CEP de origem" cadastrado — pulando SuperFrete.`)
       } else {
         try {
-          resultado = await calcularFreteSuperFrete(tokenSuperfrete, grupo.cepOrigem, cepLimpo, grupo.itensDetalhados)
+          resultado = await calcularFreteSuperFrete(grupo.superfreteToken, grupo.cepOrigem, cepLimpo, grupo.itensDetalhados)
         } catch (err) {
           console.error('Falha ao calcular frete via SuperFrete, tentando próxima opção:', err.message)
         }
