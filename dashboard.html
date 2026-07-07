@@ -905,10 +905,10 @@
       const paramsMp = new URLSearchParams(window.location.search)
       if (paramsMp.get('mp_conexao') === 'sucesso') {
         alert('✅ Conta do Mercado Pago conectada com sucesso!')
-        window.history.replaceState({}, '', 'dashboard.html')
+        window.history.replaceState({}, '', 'dashboard.html' + (paramsMp.get('tab') ? '?tab=' + paramsMp.get('tab') : ''))
       } else if (paramsMp.get('mp_conexao') === 'erro') {
         alert('❌ ' + (paramsMp.get('mp_msg') || 'Não foi possível conectar sua conta do Mercado Pago.'))
-        window.history.replaceState({}, '', 'dashboard.html')
+        window.history.replaceState({}, '', 'dashboard.html' + (paramsMp.get('tab') ? '?tab=' + paramsMp.get('tab') : ''))
       }
 
       // Garante que perfil e loja existem (fallback do trigger)

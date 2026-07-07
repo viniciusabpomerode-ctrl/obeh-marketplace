@@ -42,7 +42,8 @@ async function supabaseRequest(path, options = {}) {
     const text = await res.text().catch(() => '')
     throw new Error(`Supabase ${path} falhou (${res.status}): ${text}`)
   }
-  return res.json()
+  const text = await res.text()
+  return text ? JSON.parse(text) : null
 }
 
 function identificarPlataforma(url) {

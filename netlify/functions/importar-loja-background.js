@@ -62,7 +62,9 @@ async function supabaseRequest(path, options = {}) {
     const text = await res.text().catch(() => '')
     throw new Error(`Supabase ${path} falhou (${res.status}): ${text}`)
   }
-  return res.json()
+  // POST/PATCH com return=minimal pode vir sem corpo — evita JSON parse em vazio
+  const text = await res.text()
+  return text ? JSON.parse(text) : null
 }
 
 function esperar(ms) {
@@ -139,16 +141,17 @@ exports.handler = async (event) => {
         
         // Se o retry falhou ou retornou null, usa fallback com dados do card
         if (!detalhes) {
+          detalhes = {
             urlOrigem: cartao.url,
             titulo: cartao.titulo,
             descricao: null,
-            precoAtual: artesanouAdapter.parsePrecoBRL(cartao.precoAtualTexto),
-            precoAntigo: artesanouAdapter.parsePrecoBRL(cartao.precoAntigoTexto),
+            precoAtual: adapter.parsePrecoBRL(cartao.precoAtualTexto),
+            precoAntigo: adapter.parsePrecoBRL(cartao.precoAntigoTexto),
             categoriaTexto: cartao.categoriaTexto,
             pastaOrigemTexto: null,
             imagens: cartao.imagemThumb ? [cartao.imagemThumb] : [],
             sobEncomenda: Boolean(cartao.prazoProducaoTexto),
-            prazoProducaoDias: artesanouAdapter.extrairDiasProducao(cartao.prazoProducaoTexto)
+            prazoProducaoDias: adapter.extrairDiasProducao(cartao.prazoProducaoTexto)
           }
         }
         return mapearProdutoImportado(detalhes, { categoriasObeh, plataforma, lojaId })

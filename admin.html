@@ -587,13 +587,19 @@
 
     // Helper: chama uma Netlify Function com autenticação
     async function callNetlifyFunction(name, body) {
-      const token = await getAuthToken()
-      const res = await fetch(`/.netlify/functions/${name}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify(body)
-      })
-      return res.json()
+      try {
+        const token = await getAuthToken()
+        const res = await fetch(`/.netlify/functions/${name}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify(body)
+        })
+        const data = await res.json()
+        return data
+      } catch (err) {
+        console.error(`Erro ao chamar ${name}:`, err)
+        return { error: 'Erro de conexão com o servidor. Tente novamente.' }
+      }
     }
 
     async function carregarMinhasLojas() {
