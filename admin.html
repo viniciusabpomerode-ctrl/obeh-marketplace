@@ -479,27 +479,15 @@
         async function excluirLojaAdmin(id) {
       if (!confirm('Tem certeza que deseja EXCLUIR esta loja e todos os seus produtos? Essa ação não pode ser desfeita.')) return
 
-      const [{ data: loja }, { data: produtos }, { data: cursos }] = await Promise.all([
-        supabaseClient.from('lojas').select('logo, banner').eq('id', id).maybeSingle(),
-        supabaseClient.from('produtos').select('fotos').eq('loja_id', id),
-        supabaseClient.from('cursos').select('capa_url').eq('loja_id', id)
-      ])
+      const result = await callNetlifyFunction('admin-excluir-loja', { loja_id: id })
 
-      await supabaseClient.from('produtos').delete().eq('loja_id', id)
-      const { error } = await supabaseClient.from('lojas').delete().eq('id', id)
-      if (error) {
-        alert('❌ Erro ao excluir loja: ' + error.message)
+      if (result.error) {
+        alert('❌ Erro ao excluir loja: ' + result.error)
         return
       }
 
-      const imagens = [
-        loja?.logo, loja?.banner,
-        ...(produtos || []).flatMap(p => p.fotos || []),
-        ...(cursos || []).map(c => c.capa_url)
-      ].filter(Boolean)
-      if (imagens.length) await deletarImagensR2(imagens)
-
       alert('✅ Loja excluída com sucesso.')
+      await carregarMinhasLojas()
       await carregarTodasLojas()
     }
 
