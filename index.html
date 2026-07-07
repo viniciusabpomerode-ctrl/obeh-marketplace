@@ -85,6 +85,27 @@
         <!-- laço/detalhe artesanal -->
         <circle cx="120" cy="100" r="6" fill="#C99A3C" />
       </symbol>
+
+      <!-- ===== ÍCONES DE INTERFACE (traço, herdam currentColor via .icon) ===== -->
+      <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></symbol>
+      <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+      <symbol id="i-cart" viewBox="0 0 24 24"><circle cx="9" cy="20" r="1.6"/><circle cx="18" cy="20" r="1.6"/><path d="M2 3h2.5l2.4 11.2a2 2 0 0 0 2 1.6h8.3a2 2 0 0 0 1.95-1.55L21 7H5.3"/></symbol>
+      <symbol id="i-heart" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></symbol>
+      <symbol id="i-star" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26"/></symbol>
+      <symbol id="i-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+      <symbol id="i-zap" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10"/></symbol>
+      <symbol id="i-package" viewBox="0 0 24 24"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="M3.3 7 12 12l8.7-5"/><path d="M12 22V12"/></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></symbol>
+      <symbol id="i-store" viewBox="0 0 24 24"><path d="M3 9l1.2-5h15.6L21 9"/><path d="M3 9c0 1.5 1.3 3 3 3s3-1.5 3-3c0 1.5 1.3 3 3 3s3-1.5 3-3c0 1.5 1.3 3 3 3s3-1.5 3-3"/><path d="M4.5 12v8h15v-8"/><path d="M9.5 20v-5h5v5"/></symbol>
+      <symbol id="i-user" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+      <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></symbol>
+      <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><path d="M21 12H9"/></symbol>
+      <symbol id="i-chevron-down" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></symbol>
+      <symbol id="i-card" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></symbol>
+      <symbol id="i-truck" viewBox="0 0 24 24"><path d="M1 4h14v12H1z"/><path d="M15 8h4l4 4v4h-8"/><circle cx="5.5" cy="18.5" r="2"/><circle cx="18.5" cy="18.5" r="2"/></symbol>
+      <symbol id="i-users" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+      <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
+      <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
     </defs>
   </svg>
 
@@ -96,12 +117,12 @@
         <span class="logo-wordmark">Obeh</span>
       </a>
 
-      <button class="mobile-toggle" id="mobileToggle" aria-label="Abrir menu">☰ <span class="toggle-text">Menu</span></button>
+      <button class="mobile-toggle" id="mobileToggle" aria-label="Abrir menu"><svg class="icon" aria-hidden="true"><use href="#i-menu"></use></svg> <span class="toggle-text">Menu</span></button>
 
       <nav class="nav-links" id="navLinks" aria-label="Navegação principal">
         <div class="nav-search">
           <input type="text" id="searchInput" placeholder="Buscar peças, artesãos..." aria-label="Buscar peças e artesãos" />
-          <button onclick="buscarProdutos()" aria-label="Buscar">🔍</button>
+          <button onclick="buscarProdutos()" aria-label="Buscar"><svg class="icon" aria-hidden="true"><use href="#i-search"></use></svg></button>
         </div>
 
         <a href="#categorias">Categorias</a>
@@ -117,7 +138,7 @@
         </div>
 
         <div id="userLinks" style="display:none; align-items:center; gap:12px; position:relative;">
-          <a href="admin.html" id="adminLink" style="display:none;">🛠️ Admin</a>
+          <a href="admin.html" id="adminLink" style="display:none; align-items:center; gap:6px;"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-shield"></use></svg> Admin</a>
           <div style="position:relative;">
             <button id="userMenuTrigger" onclick="toggleUserMenu(event)" style="display:flex; flex-direction:column; align-items:center; gap:2px; background:none; border:none; cursor:pointer; padding:0; font-family:inherit;">
               <div id="userAvatarCircleNav" style="width:32px; height:32px; border-radius:50%; background:#E9DFC7; display:flex; align-items:center; justify-content:center; font-size:15px; overflow:hidden; border:1px solid var(--line); position:relative;">
@@ -126,19 +147,19 @@
               </div>
               <span id="userNomeNav" style="font-size:13px; color:var(--ink-soft); max-width:110px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Minha conta ▾</span>
             </button>
-            <div id="userMenuDropdown" style="display:none; position:absolute; top:calc(100% + 8px); right:0; background:var(--white); border:1px solid var(--line); border-radius:10px; box-shadow:0 8px 24px rgba(43,38,32,0.14); min-width:190px; overflow:hidden; z-index:200;">
-              <a href="dashboard.html?tab=loja" style="display:flex; align-items:center; gap:8px; padding:12px 16px; font-size:14px; font-weight:700; color:var(--clay-dark); text-decoration:none; background:rgba(181,80,47,0.08); border-bottom:1px solid var(--line);">🏪 Minha loja</a>
-              <a href="minhas-compras.html" style="display:flex; align-items:center; gap:8px; padding:11px 16px; font-size:14px; color:var(--ink); text-decoration:none;">📦 Minhas compras</a>
-              <a href="favoritos.html" style="display:flex; align-items:center; gap:8px; padding:11px 16px; font-size:14px; color:var(--ink); text-decoration:none;">❤️ Favoritos</a>
-              <a href="perfil.html" style="display:flex; align-items:center; gap:8px; padding:11px 16px; font-size:14px; color:var(--ink); text-decoration:none;">👤 Cadastro <span id="cadastroAvisoTexto" style="display:none; color:#c94a4a; font-size:12px;">⚠️ incompleto</span></a>
-              <a href="index.html" style="display:flex; align-items:center; gap:8px; padding:11px 16px; font-size:14px; color:var(--ink); text-decoration:none; border-top:1px solid var(--line);">🏠 Início</a>
-              <a href="#" onclick="logout()" style="display:flex; align-items:center; gap:8px; padding:11px 16px; font-size:14px; color:var(--ink-soft); text-decoration:none;">🚪 Sair</a>
+            <div id="userMenuDropdown" style="display:none; position:absolute; top:calc(100% + 8px); right:0; background:var(--white); border:1px solid var(--line); border-radius:14px; box-shadow:0 12px 32px rgba(43,38,32,0.16); min-width:200px; overflow:hidden; z-index:200;">
+              <a href="dashboard.html?tab=loja" style="display:flex; align-items:center; gap:10px; padding:13px 16px; font-size:14px; font-weight:700; color:var(--clay-dark); text-decoration:none; background:rgba(181,80,47,0.08); border-bottom:1px solid var(--line);"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-store"></use></svg> Minha loja</a>
+              <a href="minhas-compras.html" style="display:flex; align-items:center; gap:10px; padding:12px 16px; font-size:14px; color:var(--ink); text-decoration:none;"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-package"></use></svg> Minhas compras</a>
+              <a href="favoritos.html" style="display:flex; align-items:center; gap:10px; padding:12px 16px; font-size:14px; color:var(--ink); text-decoration:none;"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-heart"></use></svg> Favoritos</a>
+              <a href="perfil.html" style="display:flex; align-items:center; gap:10px; padding:12px 16px; font-size:14px; color:var(--ink); text-decoration:none;"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-user"></use></svg> Cadastro <span id="cadastroAvisoTexto" style="display:none; color:#c94a4a; font-size:12px;">⚠️ incompleto</span></a>
+              <a href="index.html" style="display:flex; align-items:center; gap:10px; padding:12px 16px; font-size:14px; color:var(--ink); text-decoration:none; border-top:1px solid var(--line);"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-home"></use></svg> Início</a>
+              <a href="#" onclick="logout()" style="display:flex; align-items:center; gap:10px; padding:12px 16px; font-size:14px; color:var(--ink-soft); text-decoration:none;"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-logout"></use></svg> Sair</a>
             </div>
           </div>
         </div>
 
         <button class="cart-btn" id="cartToggle" title="Carrinho" aria-label="Abrir carrinho">
-          🛒 <span class="cart-btn-text">Carrinho</span>
+          <svg class="icon icon-lg" aria-hidden="true"><use href="#i-cart"></use></svg> <span class="cart-btn-text">Carrinho</span>
           <span id="cartCount">0</span>
         </button>
       </nav>
@@ -149,7 +170,7 @@
   <div class="ovelha-ticker" aria-hidden="true">
     <div class="ovelha-andando" id="ovelhaAndando">
       <svg class="ovelha-svg"><use href="#obeh-sheep"></use></svg>
-      <span class="ovelha-bandeira" id="ovelhaBandeira">🏳️ Melhor marketplace de artesanato</span>
+      <span class="ovelha-bandeira" id="ovelhaBandeira">Melhor marketplace de artesanato</span>
     </div>
     <a class="ovelha-instagram" id="ovelhaInstagram" href="https://instagram.com/obehartesanatos" target="_blank" rel="noopener">@obehartesanatos</a>
   </div>
@@ -158,12 +179,14 @@
   <section class="hero">
     <div class="wrap hero-content">
       <div>
-        <p class="label">🧶 Marketplace de artesanato brasileiro</p>
-        <p class="label" style="color:#2f8f4e; font-weight:700;">💚 Melhores condições e sem taxas abusivas</p>
+        <p class="label">Marketplace de artesanato brasileiro</p>
         <h1 id="heroTitle">Cada peça carrega <span class="stitch">a marca</span> de quem fez.</h1>
         <p class="sub" id="heroSub">Compre direto de quem faz com as próprias mãos — cerâmica, tecelagem, madeira, couro e muito mais. Sem intermediário, com a história de cada artesão.</p>
+        <div style="display:inline-flex; align-items:center; gap:8px; margin-top:16px; padding:8px 16px; background:rgba(47,143,78,0.1); border:1px solid rgba(47,143,78,0.25); border-radius:999px; font-size:14px; font-weight:600; color:var(--green);">
+          <svg class="icon icon-sm" aria-hidden="true"><use href="#i-check"></use></svg> Melhores condições e sem taxas abusivas
+        </div>
         <div class="hero-ctas" id="heroCtas">
-          <a href="#vitrine" class="btn btn-primary">Explorar peças</a>
+          <a href="#vitrine" class="btn btn-primary btn-lg">Explorar peças</a>
           <a href="cadastro.html" class="btn btn-ghost">Quero vender</a>
         </div>
         <div class="hero-trust">
@@ -239,10 +262,10 @@
   <!-- ===== FAIXA DE CONFIANÇA (prova social / segurança) ===== -->
   <div style="background:var(--ink, #2B2620); color:#F7F2E7;">
     <div class="wrap" style="display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:10px 36px; padding:14px 28px; font-size:14px;">
-      <div style="display:flex; align-items:center; gap:8px;"><span aria-hidden="true">🔒</span> Compra protegida</div>
-      <div style="display:flex; align-items:center; gap:8px;"><span aria-hidden="true">⚡</span> Pix e cartão em até 12x</div>
-      <div style="display:flex; align-items:center; gap:8px;"><span aria-hidden="true">🤝</span> Dinheiro direto pro artesão</div>
-      <div style="display:flex; align-items:center; gap:8px;"><span aria-hidden="true">📦</span> Envio pra todo o Brasil</div>
+      <div style="display:flex; align-items:center; gap:8px;"><svg class="icon icon-sm" style="color:#C99A3C;" aria-hidden="true"><use href="#i-lock"></use></svg> Compra protegida</div>
+      <div style="display:flex; align-items:center; gap:8px;"><svg class="icon icon-sm" style="color:#C99A3C;" aria-hidden="true"><use href="#i-zap"></use></svg> Pix e cartão em até 12x</div>
+      <div style="display:flex; align-items:center; gap:8px;"><svg class="icon icon-sm" style="color:#C99A3C;" aria-hidden="true"><use href="#i-users"></use></svg> Dinheiro direto pro artesão</div>
+      <div style="display:flex; align-items:center; gap:8px;"><svg class="icon icon-sm" style="color:#C99A3C;" aria-hidden="true"><use href="#i-truck"></use></svg> Envio pra todo o Brasil</div>
     </div>
   </div>
 
@@ -250,7 +273,13 @@
   <div style="border-top:1px solid var(--line); border-bottom:1px solid var(--line);">
     <div class="cat-strip" id="categorias" style="border-top:none; border-bottom:none;">
       <div class="cat-row" id="catRow">
-        <!-- Injetado via JS -->
+        <!-- Skeleton enquanto as categorias carregam (substituído via JS) -->
+        <div class="skeleton skeleton-chip"></div>
+        <div class="skeleton skeleton-chip"></div>
+        <div class="skeleton skeleton-chip"></div>
+        <div class="skeleton skeleton-chip"></div>
+        <div class="skeleton skeleton-chip"></div>
+        <div class="skeleton skeleton-chip"></div>
       </div>
     </div>
     <div id="catRowOutras" style="display:none; flex-wrap:wrap; gap:12px; max-width:1180px; margin:0 auto; padding:0 28px 16px;">
@@ -263,13 +292,21 @@
     <div class="wrap">
       <div class="section-head">
         <div>
-          <h2>✨ Selecionado à mão</h2>
+          <h2>Selecionado à mão</h2>
           <p>Peças novas de ateliês de todo o Brasil.</p>
         </div>
         <a href="#" class="see-all" id="seeAllLink">Ver tudo →</a>
       </div>
       <div class="grid" id="productGrid">
-        <!-- Injetado via JS -->
+        <!-- Skeleton enquanto os produtos carregam (substituído via JS) -->
+        <div class="skeleton-card"><div class="skeleton sk-media"></div><div class="sk-body"><div class="skeleton sk-line short"></div><div class="skeleton sk-line"></div><div class="skeleton sk-line price"></div></div></div>
+        <div class="skeleton-card"><div class="skeleton sk-media"></div><div class="sk-body"><div class="skeleton sk-line short"></div><div class="skeleton sk-line"></div><div class="skeleton sk-line price"></div></div></div>
+        <div class="skeleton-card"><div class="skeleton sk-media"></div><div class="sk-body"><div class="skeleton sk-line short"></div><div class="skeleton sk-line"></div><div class="skeleton sk-line price"></div></div></div>
+        <div class="skeleton-card"><div class="skeleton sk-media"></div><div class="sk-body"><div class="skeleton sk-line short"></div><div class="skeleton sk-line"></div><div class="skeleton sk-line price"></div></div></div>
+        <div class="skeleton-card"><div class="skeleton sk-media"></div><div class="sk-body"><div class="skeleton sk-line short"></div><div class="skeleton sk-line"></div><div class="skeleton sk-line price"></div></div></div>
+        <div class="skeleton-card"><div class="skeleton sk-media"></div><div class="sk-body"><div class="skeleton sk-line short"></div><div class="skeleton sk-line"></div><div class="skeleton sk-line price"></div></div></div>
+        <div class="skeleton-card"><div class="skeleton sk-media"></div><div class="sk-body"><div class="skeleton sk-line short"></div><div class="skeleton sk-line"></div><div class="skeleton sk-line price"></div></div></div>
+        <div class="skeleton-card"><div class="skeleton sk-media"></div><div class="sk-body"><div class="skeleton sk-line short"></div><div class="skeleton sk-line"></div><div class="skeleton sk-line price"></div></div></div>
       </div>
     </div>
   </section>
@@ -305,19 +342,18 @@
   <section class="section sell-cta" id="vender">
     <div class="wrap">
       <!-- DIFERENCIAL PRINCIPAL -->
-      <div style="text-align:center; background:var(--clay); color:var(--white); padding:32px 24px; border-radius:12px; margin-bottom:40px;">
-        <div style="font-size:44px; margin-bottom:8px;">🎯</div>
-        <h2 style="color:var(--white); font-size:clamp(28px,3vw,38px);">Taxas justas, que caem conforme você cresce.</h2>
+      <div style="text-align:center; background:var(--clay); color:#FFFFFF; padding:40px 24px; border-radius:var(--radius-lg); margin-bottom:40px;">
+        <h2 style="color:#FFFFFF; font-size:clamp(28px,3vw,38px); text-wrap:balance;">Taxas justas, que caem conforme você cresce.</h2>
         <p style="font-size:16px; margin-top:10px; max-width:620px; margin-left:auto; margin-right:auto; color:#F7F2E7; line-height:1.7; opacity:0.92;">
           Manter a plataforma no ar, segura e funcionando tem custo — por isso cobramos uma pequena taxa por venda.
           Mas ela é <strong style="color:#fff;">a menor possível</strong> pra viabilizar o Obeh, nunca uma taxa abusiva: começa em <strong style="color:#fff;">8%</strong> no
           plano grátis e cai pra <strong style="color:#fff;">4%, 2%</strong> e até <strong style="color:#fff;">0%</strong> conforme você assina um plano melhor.
           O pagamento cai direto na sua conta do Mercado Pago, já com a taxa descontada automaticamente.
         </p>
-        <div style="display:flex; gap:20px; justify-content:center; margin-top:16px; flex-wrap:wrap; font-size:14px;">
-          <span>✅ Taxas transparentes, sem letras miúdas</span>
-          <span>✅ Taxa cai conforme o plano cresce</span>
-          <span>✅ Recebimento direto via Mercado Pago</span>
+        <div style="display:flex; gap:12px 24px; justify-content:center; margin-top:20px; flex-wrap:wrap; font-size:14px;">
+          <span style="display:inline-flex; align-items:center; gap:6px;"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-check"></use></svg> Taxas transparentes, sem letras miúdas</span>
+          <span style="display:inline-flex; align-items:center; gap:6px;"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-check"></use></svg> Taxa cai conforme o plano cresce</span>
+          <span style="display:inline-flex; align-items:center; gap:6px;"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-check"></use></svg> Recebimento direto via Mercado Pago</span>
         </div>
       </div>
 
@@ -336,25 +372,25 @@
           <div class="plan-desc">Para começar ou vender poucas peças.</div>
           <div class="plan-price"><span class="num">R$0</span><span class="per">/mês</span></div>
           <ul class="plan-list">
-            <li><span class="check">✅</span> Até 200 produtos</li>
-            <li><span class="check">✅</span> Loja personalizada</li>
-            <li><span class="check">✅</span> Taxa de 8% por venda</li>
-            <li><span class="check">✅</span> Pagamento direto MP</li>
+            <li><svg class="icon icon-sm check" style="margin-top:3px;" aria-hidden="true"><use href="#i-check"></use></svg> Até 200 produtos</li>
+            <li><svg class="icon icon-sm check" style="margin-top:3px;" aria-hidden="true"><use href="#i-check"></use></svg> Loja personalizada</li>
+            <li><svg class="icon icon-sm check" style="margin-top:3px;" aria-hidden="true"><use href="#i-check"></use></svg> Taxa de 8% por venda</li>
+            <li><svg class="icon icon-sm check" style="margin-top:3px;" aria-hidden="true"><use href="#i-check"></use></svg> Pagamento direto MP</li>
           </ul>
           <a href="cadastro.html" class="btn btn-outline">Criar loja grátis</a>
         </div>
 
         <!-- Plano Basic (Mais escolhido) -->
         <div class="plan reco">
-          <div class="plan-badge">🌟 Mais escolhido</div>
+          <div class="plan-badge">Mais escolhido</div>
           <div class="plan-name">Loja Basic</div>
           <div class="plan-desc">Mais produtos e taxa menor.</div>
           <div class="plan-price"><span class="num">R$9,99</span><span class="per">/mês</span></div>
           <ul class="plan-list">
-            <li><span class="check">✅</span> Até 400 produtos</li>
-            <li><span class="check">✅</span> Selo verificado</li>
-            <li><span class="check">✅</span> Taxa de 4% por venda</li>
-            <li><span class="check">✅</span> Estatísticas básicas</li>
+            <li><svg class="icon icon-sm check" style="margin-top:3px;" aria-hidden="true"><use href="#i-check"></use></svg> Até 400 produtos</li>
+            <li><svg class="icon icon-sm check" style="margin-top:3px;" aria-hidden="true"><use href="#i-check"></use></svg> Selo verificado</li>
+            <li><svg class="icon icon-sm check" style="margin-top:3px;" aria-hidden="true"><use href="#i-check"></use></svg> Taxa de 4% por venda</li>
+            <li><svg class="icon icon-sm check" style="margin-top:3px;" aria-hidden="true"><use href="#i-check"></use></svg> Estatísticas básicas</li>
           </ul>
           <a href="assinar.html?plano=basic" class="btn btn-primary">Assinar Basic</a>
         </div>
@@ -365,10 +401,10 @@
           <div class="plan-desc">Para ateliês com movimento.</div>
           <div class="plan-price"><span class="num">R$14,99</span><span class="per">/mês</span></div>
           <ul class="plan-list">
-            <li><span class="check">✅</span> Até 1000 produtos</li>
-            <li><span class="check">✅</span> Destaque nas buscas</li>
-            <li><span class="check">✅</span> Cupons personalizados</li>
-            <li><span class="check">✅</span> Taxa de 2% por venda</li>
+            <li><svg class="icon icon-sm check" style="margin-top:3px;" aria-hidden="true"><use href="#i-check"></use></svg> Até 1000 produtos</li>
+            <li><svg class="icon icon-sm check" style="margin-top:3px;" aria-hidden="true"><use href="#i-check"></use></svg> Destaque nas buscas</li>
+            <li><svg class="icon icon-sm check" style="margin-top:3px;" aria-hidden="true"><use href="#i-check"></use></svg> Cupons personalizados</li>
+            <li><svg class="icon icon-sm check" style="margin-top:3px;" aria-hidden="true"><use href="#i-check"></use></svg> Taxa de 2% por venda</li>
           </ul>
           <a href="assinar.html?plano=pro" class="btn btn-outline">Assinar Pro</a>
         </div>
@@ -379,10 +415,10 @@
           <div class="plan-desc">Pra quem vive de artesanato.</div>
           <div class="plan-price"><span class="num">R$29,99</span><span class="per">/mês</span></div>
           <ul class="plan-list">
-            <li><span class="check">✅</span> Produtos ilimitados</li>
-            <li><span class="check">✅</span> Venda cursos na plataforma</li>
-            <li><span class="check">✅</span> Máximo destaque nas buscas</li>
-            <li><span class="check">✅</span> 0% de taxa por venda</li>
+            <li><svg class="icon icon-sm check" style="margin-top:3px;" aria-hidden="true"><use href="#i-check"></use></svg> Produtos ilimitados</li>
+            <li><svg class="icon icon-sm check" style="margin-top:3px;" aria-hidden="true"><use href="#i-check"></use></svg> Venda cursos na plataforma</li>
+            <li><svg class="icon icon-sm check" style="margin-top:3px;" aria-hidden="true"><use href="#i-check"></use></svg> Máximo destaque nas buscas</li>
+            <li><svg class="icon icon-sm check" style="margin-top:3px;" aria-hidden="true"><use href="#i-check"></use></svg> 0% de taxa por venda</li>
           </ul>
           <a href="assinar.html?plano=ultra" class="btn btn-outline">Assinar Ultra</a>
         </div>
@@ -390,7 +426,7 @@
 
       <!-- NOTA SOBRE O MERCADO PAGO -->
       <div class="mp-note">
-        <span>💳</span>
+        <svg class="icon icon-lg" style="color:var(--olive); flex-shrink:0;" aria-hidden="true"><use href="#i-card"></use></svg>
         <div>
           <strong>O pagamento é direto:</strong> O cliente paga via Mercado Pago e o valor vai direto para a conta do artesão,
           já com a taxa da Obeh descontada automaticamente. O Obeh <strong>não retém nem intermedeia</strong> o dinheiro das vendas.
@@ -404,8 +440,8 @@
   <div id="cartModal">
     <div class="cart-box">
       <div class="cart-header">
-        <h3>🛒 Seu carrinho</h3>
-        <button class="close-cart" id="closeCart">✕</button>
+        <h3>Seu carrinho</h3>
+        <button class="close-cart" id="closeCart" aria-label="Fechar carrinho">✕</button>
       </div>
       <div id="cartItems">
         <p class="empty">Seu carrinho está vazio</p>
@@ -415,7 +451,7 @@
         <span>R$ 0,00</span>
       </div>
       <button class="btn btn-primary btn-lg" id="checkoutBtn">Finalizar compra</button>
-      <p class="secure-note" style="justify-content:center;"><span class="secure-icon" aria-hidden="true">🔒</span> Pagamento seguro pelo Mercado Pago</p>
+      <p class="secure-note" style="justify-content:center;"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-lock"></use></svg> Pagamento seguro pelo Mercado Pago</p>
     </div>
   </div>
 
@@ -424,7 +460,7 @@
     <div class="wrap">
       <div class="foot-grid">
         <div>
-          <div class="foot-logo">🐑 Obeh</div>
+          <div class="foot-logo" style="display:flex; align-items:center; gap:8px;"><svg style="width:36px; height:36px;" aria-hidden="true"><use href="#obeh-sheep"></use></svg> Obeh</div>
           <p class="foot-tag">Marketplace de artesanato feito por mãos brasileiras, de norte a sul.</p>
         </div>
         <div class="foot-col">
@@ -448,7 +484,7 @@
       </div>
       <div class="foot-bottom">
         <span>© 2026 Obeh Marketplace. Todos os direitos reservados.</span>
-        <span>🔒 Compra protegida · Pagamento via Mercado Pago</span>
+        <span style="display:inline-flex; align-items:center; gap:6px;"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-lock"></use></svg> Compra protegida · Pagamento via Mercado Pago</span>
         <span>Feito com 🧵 e aconchego.</span>
       </div>
     </div>
@@ -539,7 +575,7 @@
               `).join('')}
               ${outras.length > 0 ? `
                 <div class="chip" onclick="toggleOutrasCategorias()" id="chipOutros" style="font-weight:700;">
-                  <span class="dot"></span>➕ Mais categorias ▾
+                  <span class="dot"></span>Mais categorias ▾
                 </div>
               ` : ''}
             `
@@ -561,7 +597,7 @@
       const chip = document.getElementById('chipOutros')
       const aberto = containerOutras.style.display === 'flex'
       containerOutras.style.display = aberto ? 'none' : 'flex'
-      if (chip) chip.innerHTML = `<span class="dot"></span>➕ Mais categorias ${aberto ? '▾' : '▴'}`
+      if (chip) chip.innerHTML = `<span class="dot"></span>Mais categorias ${aberto ? '▾' : '▴'}`
     }
 
     // Preço (com riscado + badge de promoção quando em_promocao) usado nos cards de produto
@@ -569,12 +605,66 @@
       if (p.em_promocao && p.preco_antigo) {
         return `
           <div class="price">
-            <span style="text-decoration:line-through; color:var(--ink-soft); font-size:12px; margin-right:6px;">R$ ${Number(p.preco_antigo).toFixed(2).replace('.', ',')}</span>
+            <span class="price-old">R$ ${Number(p.preco_antigo).toFixed(2).replace('.', ',')}</span>
             R$ ${Number(p.preco).toFixed(2).replace('.', ',')}
           </div>
         `
       }
       return `<div class="price">R$ ${Number(p.preco).toFixed(2).replace('.', ',')}</div>`
+    }
+
+    // Parcelamento visível no card — só quando a parcela não fica ridícula
+    function renderParcelamentoCard(p) {
+      const preco = Number(p.preco)
+      if (!preco || preco < 30) return ''
+      const parcela = (preco / 12).toFixed(2).replace('.', ',')
+      return `<div class="installments">ou até 12x de R$ ${parcela}</div>`
+    }
+
+    // Estrelas da loja no card (prova social) — só quando a loja já tem avaliações
+    function renderEstrelasCard(p) {
+      const nota = Number(p.lojas?.nota_media)
+      const total = Number(p.lojas?.total_avaliacoes) || 0
+      if (!nota || total === 0) return ''
+      return `
+        <div class="rating-stars" style="margin-top:4px;">
+          <svg class="star" viewBox="0 0 24 24" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26"/></svg>
+          <span class="rating-num">${nota.toFixed(1)}</span>
+          <span>(${total})</span>
+        </div>
+      `
+    }
+
+    // Template visual do card de produto — usado na vitrine e na busca
+    function renderCardProduto(p) {
+      return `
+              <div class="card" onclick="window.location.href='produto.html?id=${p.id}'">
+                <div class="card-media">
+                  ${p.em_promocao ? '<span class="promo-badge">Promoção</span>' : ''}
+                  <button class="card-fav" data-produto-id="${p.id}" onclick="event.stopPropagation(); toggleFavoritoCard('${p.id}', this)" title="Favoritar" aria-label="Favoritar">🤍</button>
+                  ${p.fotos && p.fotos.length > 0
+                    ? `<img src="${p.fotos[0]}" alt="${esc(p.nome)}" loading="lazy" />`
+                    : `<svg style="width:72px; height:66px; opacity:0.35;" aria-hidden="true"><use href="#obeh-sheep"></use></svg>`
+                  }
+                </div>
+                <div class="card-body">
+                  <div class="card-cat">${p.categorias?.nome || 'Artesanato'}</div>
+                  <div class="card-title">${esc(p.nome)}</div>
+                  <div class="card-maker">${p.lojas?.nome_loja || 'Artesão'}</div>
+                  ${renderEstrelasCard(p)}
+                  ${p.sob_encomenda ? `<div style="font-size:12px; color:var(--olive); font-weight:600; margin-top:4px;">Sob encomenda${p.prazo_producao_dias ? ` — ${p.prazo_producao_dias} dia(s)` : ''}</div>` : ''}
+                  <div class="card-foot">
+                    <div class="price-block">
+                      ${renderPrecoCard(p)}
+                      ${renderParcelamentoCard(p)}
+                    </div>
+                    <button class="card-add" onclick="event.stopPropagation(); adicionarAoCarrinhoClique('${p.id}')" aria-label="Adicionar ao carrinho">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            `
     }
 
     // Gerador pseudo-aleatório determinístico (mulberry32) — com a mesma
@@ -628,30 +718,7 @@
         return
       }
 
-      grid.innerHTML = produtosFiltrados.map(p => `
-              <div class="card" onclick="window.location.href='produto.html?id=${p.id}'">
-                <div class="card-media" style="background:${p.fotos && p.fotos.length > 0 ? '#E9DFC7' : '#E9DFC7'}">
-                  ${p.em_promocao ? '<span class="card-badge" style="position:absolute; top:10px; left:10px; background:var(--clay); color:#fff; font-size:11px; font-weight:700; padding:3px 10px; border-radius:999px;">🔥 Promoção</span>' : ''}
-                  <button class="card-fav" data-produto-id="${p.id}" onclick="event.stopPropagation(); toggleFavoritoCard('${p.id}', this)" title="Favoritar">🤍</button>
-                  ${p.fotos && p.fotos.length > 0
-                    ? `<img src="${p.fotos[0]}" alt="${esc(p.nome)}" loading="lazy" />`
-                    : `<span class="placeholder">🧵</span>`
-                  }
-                </div>
-                <div class="card-body">
-                  <div class="card-cat">${p.categorias?.nome || 'Artesanato'}</div>
-                  <div class="card-title">${esc(p.nome)}</div>
-                  <div class="card-maker">${p.lojas?.nome_loja || 'Artesão'}</div>
-                  ${p.sob_encomenda ? `<div style="font-size:11px; color:var(--olive); font-weight:600; margin-top:2px;">📦 Sob encomenda${p.prazo_producao_dias ? ` — ${p.prazo_producao_dias} dia(s)` : ''}</div>` : ''}
-                  <div class="card-foot">
-                    ${renderPrecoCard(p)}
-                    <button class="card-add" onclick="event.stopPropagation(); adicionarAoCarrinhoClique('${p.id}')">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            `).join('')
+      grid.innerHTML = produtosFiltrados.map(p => renderCardProduto(p)).join('')
 
       marcarFavoritosNaGrade(produtosFiltrados.map(p => p.id))
     }
@@ -754,17 +821,15 @@
 
       renderizarCarrinho()
 
-      // Feedback visual
+      // Feedback visual — pisca verde de sucesso e volta ao normal
       const btn = document.querySelector(`.card-add[onclick*="${produtoId}"]`)
       if (btn) {
-        btn.style.transform = 'scale(1.3)'
-        btn.style.background = 'var(--clay)'
-        btn.style.color = 'white'
+        btn.style.transform = 'scale(1.25)'
+        btn.style.background = 'var(--green)'
         setTimeout(() => {
-          btn.style.transform = 'scale(1)'
-          btn.style.background = 'transparent'
-          btn.style.color = 'var(--ink)'
-        }, 300)
+          btn.style.transform = ''
+          btn.style.background = ''
+        }, 350)
       }
     }
 
@@ -830,30 +895,7 @@
         return
       }
 
-      grid.innerHTML = ordenarPorDestaque(produtosFiltrados).map(p => `
-              <div class="card" onclick="window.location.href='produto.html?id=${p.id}'">
-                <div class="card-media" style="background:${p.fotos && p.fotos.length > 0 ? '#E9DFC7' : '#E9DFC7'}">
-                  ${p.em_promocao ? '<span class="card-badge" style="position:absolute; top:10px; left:10px; background:var(--clay); color:#fff; font-size:11px; font-weight:700; padding:3px 10px; border-radius:999px;">🔥 Promoção</span>' : ''}
-                  <button class="card-fav" data-produto-id="${p.id}" onclick="event.stopPropagation(); toggleFavoritoCard('${p.id}', this)" title="Favoritar">🤍</button>
-                  ${p.fotos && p.fotos.length > 0
-                    ? `<img src="${p.fotos[0]}" alt="${esc(p.nome)}" loading="lazy" />`
-                    : `<span class="placeholder">🧵</span>`
-                  }
-                </div>
-                <div class="card-body">
-                  <div class="card-cat">${p.categorias?.nome || 'Artesanato'}</div>
-                  <div class="card-title">${esc(p.nome)}</div>
-                  <div class="card-maker">${p.lojas?.nome_loja || 'Artesão'}</div>
-                  ${p.sob_encomenda ? `<div style="font-size:11px; color:var(--olive); font-weight:600; margin-top:2px;">📦 Sob encomenda${p.prazo_producao_dias ? ` — ${p.prazo_producao_dias} dia(s)` : ''}</div>` : ''}
-                  <div class="card-foot">
-                    ${renderPrecoCard(p)}
-                    <button class="card-add" onclick="event.stopPropagation(); adicionarAoCarrinhoClique('${p.id}')">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            `).join('')
+      grid.innerHTML = ordenarPorDestaque(produtosFiltrados).map(p => renderCardProduto(p)).join('')
 
       marcarFavoritosNaGrade(produtosFiltrados.map(p => p.id))
     }

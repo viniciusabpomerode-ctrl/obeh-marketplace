@@ -224,7 +224,7 @@ async function getProducts() {
     .from('produtos')
     .select(`
       *,
-      lojas (nome_loja, logo, banner, mercado_pago_link),
+      lojas (nome_loja, logo, banner, mercado_pago_link, nota_media, total_avaliacoes),
       categorias (nome)
     `)
     .eq('status', 'ativo')
