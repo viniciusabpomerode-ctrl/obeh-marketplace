@@ -7,18 +7,23 @@
 // ============================================
 const Stripe = require('stripe')
 
+// Os price IDs vêm das variáveis de ambiente do Netlify (assim dá pra trocar
+// preço, ou alternar entre modo teste/real do Stripe, sem mexer no código).
+// Os valores fixos abaixo são só fallback pra não quebrar se alguma variável
+// faltar. IMPORTANTE: os preços têm que ser do MESMO modo (live/test) da
+// STRIPE_SECRET_KEY configurada.
 const PRICE_IDS = {
   basic: {
-    regular: 'price_1Tp8kP3vXW7W5vhxBQZcc6W6', // R$ 9,99
-    promo: 'price_1Torlv3vXW7W5vhxkuVd97f7'    // R$ 6,99
+    regular: process.env.STRIPE_PRICE_BASIC || 'price_1Tp8kP3vXW7W5vhxBQZcc6W6', // R$ 9,99
+    promo: process.env.STRIPE_PROMO_BASIC || 'price_1Torlv3vXW7W5vhxkuVd97f7'    // R$ 6,99
   },
   pro: {
-    regular: 'price_1ToroA3vXW7W5vhxv7SRbM5t', // R$ 14,99
-    promo: 'price_1Tp8mW3vXW7W5vhxSQYWtJgW'    // R$ 9,99
+    regular: process.env.STRIPE_PRICE_PRO || 'price_1ToroA3vXW7W5vhxv7SRbM5t', // R$ 14,99
+    promo: process.env.STRIPE_PROMO_PRO || 'price_1Tp8mW3vXW7W5vhxSQYWtJgW'    // R$ 9,99
   },
   ultra: {
-    regular: 'price_1ToroT3vXW7W5vhxMES2Bn7F', // R$ 29,99
-    promo: 'price_1Tp8oW3vXW7W5vhxJxrpCdH4'    // R$ 14,99
+    regular: process.env.STRIPE_PRICE_ULTRA || 'price_1ToroT3vXW7W5vhxMES2Bn7F', // R$ 29,99
+    promo: process.env.STRIPE_PROMO_ULTRA || 'price_1Tp8oW3vXW7W5vhxJxrpCdH4'    // R$ 14,99
   }
 }
 
