@@ -15,7 +15,9 @@ const Stripe = require('stripe')
 const PRICE_IDS = {
   basic: {
     regular: process.env.STRIPE_PRICE_BASIC || 'price_1Tp8kP3vXW7W5vhxBQZcc6W6', // R$ 9,99
-    promo: process.env.STRIPE_PROMO_BASIC || 'price_1Torlv3vXW7W5vhxkuVd97f7'    // R$ 6,99
+    // Aceita também "STRIPLE_PROMO_BASIC" — a variável foi criada no Netlify
+    // com esse nome (erro de digitação), e o dono preferiu manter assim.
+    promo: process.env.STRIPE_PROMO_BASIC || process.env.STRIPLE_PROMO_BASIC || 'price_1Torlv3vXW7W5vhxkuVd97f7' // R$ 6,99
   },
   pro: {
     regular: process.env.STRIPE_PRICE_PRO || 'price_1ToroA3vXW7W5vhxv7SRbM5t', // R$ 14,99
